@@ -23,6 +23,12 @@ export const state = {
   // sóng ngang – dây
   tf: 1,            // Hz (real, 0,2–5)
   tA: 5,            // cm (real amplitude)
-  tv: 2             // m/s (real propagation speed)
+  tv: 2,            // m/s (real propagation speed)
+  // sóng mặt
+  sf: 1,            // Hz
+  sA: 7,            // cm
+  sv: 1.56,         // m/s
+  deep: true,       // nước sâu | nước nông
+  orbits: true      // show orbit outlines of the tracked particles
 };
 export function set(key, value) { state[key] = value; bus.emit('change', {key, value}); }
