@@ -6,6 +6,7 @@ import longitudinal from './modes/longitudinal.js';
 import transverse from './modes/transverse.js';
 import surface from './modes/surface.js';
 import em from './modes/em.js';
+import './audio.js';
 
 const MODES = [longitudinal, transverse, surface, em];
 const byId = id => MODES.find(m => m.id === id);
@@ -33,7 +34,8 @@ const ui = mountShell({
 
 function setMode(id) {
   const m = byId(id) || MODES[0];
-  mode = m; state.mode = m.id; state.t = 0;
+  mode = m; state.t = 0; if (m.reset) m.reset();
+  set('mode', m.id);
   set('slow', m.defaults.slow);
   m.layout(W, H);
   ui.setMode(m);
@@ -50,6 +52,7 @@ function resize() {
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   grid = makeGrid(W, H, dpr);
   mode.layout(W, H);
+  bus.emit('change', {key: 'layout'});
   dirty = true;
 }
 

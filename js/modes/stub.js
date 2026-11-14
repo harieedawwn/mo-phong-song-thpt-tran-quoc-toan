@@ -9,7 +9,7 @@ export function makeStub(cfg) {
   return {
     id: cfg.id, title: cfg.title, short: cfg.short, icon: cfg.icon,
     defaults: {slow: cfg.slow},
-    sources: cfg.sources,            // {f, v} real values for the readouts
+    metrics() { return cfg.sources; },   // {f, v} real values for the readouts
     controls() {
       const fmin = 0.001, ratio = 1000;
       const val = document.createElement('span'); val.className = 'val';

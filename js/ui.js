@@ -18,7 +18,13 @@ export const PATHS = {
   longitudinal: '<path d="M3 5v14M6 5v14M9 5v14M15 5v14M21 5v14"/>',
   transverse: '<path d="M2 12c2.5-7 5-7 7.5 0s5 7 7.5 0 3.5-5 5-3"/>',
   surface: '<path d="M2 8c2-2 4-2 6 0s4 2 6 0 4-2 6 0"/><circle cx="12" cy="15" r="3.5"/><path d="M12 11.5v.01"/>',
-  em: '<path d="M13 2L4 14h7l-1 8 9-12h-7z"/>'
+  em: '<path d="M13 2L4 14h7l-1 8 9-12h-7z"/>',
+  ruler: '<path d="M3 17L17 3l4 4L7 21z"/><path d="M7 13l2 2M10 10l2 2M13 7l2 2"/>',
+  target: '<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="2.5" fill="currentColor"/>',
+  tag: '<path d="M3 3h8l10 10-8 8L3 11z"/><circle cx="7.5" cy="7.5" r="1.5"/>',
+  medium: '<path d="M3 8c3-2 6 2 9 0s6-2 9 0M3 16c3-2 6 2 9 0s6-2 9 0"/>',
+  note: '<path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/>',
+  source: '<rect x="3" y="6" width="6" height="12" rx="1"/><path d="M9 9l6-5v16l-6-5"/>'
 };
 export function icon(name, size = 20, cls = '') {
   const s = document.createElement('span');
@@ -51,6 +57,15 @@ export function chip(content, isOn, onClick, cls) {
   bind(() => b.setAttribute('aria-pressed', String(!!isOn())));
   return b;
 }
+// Segmented control (active = black fill). opts: [[value, label], ...]
+export function seg(opts, get, setter, label) {
+  return h('div', {class: 'seg seg-in', role: 'group', 'aria-label': label},
+    ...opts.map(([v, t]) => {
+      const b = h('button', {type: 'button', 'aria-pressed': 'false', onclick: () => setter(v)}, t);
+      bind(() => b.setAttribute('aria-pressed', String(get() === v)));
+      return b;
+    }));
+}
 export function toggle(ic, label, get, setter) {
   const b = h('button', {type: 'button', class: 'tg', 'aria-pressed': 'false', title: label, onclick: () => setter(!get())}, icon(ic, 18), h('span', {text: label}));
   bind(() => b.setAttribute('aria-pressed', String(!!get())));
@@ -65,6 +80,20 @@ export function slider({min, max, step = 1, label, pos, apply, sync}) {
   i.addEventListener('input', () => { paint(); apply(+i.value); });
   bind(() => { if (document.activeElement !== i) { const p = String(pos()); if (i.value !== p) { i.value = p; paint(); } } if (sync) sync(); });
   return wrap;
+}
+// Log slider for the slow-motion factor (×1 … ×100 000) snapped to 1-2-5 steps.
+export function slowControl() {
+  const val = h('span', {class: 'val'});
+  const LO = 1e-5, SPAN = 5;  // decades
+  const s = slider({min: 0, max: 1000, label: 'Làm chậm',
+    pos: () => Math.round(1000 * (Math.log10(Math.min(1, Math.max(LO, state.slow))) - Math.log10(LO)) / SPAN),
+    apply: p => {
+      const n = Math.pow(10, SPAN * (1 - p / 1000)), e = Math.floor(Math.log10(n) + 1e-9), m = n / 10 ** e;
+      const nice = (m < 1.5 ? 1 : m < 3.5 ? 2 : m < 7.5 ? 5 : 10) * 10 ** e;
+      if (Math.abs(1 / nice - state.slow) > 1e-12) set('slow', 1 / nice);
+    },
+    sync: () => { val.textContent = slowText(state.slow); }});
+  return [lab('slow', 'Làm chậm', val), s];
 }
 export const lab = (ic, text, valEl) => h('div', {class: 'lab'}, h('span', {class: 'ic'}, icon(ic, 15), text), valEl || null);
 // A controls group; `tab` is its id in the phone bottom sheet ("wave" | "show").
@@ -130,7 +159,7 @@ export function mountShell({modes, onMode, onRestart, onToggle, onShot}) {
   $('formula').append('λ = ', h('b', {text: 'v'}), '·T = ', h('b', {text: 'v'}), '/f');
   const put = (c, parts) => { const t = parts[0] + '|' + parts[1]; if (c.last !== t) { c.last = t; c.v.replaceChildren(parts[0], h('small', {text: parts[1]})); } };
   function syncMetrics(m) {
-    const {f, v} = m.sources;
+    const {f, v} = m.metrics();
     put(cells.f, freqParts(f)); put(cells.T, timeParts(1 / f)); put(cells.l, lenParts(v / f)); put(cells.v, speedParts(v));
   }
 
@@ -151,7 +180,7 @@ export function mountShell({modes, onMode, onRestart, onToggle, onShot}) {
     const groups = m.controls();
     grps.replaceChildren(...groups);
     featBody.replaceChildren(featBody.firstChild, ...m.features().map(([k, v]) => h('div', {class: 'feat-row'}, h('span', {class: 'k', text: k}), h('span', {class: 'vv', text: v}))));
-    const ids = [...groups.map(g => g.dataset.grp), 'feat'];
+    const ids = [...new Set(groups.map(g => g.dataset.grp)), 'feat'];
     ctrl.dataset.tab = 'none';
     dock.replaceChildren(...ids.map(k => h('button', {type: 'button', 'data-k': k, 'aria-pressed': 'false', onclick: () => { ctrl.dataset.tab = ctrl.dataset.tab === k ? 'none' : k; syncDock(); }}, icon(DOCK[k][0], 20), DOCK[k][1])));
     placeFeat(); syncDock(); syncBinds();
@@ -175,16 +204,20 @@ export function mountShell({modes, onMode, onRestart, onToggle, onShot}) {
     btnPlay.setAttribute('aria-label', playLab.textContent);
     btnPlay.setAttribute('aria-pressed', String(p));
   }
+  let cur = null, lastBadges = '';
   function syncBadges() {
     spd.replaceChildren(icon('slow', 15), 'Làm chậm ' + slowText(state.slow));
-    badges.replaceChildren(...(state.slow < 1 ? [h('span', {class: 'badge', text: 'Đã làm chậm ' + slowText(state.slow)})] : []));
+    const list = (state.slow < 1 ? ['Đã làm chậm ' + slowText(state.slow)] : []).concat(cur && cur.badges ? cur.badges() : []);
+    const key = list.join('|');
+    if (key !== lastBadges) { lastBadges = key; badges.replaceChildren(...list.map(t => h('span', {class: 'badge', text: t}))); }
   }
 
-  bus.on('change', e => { if (e.key === 'muted') syncMute(); if (e.key === 'playing') syncPlay(); if (e.key === 'slow') syncBadges(); syncBinds(); });
+  bus.on('change', e => { if (e.key === 'muted') syncMute(); if (e.key === 'playing') syncPlay(); syncBadges(); if (cur) syncMetrics(cur); syncBinds(); });
   syncMute(); syncPlay(); syncBadges();
 
   return {
     setMode(m) {
+      cur = m;
       for (const b of tabBtns) b.setAttribute('aria-selected', String(b.dataset.id === m.id));
       buildControls(m); syncMetrics(m); syncBadges();
     }

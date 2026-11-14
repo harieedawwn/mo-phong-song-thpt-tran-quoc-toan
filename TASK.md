@@ -14,7 +14,7 @@ SPEC: §4, §5, §6.
 - [x] Phone layout skeleton (bottom sheet, 4 icon tabs, 1-row metrics).
 - [x] `version.json`, push, confirm Pages deploy works (enable Pages → GitHub Actions if needed; if you cannot, mark `[!]` with the click path for the owner).
 
-## Phase 1 – Sóng dọc: vật lí + phần tử không khí  `[ ]`
+## Phase 1 – Sóng dọc: vật lí + phần tử không khí  `[~]`
 SPEC: §2 (Bài 8, Bài 9), §3.1 (air, ruler, controls), §6.
 - [ ] `js/physics.js`: u(x,t) with propagating front, −∂u/∂x, SPEED, visLambda clamp, describe pitch (port from legacy).
 - [ ] Air dot grid displaced along x, 3 flat shade classes from −∂u/∂x, tracked red particle with VTCB tick + ↔ arrow, outlined layer column.

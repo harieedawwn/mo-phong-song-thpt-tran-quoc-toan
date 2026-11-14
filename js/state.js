@@ -13,6 +13,12 @@ export const state = {
   slow: 0.005,      // slow-motion factor: simulated seconds per real second
   t: 0,             // simulated physical time since the wave started (s)
   muted: false,
-  labels: true, ruler: true, track: true
+  labels: true, ruler: true, track: true,
+  // sóng dọc – sóng âm
+  f: 440,           // Hz (real)
+  level: 70,        // dB (độ to) → drawn amplitude + audio gain
+  medium: 'air',    // air | water | steel
+  source: 'speaker',// speaker | talker
+  sound: 'tone'     // tone (âm đơn) | voice (giọng nói)
 };
 export function set(key, value) { state[key] = value; bus.emit('change', {key, value}); }
