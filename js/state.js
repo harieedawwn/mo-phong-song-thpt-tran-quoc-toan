@@ -29,6 +29,9 @@ export const state = {
   sA: 7,            // cm
   sv: 1.56,         // m/s
   deep: true,       // nước sâu | nước nông
-  orbits: true      // show orbit outlines of the tracked particles
+  orbits: true,     // show orbit outlines of the tracked particles
+  // sóng điện từ
+  band: 0,          // index into the 7 bands of Bảng 11.1
+  emE: true, emB: true, emArrows: true
 };
 export function set(key, value) { state[key] = value; bus.emit('change', {key, value}); }

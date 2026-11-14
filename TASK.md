@@ -46,11 +46,11 @@ SPEC: §2 (Sóng mặt), §3.3. Refs: `docs/ref/surface-wave-*.png`.
 - [x] Labels (đỉnh/hõm, phương truyền, λ), toggles (quỹ đạo, nước sâu/nông), controls, metrics, Đặc điểm card.
 - [x] Check: top particle moves forward at the crest and backward in the trough; orbit radius at depth λ/2 ≈ 4 % of surface (e^(−π)).
 
-## Phase 5 – Sóng điện từ  `[ ]`
+## Phase 5 – Sóng điện từ  `[x]`
 SPEC: §2 (Bài 11 table – verbatim), §3.4.
-- [ ] Oblique axes, E (orange) and B (blue) arrow trains in phase, tip curves, legend "E ⟂ B ⟂ v → sóng ngang", "v = c = 3·10⁸ m/s".
-- [ ] Spectrum scale of 7 flat blocks (visible light = 7 solid stripes), tap to select, shows λ range, f range, example, λ = c/f readout.
-- [ ] Toggles E / B / mũi tên, làm chậm; metrics (f, T, λ, v = c) and Đặc điểm card.
+- [x] Oblique axes, E (orange) and B (blue) arrow trains in phase, tip curves, legend "E ⟂ B ⟂ v → sóng ngang", "v = c = 3·10⁸ m/s".
+- [x] Spectrum scale of 7 flat blocks (visible light = 7 solid stripes), tap to select, shows λ range, f range, example, λ = c/f readout.
+- [x] Toggles E / B / mũi tên, làm chậm; metrics (f, T, λ, v = c) and Đặc điểm card.
 
 ## Phase 6 – Hoàn thiện giao diện + điện thoại + Zalo  `[ ]`
 SPEC: §4, §6.
