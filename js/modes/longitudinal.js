@@ -165,10 +165,14 @@ function draw(ctx) {
 }
 
 function legend(ctx, y) {
-  const fs = L.fs - 0.5, items = [[C.comp, 'Vùng nén'], [C.neutral, 'Bình thường'], [C.rare, 'Vùng giãn']];
-  if (state.track) items.push([C.track, 'Phần tử theo dõi']);
-  ctx.font = font(fs, 600);
-  let w = 0; for (const [, t] of items) w += 14 + textW(ctx, t) + 16;
+  const items = [[C.comp, 'Vùng nén'], [C.neutral, 'Bình thường'], [C.rare, 'Vùng giãn']];
+  if (state.track) items.push([C.track, L.phone ? 'Theo dõi' : 'Phần tử theo dõi']);
+  let fs = L.fs - 0.5, w = 0;
+  for (; fs > 8; fs -= 0.5) {
+    ctx.font = font(fs, 600); w = 0;
+    for (const [, t] of items) w += 14 + textW(ctx, t) + 16;
+    if (w - 16 <= L.w - 12) break;
+  }
   let x = L.w / 2 - (w - 16) / 2;
   for (const [col, t] of items) {
     ctx.fillStyle = col; ctx.beginPath(); ctx.arc(x + 5, y, 5, 0, 6.2832); ctx.fill();
