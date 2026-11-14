@@ -78,14 +78,14 @@ SPEC: §7 (Tai). Recommended model: **Opus** (drawing).
 - [x] ≤ 7 labels, no overlaps, phone layout works.
 - [x] Side-by-side check vs `docs/ref/v1-ear.png`: a non-expert must instantly see "an ear"; iterate (max 3 rounds).
 
-## Phase 10 – Đánh bóng: rõ, đẹp, cuốn hút (không nặng máy)  `[~]`
+## Phase 10 – Đánh bóng: rõ, đẹp, cuốn hút (không nặng máy)  `[x]`
 SPEC: §4, §5. Model: Sonnet (High).
-- [ ] Physics spot-checks: Sóng điện từ – E and B maxima at the same x (in phase); Sóng mặt – clockwise orbits, no gap at stage edges; Sóng ngang – u–x/u–t graphs consistent with the rope.
-- [ ] Toggle buttons (`.tg`) labels never wrap to 2 lines (shorter Vietnamese words or wider grid); school name stays on one line at every width.
-- [ ] Cheap "wow" polish, each must pass before/after: (a) on mode switch the wave visibly starts from the source (t = 0) with a 0.4 s fade-in of labels;
+- [x] Physics spot-checks: Sóng điện từ – E and B maxima at the same x (in phase); Sóng mặt – clockwise orbits, no gap at stage edges; Sóng ngang – u–x/u–t graphs consistent with the rope.
+- [x] Toggle buttons (`.tg`) labels never wrap to 2 lines (shorter Vietnamese words or wider grid); school name stays on one line at every width.
+- [x] Cheap "wow" polish, each must pass before/after: (a) on mode switch the wave visibly starts from the source (t = 0) with a 0.4 s fade-in of labels;
   (b) hover/tap highlight on labelled parts; (c) consistent label pills and leader lines across modes; (d) phone layout re-check for all 4 modes.
-- [ ] Sound stays **muted by default** (owner request); the mute button shows clearly that sound is off.
-- [ ] Final `--all` screenshots for 4 modes, zero errors, deploy check.
+- [x] Sound stays **muted by default** (owner request); the mute button shows clearly that sound is off.
+- [x] Final `--all` screenshots for 4 modes, zero errors, deploy check.
 
 ## Log
 <!-- one line per session: date · phase · what was done · commit hash -->
