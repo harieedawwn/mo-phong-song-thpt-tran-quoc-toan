@@ -64,6 +64,29 @@ SPEC: §4, §6.
 - [x] Final `--all` screenshots of 4 modes, zero errors, deploy check, set `version.json` phase "final".
 - [x] Report: link + 3 lines + anything the owner should test on a real phone / in Zalo.
 
+## Phase 8 – Vẽ lại Người nói (Art v2)  `[ ]`
+SPEC: §7 (Người nói), §5 palette. Recommended model: **Opus** (drawing). Before screenshot first: `node tools/shot.mjs before8` with source = Người nói.
+- [ ] Download the §7 references into `docs/ref/web/` and look at them; write 3 bullet "what makes it recognisable" notes in the Log.
+- [ ] Rebuild `js/art/talker.js`: proportioned side profile + sagittal vocal tract, vibrating vocal folds, air-flow arrow, ≤ 5 de-collided labels.
+- [ ] Works at desktop and phone sizes (Path2D cached per size, no per-frame allocation).
+- [ ] Side-by-side check vs `docs/ref/v1-talker.png` and the references: must be clearly better, else iterate (max 3 rounds).
+
+## Phase 9 – Vẽ lại Tai người nghe với kính lúp (Art v2)  `[ ]`
+SPEC: §7 (Tai). Recommended model: **Opus** (drawing).
+- [ ] Small listener head (same style as Phase 8) + magnifier callout + large coronal ear cross-section in correct anatomical order.
+- [ ] Motion: eardrum, ossicles, nerve pulses synced to the arriving wave; click part → highlight + caption; empty click/Esc clears.
+- [ ] ≤ 7 labels, no overlaps, phone layout works.
+- [ ] Side-by-side check vs `docs/ref/v1-ear.png`: a non-expert must instantly see "an ear"; iterate (max 3 rounds).
+
+## Phase 10 – Đánh bóng: rõ, đẹp, cuốn hút (không nặng máy)  `[ ]`
+SPEC: §4, §5. Model: Sonnet (High).
+- [ ] Physics spot-checks: Sóng điện từ – E and B maxima at the same x (in phase); Sóng mặt – clockwise orbits, no gap at stage edges; Sóng ngang – u–x/u–t graphs consistent with the rope.
+- [ ] Toggle buttons (`.tg`) labels never wrap to 2 lines (shorter Vietnamese words or wider grid); school name stays on one line at every width.
+- [ ] Cheap "wow" polish, each must pass before/after: (a) on mode switch the wave visibly starts from the source (t = 0) with a 0.4 s fade-in of labels;
+  (b) hover/tap highlight on labelled parts; (c) consistent label pills and leader lines across modes; (d) phone layout re-check for all 4 modes.
+- [ ] Sound stays **muted by default** (owner request); the mute button shows clearly that sound is off.
+- [ ] Final `--all` screenshots for 4 modes, zero errors, deploy check.
+
 ## Log
 <!-- one line per session: date · phase · what was done · commit hash -->
 2026-11-14 · Phase 0 · khung ứng dụng (header, 4 tab, panel, canvas giấy kẻ ô, vòng lặp, bố cục điện thoại), 4 chế độ giữ chỗ; f=440 Hz/khí → T=2,27 ms, λ=78,0 cm; FM 100 MHz → λ=3 m · 8c74cf5

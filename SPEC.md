@@ -159,3 +159,31 @@ Match the look of `docs/ref/surface-wave-particle-grid.png` (cross-section of a 
   `100dvh` with `100vh` fallback, `env(safe-area-inset-*)` padding, touch targets ≥ 40 px, no hover-only features, `touch-action` set on the canvas.
 - Accessibility: buttons have Vietnamese `aria-label`s, focus rings visible, `prefers-reduced-motion` starts paused.
 - Page weight without fonts < 200 KB. No external requests at runtime.
+
+## 7. Art v2 (owner feedback after the first build) – overrides §3.1 drawings where they conflict
+Owner verdict: the speaking person's face is ugly and the ear is unrecognisable ("không nhìn ra là cái tai").
+Goal: drawings a student recognises in 1 second, textbook-illustration quality, still flat (solid fills + ink outlines, no gradients).
+### References (download into `docs/ref/web/` and LOOK at them before drawing; draw your own vector paths, never trace-embed the files)
+- Ear cross-section (layout, proportions): https://commons.wikimedia.org/wiki/File:Anatomy_of_the_Human_Ear.svg (CC BY 2.5, Chittka & Brockmann)
+- Ear, colour-coded style: https://commons.wikimedia.org/wiki/File:Blausen_0330_EarAnatomy.png (CC BY 3.0, Blausen Medical)
+- Vocal tract, clean line art: https://commons.wikimedia.org/wiki/File:Places_of_articulation.svg
+- Head/neck sagittal anatomy: https://commons.wikimedia.org/wiki/File:Gray994.png (public domain)
+- Composition: `docs/ref/ear-voice-reference.png` (owner's image). Current weak result: `docs/ref/v1-talker.png`, `docs/ref/v1-ear.png`.
+If a URL fails, search Wikimedia Commons for the same subject; download the "Original file" link (upload.wikimedia.org).
+### Người nói (talker) – recognisable person first, anatomy second
+- A calm adult **side profile** (forehead, nose, lips, chin, jaw, neck, ear, short hair) with good proportions (eye on the mid-line of the head,
+  nose bottom ≈ ear bottom, lips at 1/3 between nose and chin). Simple, friendly, not cartoonish, not creepy. Skin flat `#f3c9b1`, hair flat dark.
+- Inside, a clean **sagittal cut** of the vocal tract (as in "Places of articulation"): nasal cavity, hard/soft palate, tongue, teeth, lips,
+  oral cavity, pharynx (họng), epiglottis, larynx with the **dây thanh âm** (2 small folds that visibly vibrate when playing), trachea, a few vertebrae.
+- Air-flow arrow from lungs/trachea → vocal folds → mouth; mouth slightly open; sound leaves the lips into the air grid.
+- Labels (≤ 5): Dây thanh âm (nguồn dao động), Họng, Khoang miệng, Khoang mũi, Lưỡi – short leaders that never cross.
+### Tai người nghe – context + magnified cut (fixes "can't tell it's an ear")
+- Draw the **listener's head in side profile** (same style as the talker, facing the source) at small scale, and a **circular magnifier**
+  ("kính lúp" callout: ring around the ear on the head + two thin lines to a big circle) that shows the **ear cross-section** large.
+- Ear cross-section in the circle (coronal cut, like the Wikimedia diagram): skin + skull band, pinna sticking out, S-shaped ear canal,
+  eardrum (màng nhĩ) as a thin tilted membrane, malleus–incus–stapes chained correctly (malleus touching the eardrum, stapes footplate in the
+  oval window), middle-ear cavity, Eustachian tube going down-forward, cochlea (2.5-turn snail, purple), three semicircular canals at right angles
+  (purple), vestibule, auditory nerve (yellow) leaving toward "Não".
+- Motion: eardrum bulges in/out with the arriving pressure, ossicles rock, small pulses run along the nerve while sound arrives.
+- Labels (≤ 7, de-collided): Vành tai, Ống tai, Màng nhĩ, Xương búa – đe – bàn đạp, Ốc tai, Ống bán khuyên, Dây thần kinh thính giác.
+- The same approach on phones (magnifier may sit below the head).

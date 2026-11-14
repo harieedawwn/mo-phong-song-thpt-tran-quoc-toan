@@ -12,7 +12,7 @@ export const state = {
   playing: true,
   slow: 0.005,      // slow-motion factor: simulated seconds per real second
   t: 0,             // simulated physical time since the wave started (s)
-  muted: false,
+  muted: true,      // sound off on first open; the speaker button turns it on
   labels: true, ruler: true, track: true,
   // sóng dọc – sóng âm
   f: 440,           // Hz (real)

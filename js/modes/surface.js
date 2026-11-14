@@ -70,8 +70,9 @@ function particle(x0, d) {
   oy = P.y0 + d - e * axB(d) * Math.cos(ph);
 }
 function curve(d, n) {        // dense material line at depth d → sx/sy0
-  const step = (L.w + 12) / (n - 1);
-  for (let i = 0; i < n; i++) { particle(-6 + i * step, d); sx[i] = ox; sy0[i] = oy; }
+  // sample beyond both edges: horizontal particle motion (up to A) must never open a gap at the stage border
+  const m = (P.A || 0) * 1.6 + 24, step = (L.w + 2 * m) / (n - 1);
+  for (let i = 0; i < n; i++) { particle(-m + i * step, d); sx[i] = ox; sy0[i] = oy; }
 }
 function pathCurve(ctx, n, move) { for (let i = 0; i < n; i++) (i || !move) ? ctx.lineTo(sx[i], sy0[i]) : ctx.moveTo(sx[i], sy0[i]); }
 
@@ -84,6 +85,10 @@ function orbit(ctx, cx, cy, a, b, arrowOn) {
 
 function draw(ctx) {
   if (!L.w) return;
+  ctx.save(); ctx.beginPath(); ctx.rect(0, 0, L.w, L.h); ctx.clip();
+  try { drawInner(ctx); } finally { ctx.restore(); }
+}
+function drawInner(ctx) {
   syncWave();
   const {w, fs} = L, y0 = P.y0;
   const cols = P.deep ? L.cols : Math.round(L.cols * 0.72), rows = P.deep ? L.rows : 6, dx = w / (cols - 0.5);
@@ -119,7 +124,7 @@ function draw(ctx) {
   for (const r of rowsT) { const rr = Math.min(rows - 1, r); if (tr.indexOf(rr) < 0) tr.push(rr); }
   const isT = (i, j) => state.track && i === tc && tr.indexOf(j) >= 0;
   ctx.fillStyle = '#1f2933'; ctx.beginPath();
-  for (let j = 0; j < rows; j++) for (let i = 0; i < cols; i++) {
+  for (let j = 0; j < rows; j++) for (let i = -1; i <= cols; i++) {
     if (isT(i, j)) continue;
     particle(i * dx, j * dz);
     ctx.moveTo(ox + L.r, oy); ctx.arc(ox, oy, L.r, 0, TAU);

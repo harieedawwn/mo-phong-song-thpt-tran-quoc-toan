@@ -57,7 +57,7 @@ button{-webkit-tap-highlight-color:transparent}
 .tbtn[aria-pressed=true]{background:var(--ink);color:#fff}
 #title{justify-self:center;align-self:center;padding:9px 26px;background:#fff;border:1px solid #f1c9cb;border-radius:12px;box-shadow:var(--shadow);white-space:nowrap}
 #title h1{margin:0;font:800 22px/1.25 var(--font);letter-spacing:.04em;color:var(--red);text-transform:uppercase}
-#school{justify-self:end;max-width:260px;padding:7px 14px 7px 16px;background:#fff;border-radius:10px;border-left:5px solid var(--red);box-shadow:var(--shadow);font:800 13.5px/1.3 var(--font);color:var(--red);text-transform:uppercase;letter-spacing:.02em}
+#school{justify-self:end;max-width:none;white-space:nowrap;padding:7px 14px 7px 16px;background:#fff;border-radius:10px;border-left:5px solid var(--red);box-shadow:var(--shadow);font:800 13.5px/1.3 var(--font);color:var(--red);text-transform:uppercase;letter-spacing:.02em}
 
 /* ===== Thanh chọn chế độ ===== */
 #tabs{grid-area:tabs;justify-self:center;align-self:start;max-width:100%}
@@ -165,7 +165,7 @@ button{-webkit-tap-highlight-color:transparent}
 @media (min-width:1000px) and (max-width:1180px){
  :root{--ctrl-w:270px;--info-w:236px}
  #title h1{font-size:17px}#title{padding:7px 16px}
- #school{max-width:200px;font-size:11.5px}
+ #school{font-size:10.5px;padding:5px 10px 5px 12px}
  .m-val{font-size:15px}
 }
 
