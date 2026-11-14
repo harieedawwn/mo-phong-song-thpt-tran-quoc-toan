@@ -13,7 +13,7 @@ export function describePitch(f) {
   return {label: 'Siêu âm', audible: false};
 }
 // Sound level (dB) → linear gain for WebAudio (100 dB = 1).
-export const levelToGain = db => Math.pow(10, (clamp(db, 20, 100) - 100) / 40);
+export const levelToGain = db => Math.pow(10, (clamp(db, 20, 100) - 100) / 70);
 
 // Nice slow-motion factor (1, 2, 5 ·10ⁿ) so the drawn oscillation runs at about `target` Hz.
 export function niceSlow(f, target = 1.6) {

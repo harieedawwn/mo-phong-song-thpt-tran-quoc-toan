@@ -54,14 +54,19 @@ function sync() {
   if (!voice || voiceType !== state.sound) { stopVoice(); voiceType = state.sound; voice = makeVoice(voiceType, f); }
   else voice.setF(f);
   const cap = f > 16000 ? 0.35 : 1;
-  master.gain.setTargetAtTime(0.8 * levelToGain(state.level) * cap, ctx.currentTime, 0.015);
+  master.gain.setTargetAtTime(1.2 * levelToGain(state.level) * cap, ctx.currentTime, 0.015);
 }
 function wanted() { return unlocked && state.mode === 'longitudinal' && state.playing && !state.muted; }
 
 const WATCH = new Set(['f', 'level', 'sound', 'muted', 'playing', 'mode']);
 bus.on('change', e => { if (e && WATCH.has(e.key)) sync(); });
 // first tap anywhere unlocks audio (required by browsers); later taps just resume a suspended context
-function unlock() { unlocked = true; init(); sync(); }
+function unlock() {
+  unlocked = true; init();
+  // iOS / Zalo: play one silent buffer inside the gesture so the context really starts
+  if (ctx && !unlock.done) { try { const s = ctx.createBufferSource(); s.buffer = ctx.createBuffer(1, 1, 22050); s.connect(ctx.destination); s.start(0); unlock.done = true; } catch (e) { /* ignore */ } }
+  sync();
+}
 addEventListener('pointerdown', unlock, {capture: true});
 addEventListener('keydown', unlock, {capture: true});
 document.addEventListener('visibilitychange', () => { if (ctx) { if (document.hidden) ctx.suspend().catch(() => {}); else ctx.resume().catch(() => {}); } });
