@@ -186,7 +186,7 @@ function draw(ctx) {
     const a = Math.max(wave.A, 6);
     arrow(ctx, x0 - a - 5, ty, x0 + a + 5, ty, {color: C.track, width: 2, size: 7, both: true});
     if (state.labels && !L.compact) {
-      pill(ctx, 'VTCB', x0, fieldBot + 31, {size: fs - 1, weight: 700, color: C.ink, fill: C.paper, stroke: null, pad: 3});
+      pill(ctx, 'VTCB', x0, fieldBot + 28, {size: fs - 1, weight: 700, color: C.ink, fill: C.paper, stroke: null, pad: 3});
       const t = L.layout === 'side' && L.airW > 330 ? 'Một lớp không khí: dao động quanh VTCB' : 'Một lớp không khí';
       ctx.font = font(fs - 0.5, 600);
       pill(ctx, t, x0 + dx * 0.6 + a + 8 + textW(ctx, t) / 2 + 3, ty, {size: fs - 0.5, weight: 600, color: C.ink2, fill: C.paper, stroke: null, pad: 3});
@@ -196,7 +196,7 @@ function draw(ctx) {
   // --- λ ruler bracket under the field (label shows the REAL wavelength)
   if (rx >= 0 && !L.compact) {
     const [n, u] = lenParts(wave.lam);
-    ruler(ctx, rx, rx + lam, fieldBot + (L.layout === 'side' ? 56 : 46), 'λ = ' + n + ' ' + u, {size: fs + 0.5, color: C.ink, maxX: L.w - 4});
+    ruler(ctx, rx, rx + lam, fieldBot + (L.layout === 'side' ? 56 : 47), 'λ = ' + n + ' ' + u, {size: fs + 0.5, color: C.ink, maxX: L.w - 4});
   }
 
   // --- figures (source, ear) + legend / caption
