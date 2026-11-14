@@ -27,13 +27,14 @@ function layout(w, hh) {
   const phone = w < 600;
   L.w = w; L.h = hh; L.phone = phone; L.fs = phone ? 11 : 12.5;
   L.mx = phone ? 8 : 18;
-  L.bh = phone ? 30 : 44;                     // block height
-  L.nameH = phone ? 24 : 30;
-  L.infoH = phone ? 62 : 46;
-  L.pb = phone ? 58 : 62;                     // room for the Phát / Tạm dừng buttons
+  L.short = !phone && hh < 470;               // phone landscape / very low windows: compact scale + one-line card
+  L.bh = phone ? 30 : L.short ? 28 : 44;      // block height
+  L.nameH = phone ? 24 : L.short ? 20 : 30;
+  L.infoH = phone ? 62 : L.short ? 28 : 46;
+  L.pb = phone ? 58 : L.short ? 52 : 62;      // room for the Phát / Tạm dừng buttons
   L.botH = 16 + 6 + L.bh + 4 + L.nameH + 6 + L.infoH + 6 + L.pb;
   L.micro = hh < 300;                         // phone landscape: wave only (full layout comes in the polish phase)
-  if (L.micro) { L.botH = 0; L.top = 40; } else L.top = phone ? 86 : 64;
+  if (L.micro) { L.botH = 0; L.top = 40; } else L.top = phone ? 86 : L.short ? 44 : 64;
   L.bw = (w - 2 * L.mx) / 7;
   L.yBlocks = hh - L.botH + 22;
   L.yInfo = L.yBlocks + L.bh + 4 + L.nameH + 6;
@@ -41,8 +42,9 @@ function layout(w, hh) {
   L.vis = clamp(w * 0.14, 60, 150);           // drawn propagation speed (px/s) – same for every band, as in reality
   const rh = hh - L.botH - L.top;             // height of the wave region
   L.rh = rh;
-  L.emax = clamp((rh - (L.micro ? 10 : 86)) / 2, 18, phone ? 100 : 130);
-  L.y0 = L.micro ? L.top + rh * 0.5 : L.top + (rh - (2 * L.emax + 68)) / 2 + 26 + L.emax;
+  const extra = L.micro ? 10 : L.short ? 40 : 86;   // ruler (+ propagation row) under the wave
+  L.emax = clamp((rh - extra) / 2, 18, phone ? 100 : 130);
+  L.y0 = L.micro ? L.top + rh * 0.5 : L.short ? L.top + 8 + L.emax : L.top + (rh - (2 * L.emax + 68)) / 2 + 26 + L.emax;
   const n = Math.ceil(w / 3) + 2;
   if (xs.length < n) xs = new Float32Array(n);
 }
@@ -117,22 +119,51 @@ function draw(ctx) {
       ruler(ctx, xa, xb, ry, 'λ = ' + a + ' ' + b, {size: fs, maxX: w - 4});
     }
   }
+  if (state.emE && state.emB) inPhase(ctx, x0, y0, lam, front, em, bm);
   if (L.micro) return;
   // propagation arrow + speed
-  const py = ry + 22;
-  arrow(ctx, x0 - 12, py, x0 + (phone ? 28 : 40), py, {width: 2, size: 8, color: C.ink2});
-  text(ctx, 'Phương truyền sóng (v = c = 3·10⁸ m/s)', x0 + (phone ? 36 : 48), py, {size: fs, weight: 700, align: 'left', color: C.ink2});
+  if (L.short) text(ctx, 'v = c = 3·10⁸ m/s', w - 8, y0 + 14, {size: fs, weight: 700, align: 'right', color: C.ink2});
+  else {
+    const py = ry + 22;
+    arrow(ctx, x0 - 12, py, x0 + (phone ? 28 : 40), py, {width: 2, size: 8, color: C.ink2});
+    text(ctx, 'Phương truyền sóng (v = c = 3·10⁸ m/s)', x0 + (phone ? 36 : 48), py, {size: fs, weight: 700, align: 'left', color: C.ink2});
+  }
 
   // --- legend (top-right on desktop, under the badges on phones)
   const lx = phone ? 10 : w - 12, al = phone ? 'left' : 'right', ly = phone ? L.top - 28 : 16;
   text(ctx, 'E ⟂ B ⟂ v → sóng ngang', lx, ly, {size: fs + 1, weight: 800, align: al});
-  text(ctx, 'Truyền được trong chân không', lx, ly + 17, {size: fs, weight: 600, align: al, color: C.muted});
-  if (!phone) {
+  if (!L.short) text(ctx, 'Truyền được trong chân không', lx, ly + 17, {size: fs, weight: 600, align: al, color: C.muted});
+  if (!phone && !L.short) {
     ctx.fillStyle = C.comp; ctx.fillRect(lx - 244, ly + 31, 12, 12); ctx.fillStyle = C.rare; ctx.fillRect(lx - 122, ly + 31, 12, 12);
     text(ctx, 'E: điện trường', lx - 226, ly + 37, {size: fs, weight: 700, align: 'left'}); text(ctx, 'B: cảm ứng từ', lx - 104, ly + 37, {size: fs, weight: 700, align: 'left'});
   }
 
   drawScale(ctx, band);
+}
+
+// "Cùng pha" marker: one fully formed crest near the middle; the E arrow and the B arrow drawn from the SAME point of the axis
+// are both at their maximum (the B tip curve looks shifted only because z is drawn obliquely).
+function inPhase(ctx, x0, y0, lam, front, em, bm) {
+  const span = Math.min(front - 0.4 * lam, L.w - 16 - x0);
+  if (span < 0.6 * lam) return;
+  const mid = span * (L.phone ? 0.5 : 0.55);
+  const m = Math.max(1, Math.round((front - mid) / lam)), xr = front - m * lam;
+  if (xr < 0.3 * lam || xr > span) return;
+  const x = x0 + xr, yE = y0 - em, bx = x + BX * bm, by = y0 - BY * bm;
+  ctx.strokeStyle = C.ink2; ctx.lineWidth = 1.2; ctx.setLineDash([4, 4]);
+  ctx.beginPath(); ctx.moveTo(x, yE - 4); ctx.lineTo(x, y0 + 10); ctx.stroke(); ctx.setLineDash([]);
+  // the two maximal arrows, re-drawn thicker from the common base
+  // flat white outline under each so they read clearly above the thin arrow trains
+  arrow(ctx, x, y0, x, yE, {width: 7.5, size: 14, color: '#fff'});
+  arrow(ctx, x, y0, x, yE, {width: 3.4, size: 10, color: '#c2410c'});
+  arrow(ctx, x, y0, bx, by, {width: 7.5, size: 14, color: '#fff'});
+  arrow(ctx, x, y0, bx, by, {width: 3.4, size: 10, color: '#1361ad'});
+  ctx.fillStyle = C.ink; ctx.beginPath(); ctx.arc(x, y0, 3.6, 0, TAU); ctx.fill();
+  if (L.micro) return;
+  const t = L.phone ? 'Cùng pha: E, B cùng cực đại' : 'Cùng pha: E và B cùng đạt cực đại tại một điểm';
+  ctx.font = font(L.fs - 0.5, 700);
+  const tw = textW(ctx, t) + 14, lx = clamp(x, tw / 2 + 4, L.w - tw / 2 - 4);
+  pill(ctx, t, lx, yE - 16, {size: L.fs - 0.5});
 }
 
 function drawScale(ctx, band) {
@@ -148,9 +179,9 @@ function drawScale(ctx, band) {
     else { const sw = ww / 7; for (let s = 0; s < 7; s++) { ctx.fillStyle = RAINBOW[s]; ctx.fillRect(x + s * sw, yBlocks, Math.ceil(sw) + (s < 6 ? 0.5 : 0), bh); } }
     ctx.strokeStyle = sel ? C.red : C.ink; ctx.lineWidth = sel ? 3.5 : 1.5; ctx.strokeRect(x, yBlocks, ww, bh);
     // name below the block
-    const nm = phone ? b.short : b.name, cx = x + ww / 2, ny = yBlocks + bh + 4 + L.nameH / 2;
+    const nm = phone || L.short ? b.short : b.name, cx = x + ww / 2, ny = yBlocks + bh + 4 + L.nameH / 2;
     const col = sel ? C.red : C.ink;
-    const nsz = phone ? 9.5 : fs, wt = sel ? 800 : 700;
+    const nsz = phone ? 9.5 : L.short ? fs - 1 : fs, wt = sel ? 800 : 700;
     ctx.font = font(nsz, wt);
     if (nm.indexOf(' ') > 0 && textW(ctx, nm) > ww - 4) {
       const parts = nm.split(' '), mid = Math.ceil(parts.length / 2);
@@ -165,7 +196,14 @@ function drawScale(ctx, band) {
   const [a, b] = lenParts(CC / f);
   const calc = 'λ = c/f = 3·10⁸ / ' + sciOf(f) + ' = ' + a + ' ' + b;
   const x = cx0 + 14;
-  if (phone) {
+  if (L.short) {
+    const t1 = band.name + ' · ' + band.ex;
+    text(ctx, t1, x, y + hh / 2, {size: fs, weight: 800, align: 'left', color: C.red});
+    ctx.font = font(fs, 800); const x2 = x + textW(ctx, t1) + 16;
+    ctx.font = font(fs, 800, true); const cw2 = textW(ctx, calc);
+    if (x2 + 150 < cx0 + cw - 24 - cw2) text(ctx, 'λ: ' + band.lam, x2, y + hh / 2, {size: fs - 1.5, weight: 700, align: 'left', mono: true});
+    text(ctx, calc, cx0 + cw - 12, y + hh / 2, {size: fs, weight: 800, align: 'right', mono: true, color: C.comp});
+  } else if (phone) {
     text(ctx, band.name + ' · ' + band.ex, x, y + 12, {size: 10.5, weight: 800, align: 'left', color: C.red});
     text(ctx, 'λ: ' + band.lam, x, y + 26, {size: 10, weight: 700, align: 'left', mono: true});
     text(ctx, 'f: ' + band.fr, x, y + 40, {size: 10, weight: 700, align: 'left', mono: true});
@@ -209,6 +247,6 @@ export default {
     ['Môi trường', 'Chân không và môi trường trong suốt'],
     ['Ví dụ', 'Sóng FM, lò vi sóng, ánh sáng, tia X']],
   controls,
-  badges: () => L.phone ? ['Đã làm chậm rất nhiều', 'Biên độ phóng đại'] : ['Đã làm chậm rất nhiều', 'Biên độ phóng đại', 'λ vẽ theo tỉ lệ tương đối'],
+  badges: () => L.phone || L.short ? ['Đã làm chậm rất nhiều', 'Biên độ phóng đại'] : ['Đã làm chậm rất nhiều', 'Biên độ phóng đại', 'λ vẽ theo tỉ lệ tương đối'],
   layout, draw, pointer, update() {}, reset() {}
 };

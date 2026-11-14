@@ -78,7 +78,7 @@ SPEC: §7 (Tai). Recommended model: **Opus** (drawing).
 - [x] ≤ 7 labels, no overlaps, phone layout works.
 - [x] Side-by-side check vs `docs/ref/v1-ear.png`: a non-expert must instantly see "an ear"; iterate (max 3 rounds).
 
-## Phase 10 – Đánh bóng: rõ, đẹp, cuốn hút (không nặng máy)  `[ ]`
+## Phase 10 – Đánh bóng: rõ, đẹp, cuốn hút (không nặng máy)  `[~]`
 SPEC: §4, §5. Model: Sonnet (High).
 - [ ] Physics spot-checks: Sóng điện từ – E and B maxima at the same x (in phase); Sóng mặt – clockwise orbits, no gap at stage edges; Sóng ngang – u–x/u–t graphs consistent with the rope.
 - [ ] Toggle buttons (`.tg`) labels never wrap to 2 lines (shorter Vietnamese words or wider grid); school name stays on one line at every width.

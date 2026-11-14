@@ -66,8 +66,8 @@ export function seg(opts, get, setter, label) {
       return b;
     }));
 }
-export function toggle(ic, label, get, setter) {
-  const b = h('button', {type: 'button', class: 'tg', 'aria-pressed': 'false', title: label, onclick: () => setter(!get())}, icon(ic, 18), h('span', {text: label}));
+export function toggle(ic, label, get, setter, tip) {
+  const b = h('button', {type: 'button', class: 'tg', 'aria-pressed': 'false', title: tip || label, 'aria-label': tip || label, onclick: () => setter(!get())}, icon(ic, 18), h('span', {text: label}));
   bind(() => b.setAttribute('aria-pressed', String(!!get())));
   return b;
 }
@@ -140,7 +140,8 @@ export function mountShell({modes, onMode, onRestart, onToggle, onShot}) {
   const syncMute = () => {
     btnMute.setAttribute('aria-pressed', String(state.muted));
     btnMute.title = state.muted ? 'Bật tiếng' : 'Tắt tiếng'; btnMute.setAttribute('aria-label', btnMute.title);
-    btnMute.replaceChildren(icon(state.muted ? 'mute' : 'vol', 20));
+    btnMute.replaceChildren(icon(state.muted ? 'mute' : 'vol', 20), h('span', {class: 'mlab', text: state.muted ? 'Âm: tắt' : 'Âm: bật'}));
+    btnMute.dataset.muted = String(!!state.muted);
   };
 
   // mode tabs

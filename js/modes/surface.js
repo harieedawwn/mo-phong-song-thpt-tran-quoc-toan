@@ -215,8 +215,8 @@ function controls() {
     group('show', 'Hiển thị',
       h('div', {class: 'tgs'},
         toggle('pause', 'Dừng hình', () => !state.playing, v => set('playing', !v)),
-        toggle('target', 'Theo dõi phần tử', () => state.track, v => set('track', v)),
-        toggle('surface', 'Quỹ đạo phần tử', () => state.orbits, v => set('orbits', v)),
+        toggle('target', 'Phần tử đỏ', () => state.track, v => set('track', v), 'Theo dõi các phần tử màu đỏ'),
+        toggle('surface', 'Quỹ đạo', () => state.orbits, v => set('orbits', v)),
         toggle('ruler', 'Thước λ', () => state.ruler, v => set('ruler', v)),
         toggle('tag', 'Nhãn', () => state.labels, v => set('labels', v))))
   ];
