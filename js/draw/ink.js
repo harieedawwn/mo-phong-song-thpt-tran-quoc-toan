@@ -52,7 +52,7 @@ export function arrow(ctx, x1, y1, x2, y2, {color = C.ink, width = 2, size = 8, 
   if (both) head(ctx, x1, y1, a + Math.PI, size);
 }
 // Horizontal dimension bracket |<—— label ——>| between x1 and x2 at height y.
-export function ruler(ctx, x1, x2, y, label, {color = C.ink, size = 12} = {}) {
+export function ruler(ctx, x1, x2, y, label, {color = C.ink, size = 12, maxX = Infinity} = {}) {
   ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = 1.5; ctx.lineCap = 'butt';
   ctx.beginPath(); ctx.moveTo(x1, y - 7); ctx.lineTo(x1, y + 7); ctx.moveTo(x2, y - 7); ctx.lineTo(x2, y + 7); ctx.stroke();
   ctx.font = font(size, 700, true);
@@ -64,5 +64,6 @@ export function ruler(ctx, x1, x2, y, label, {color = C.ink, size = 12} = {}) {
   ctx.stroke();
   head(ctx, x1, y, Math.PI, 7); head(ctx, x2, y, 0, 7);
   if (inside) pill(ctx, label, mid, y, {size, mono: true, stroke: null, fill: C.paper, color});
+  else if (x2 + 10 + tw > maxX) pill(ctx, label, x1 - 10 - tw / 2, y, {size, mono: true, stroke: color, color});
   else pill(ctx, label, x2 + 10 + tw / 2, y, {size, mono: true, stroke: color, color});
 }

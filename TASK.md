@@ -23,15 +23,15 @@ SPEC: §2 (Bài 8, Bài 9), §3.1 (air, ruler, controls), §6.
 - [x] `js/audio.js` ported (tone + voice timbres, starts on tap, mute button works); placeholder rectangles for source and ear.
 - [x] Check: dots visibly crowd exactly where "Vùng nén" is labelled; at 440 Hz in air λ shows 78,0 cm (343/440 = 0,7795 m).
 
-## Phase 2 – Sóng dọc: hình vẽ loa, người nói, tai (giải phẫu)  `[ ]`
+## Phase 2 – Sóng dọc: hình vẽ loa, người nói, tai (giải phẫu)  `[x]`
 SPEC: §3.1 (source + ear), §5 (anatomy palette, accuracy). Reference: `docs/ref/ear-voice-reference.png`.
 This is the hardest drawing phase. Work section by section and screenshot after each: loa → người nói → tai ngoài → tai giữa → tai trong.
-- [ ] `js/art/speaker.js`: flat side-view loudspeaker, cone moving with u(0,t).
-- [ ] `js/art/talker.js`: sagittal head cross-section (lips, teeth, tongue, oral cavity, nasal cavity outline, pharynx, larynx + vibrating dây thanh âm, vertebrae); source toggle Loa | Người nói.
-- [ ] `js/art/ear.js`: ear cross-section in correct anatomical order; màng nhĩ + 3 xương con move with the arriving pressure; nerve pulses to "não".
-- [ ] Click a part → highlight + 1-line caption; click empty / Esc → clear. Max 7 labels visible; labels never overlap each other (simple vertical de-collision).
-- [ ] Portrait phone composition works (source top, ear bottom or scaled), nothing clipped.
-- [ ] Self-review against the reference: list 3 differences in the commit message body and fix the worst one before finishing.
+- [x] `js/art/speaker.js`: flat side-view loudspeaker, cone moving with u(0,t).
+- [x] `js/art/talker.js`: sagittal head cross-section (lips, teeth, tongue, oral cavity, nasal cavity outline, pharynx, larynx + vibrating dây thanh âm, vertebrae); source toggle Loa | Người nói.
+- [x] `js/art/ear.js`: ear cross-section in correct anatomical order; màng nhĩ + 3 xương con move with the arriving pressure; nerve pulses to "não".
+- [x] Click a part → highlight + 1-line caption; click empty / Esc → clear. Max 7 labels visible; labels never overlap each other (simple vertical de-collision).
+- [x] Portrait phone composition works (source top, ear bottom or scaled), nothing clipped.
+- [x] Self-review against the reference: list 3 differences in the commit message body and fix the worst one before finishing.
 
 ## Phase 3 – Sóng ngang (dây)  `[ ]`
 SPEC: §2, §3.2.

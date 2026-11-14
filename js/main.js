@@ -73,6 +73,14 @@ function frame(ts) {
 function startLoop() { cancelAnimationFrame(raf); last = performance.now(); raf = requestAnimationFrame(frame); }
 
 bus.on('change', () => { dirty = true; });
+// taps on the stage go to the current mode (e.g. select an anatomy part); Esc clears
+canvas.addEventListener('pointerdown', e => {
+  if (!mode.pointer || (e.button && e.button !== 0)) return;
+  const r = canvas.getBoundingClientRect();
+  mode.pointer((e.clientX - r.left) * (W / r.width), (e.clientY - r.top) * (H / r.height));
+  dirty = true;
+});
+addEventListener('keydown', e => { if (e.key === 'Escape' && mode.escape) { mode.escape(); dirty = true; } });
 new ResizeObserver(resize).observe(stage);
 addEventListener('hashchange', () => { const id = modeFromHash(); if (id && id !== mode.id) setMode(id); });
 document.addEventListener('visibilitychange', () => { if (document.hidden) cancelAnimationFrame(raf); else startLoop(); });

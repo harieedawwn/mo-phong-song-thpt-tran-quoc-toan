@@ -1,9 +1,13 @@
 // Sóng dọc – Sóng âm: air layers (dot grid) displaced along x by u(x,t); colours from −∂u/∂x (vùng nén / vùng giãn).
-import {state, set} from '../state.js';
+import {state, set, bus} from '../state.js';
 import {h, seg, chip, toggle, slider, group, lab, slowControl} from '../ui.js';
 import {lenParts, freqParts} from '../fmt.js';
 import {SPEED, MEDIUM, HEARING, clamp, describePitch, niceSlow, makeWave} from '../physics.js';
 import {C, font, pill, text, arrow, ruler, roundRect, textW} from '../draw/ink.js';
+import {layoutLabels, drawLabels, pickLabel} from '../art/figure.js';
+import {makeSpeaker, SPK_RIM, SPK_NAMES, SPK_CAPS, SPK_LABELS} from '../art/speaker.js';
+import {makeTalker, TALK_W, TALK_H, MOUTH, TALK_NAMES, TALK_CAPS, TALK_LABELS} from '../art/talker.js';
+import {makeEar, EAR_W, EAR_H, EAR_NAMES, EAR_CAPS, EAR_LABELS} from '../art/ear.js';
 
 const F_MIN = 10, F_MAX = 40000;           // slider reaches a little outside 20 Hz–20 kHz to show hạ âm / siêu âm
 const DB_MIN = 40, DB_MAX = 100;
@@ -17,25 +21,63 @@ const niceF = f => f < 100 ? Math.round(f) : Number(f.toPrecision(f < 1000 ? 2 :
 const fPos = f => Math.round(1000 * Math.log(f / F_MIN) / Math.log(F_MAX / F_MIN));
 function setF(f) { set('f', f); set('slow', niceSlow(f)); }
 
+const spk = makeSpeaker(), talk = makeTalker(), ear = makeEar();
+// phone: labels in priority order – as many as fit beside the figure
+const PHONE_LABELS = {ear: ['drum', 'cochlea', 'nerve', 'malleus', 'pinna'], talker: ['cords', 'mouth', 'throat', 'tongue'], speaker: ['cone', 'coil', 'magnet']};
+const fitN = (ids, band) => ids.slice(0, Math.max(1, Math.min(ids.length, Math.floor((band - 30) / 23))));
+let sel = null, selWho = '', labelKey = '';
+
 function layout(w, hh) {
   const phone = w < 600;
-  L.w = w; L.h = hh; L.phone = phone;
+  L.w = w; L.h = hh; L.phone = phone; L.srcKey = state.source;
   L.fs = phone ? 11 : 12.5;
-  L.cols = phone ? 28 : 40; L.rows = phone ? 10 : 12;
-  const side = phone ? Math.max(44, w * 0.12) : clamp(w * 0.14, 86, 150);
-  L.srcR = side; L.earL = w - side - (phone ? 4 : 6);
-  L.airL = L.srcR + (phone ? 8 : 16); L.airR = L.earL - (phone ? 8 : 16);
-  L.airW = L.airR - L.airL;
-  L.dx = L.airW / L.cols;
   // compact = short stage (phone with the control sheet open): only labels + field
-  L.compact = hh < 440; L.tiny = hh < 240;          // tiny = landscape phone: field only
-  const top = L.tiny ? 4 : L.compact ? 8 : phone ? 78 : 46, bottom = L.compact ? 66 : phone ? 72 : 76;
-  const above = L.tiny ? 16 : L.compact ? 62 : phone ? 80 : 88, below = L.compact ? 6 : phone ? 118 : 112;
-  const avail = hh - top - bottom - above - below;
-  L.dy = clamp(avail / L.rows, 8, Math.min(26, L.dx * (phone ? 2.4 : 1.9)));
-  const block = above + L.rows * L.dy + below;
-  L.fieldTop = top + Math.max(0, (hh - top - bottom - block) / 2) + above;
-  L.fieldBot = L.fieldTop + L.rows * L.dy;
+  L.tiny = hh < 240;                                  // tiny = landscape phone: field only
+  L.layout = !phone ? 'side' : hh >= 420 ? 'stack' : 'bars';   // side: figures left/right of the field · stack: figure above / below (portrait phone) · bars: markers only
+  L.compact = L.layout === 'stack' ? false : hh < 440;
+  const talker = state.source === 'talker';
+  labelKey = '';
+  if (L.layout === 'stack') {
+    L.cols = 26; L.rows = 6;
+    L.airL = 12; L.airR = w - 12; L.airW = L.airR - L.airL; L.dx = L.airW / L.cols;
+    const top0 = 74, avail = hh - top0 - 70;
+    L.bandA = clamp(avail * 0.28, 84, 140); L.bandB = clamp(avail * 0.26, 80, 130);
+    L.above = 46; L.below = 64;
+    L.dy = clamp((avail - L.bandA - L.bandB - L.above - L.below) / L.rows, 7, 17);
+    L.fieldTop = top0 + L.bandA + L.above; L.fieldBot = L.fieldTop + L.rows * L.dy;
+    // figures: source top-left, ear bottom-right
+    (talker ? talk : spk).place(6, top0, w * 0.4, L.bandA - 4, 0, 0.5);
+    ear.place(w - 6 - w * 0.62, L.fieldBot + L.below, w * 0.62, L.bandB - 2, 1, 0.5);
+  } else if (L.layout === 'bars') {
+    L.cols = 24; L.rows = 8;
+    L.airL = 14; L.airR = w - 14; L.airW = L.airR - L.airL; L.dx = L.airW / L.cols;
+    L.above = L.tiny ? 16 : 62; L.below = 6;
+    const top = 8, bottom = 66, avail = hh - top - bottom - L.above - L.below;
+    L.dy = clamp(avail / L.rows, 8, 20);
+    const block = L.above + L.rows * L.dy + L.below;
+    L.fieldTop = top + Math.max(0, (hh - top - bottom - block) / 2) + L.above; L.fieldBot = L.fieldTop + L.rows * L.dy;
+  } else {
+    const srcW = talker ? clamp(w * 0.3, 150, 235) : clamp(w * 0.19, 100, 150), earW = clamp(w * 0.32, 160, 250);
+    L.airL = srcW + 12; L.airR = w - earW - 8; L.airW = L.airR - L.airL;
+    L.cols = clamp(Math.round(L.airW / 9), 24, 40); L.rows = 12; L.dx = L.airW / L.cols;
+    const top = L.tiny ? 4 : L.compact ? 8 : 46, bottom = L.compact ? 66 : 76;
+    L.above = L.tiny ? 16 : L.compact ? 62 : 88; L.below = L.compact ? 6 : 112;
+    const avail = hh - top - bottom - L.above - L.below;
+    L.dy = clamp(avail / L.rows, 8, Math.min(26, L.dx * 1.9));
+    const block = L.above + L.rows * L.dy + L.below;
+    L.fieldTop = top + Math.max(0, (hh - top - bottom - block) / 2) + L.above; L.fieldBot = L.fieldTop + L.rows * L.dy;
+    const cy = (L.fieldTop + L.fieldBot) / 2, rowsH = L.compact ? 0 : 56;        // room for 2 label rows above / below a figure
+    const fitS = (sw, up, dn) => Math.max(0.3, Math.min(sw, (cy - 38 - rowsH) / up, (hh - bottom - rowsH - cy) / dn));
+    if (talker) {
+      const s = fitS((srcW - 2) / 231, MOUTH[1], TALK_H - MOUTH[1]);
+      talk.s = s; talk.x = L.airL - 4 - 231 * s; talk.y = cy - MOUTH[1] * s;
+    } else {
+      const s = fitS((srcW - 6) / 124, 85, 85);
+      spk.s = s; spk.x = L.airL - 6 - SPK_RIM * s; spk.y = cy - 85 * s;
+    }
+    const se = fitS(earW / 234, 100, 100);
+    ear.s = se; ear.x = L.airR + 6 - 16 * se; ear.y = cy - 100 * se;
+  }
   L.r = clamp(Math.min(L.dx, L.dy) * 0.24, 1.6, 3.4);
   L.trackCol = Math.round(L.cols * 0.27);
   restX = new Float32Array(L.cols);
@@ -55,15 +97,16 @@ function syncWave() {
 
 function draw(ctx) {
   if (!L.w) return;
+  if (L.srcKey !== state.source) { layout(L.w, L.h); if (sel && selWho === 'src') setSel(null, ''); }
   syncWave();
   const {airL, airW, dx, dy, fieldTop, fieldBot, cols, rows, r, fs} = L;
   const lam = wave.lamPx, cyc = wave.cycles(), front = wave.front;
   ctx.lineJoin = 'round'; ctx.lineCap = 'round';
 
   // --- propagation direction
-  const ay = fieldTop - (L.phone ? 70 : 76);
-  if (!L.compact) arrow(ctx, airL, ay, L.airR, ay, {width: 2, size: 9, color: C.ink2});
-  if (state.labels && !L.compact) pill(ctx, 'Phương truyền sóng', airL + airW / 2, ay, {size: fs, fill: C.paper, stroke: null, color: C.ink2});
+  const ay = fieldTop - 76, arrowOn = L.layout === 'side' && !L.compact;
+  if (arrowOn) arrow(ctx, airL, ay, L.airR, ay, {width: 2, size: 9, color: C.ink2});
+  if (state.labels && arrowOn) pill(ctx, 'Phương truyền sóng', airL + airW / 2, ay, {size: fs, fill: C.paper, stroke: null, color: C.ink2});
 
   // --- thin bar above the field: vùng nén (orange) / vùng giãn (blue), same formula as the dots
   const by = fieldTop - 12;
@@ -77,17 +120,18 @@ function draw(ctx) {
   // One row if both fit side by side, else giãn goes to an upper row with a thin leader to its bar.
   if (state.labels && !L.tiny) {
     ctx.font = font(fs, 700);
-    const wN = textW(ctx, 'Vùng giãn') + 14, ly = by - 17;
+    const short = L.layout === 'stack', tN = short ? 'Nén' : 'Vùng nén', tG = short ? 'Giãn' : 'Vùng giãn';
+    const wN = textW(ctx, tG) + 14, ly = by - 17;
     const oneRow = lam / 2 >= wN + 6, every = lam >= wN + 6 ? 1 : 2;
     const showG = oneRow || lam / 2 >= wN / 2 + 6, gy = oneRow ? ly : ly - 23;
     for (let n = Math.ceil(cyc - airW / lam - 0.5); n <= Math.floor(cyc) + 1; n++) {
       if (n % every) continue;                                 // parity keeps each label attached to its own centre
       const xc = lam * (cyc - n);
-      if (n >= 1 && xc > 16 && xc < airW - 16) pill(ctx, 'Vùng nén', airL + xc, ly, {size: fs, fill: C.comp, stroke: C.comp, color: '#fff'});
+      if (n >= 1 && xc > 16 && xc < airW - 16) pill(ctx, tN, airL + xc, ly, {size: fs, fill: C.comp, stroke: C.comp, color: '#fff'});
       const xg = xc - lam / 2;                                 // n = 0 is the front itself (half a compression): no label
       if (showG && n >= 0 && xg > 16 && xg < airW - 16 && xg <= front) {
         if (!oneRow) { ctx.strokeStyle = C.rare; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(airL + xg, gy + 8); ctx.lineTo(airL + xg, by - 4); ctx.stroke(); }
-        pill(ctx, 'Vùng giãn', airL + xg, gy, {size: fs, fill: C.rare, stroke: C.rare, color: '#fff'});
+        pill(ctx, tG, airL + xg, gy, {size: fs, fill: C.rare, stroke: C.rare, color: '#fff'});
       }
     }
   }
@@ -103,7 +147,7 @@ function draw(ctx) {
       rulerN = ok(mc) ? mc : ok(mr) ? mr : -1;
     }
     if (rulerN >= 2) {
-      rx = airL + xAt(rulerN); const gl = L.compact ? 0 : 64;
+      rx = airL + xAt(rulerN); const gl = L.compact ? 0 : L.layout === 'side' ? 64 : 38;
       ctx.strokeStyle = 'rgba(21,24,29,.45)'; ctx.lineWidth = 1; ctx.setLineDash([4, 4]);
       ctx.beginPath(); ctx.moveTo(rx, by + 4); ctx.lineTo(rx, fieldBot + gl); ctx.moveTo(rx + lam, by + 4); ctx.lineTo(rx + lam, fieldBot + gl); ctx.stroke();
       ctx.setLineDash([]);
@@ -142,7 +186,7 @@ function draw(ctx) {
     arrow(ctx, x0 - a - 5, ty, x0 + a + 5, ty, {color: C.track, width: 2, size: 7, both: true});
     if (state.labels && !L.compact) {
       pill(ctx, 'VTCB', x0, fieldBot + 31, {size: fs - 1, weight: 700, color: C.ink, fill: C.paper, stroke: null, pad: 3});
-      const t = L.phone ? 'Lớp không khí' : 'Một lớp không khí: dao động quanh VTCB';
+      const t = L.layout === 'side' && L.airW > 330 ? 'Một lớp không khí: dao động quanh VTCB' : 'Một lớp không khí';
       ctx.font = font(fs - 0.5, 600);
       pill(ctx, t, x0 + dx * 0.6 + a + 8 + textW(ctx, t) / 2 + 3, ty, {size: fs - 0.5, weight: 600, color: C.ink2, fill: C.paper, stroke: null, pad: 3});
     }
@@ -151,17 +195,21 @@ function draw(ctx) {
   // --- λ ruler bracket under the field (label shows the REAL wavelength)
   if (rx >= 0 && !L.compact) {
     const [n, u] = lenParts(wave.lam);
-    ruler(ctx, rx, rx + lam, fieldBot + 56, 'λ = ' + n + ' ' + u, {size: fs + 0.5, color: C.ink});
+    ruler(ctx, rx, rx + lam, fieldBot + (L.layout === 'side' ? 56 : 46), 'λ = ' + n + ' ' + u, {size: fs + 0.5, color: C.ink, maxX: L.w - 4});
   }
 
-  // --- legend + caption
-  const gy = fieldBot + (L.phone ? 84 : 86);
-  if (!L.compact) legend(ctx, gy);
-  if (state.labels && !L.compact) text(ctx, L.phone ? 'Phần tử chỉ dao động quanh VTCB; năng lượng được truyền đi.' : 'Các phần tử không khí chỉ dao động quanh VTCB – năng lượng sóng truyền đi, không khí không bị đẩy theo.',
-    L.w / 2, gy + (L.phone ? 22 : 24), {size: fs - 0.5, weight: 600, color: C.muted});
-
-  drawSource(ctx);
-  drawEar(ctx);
+  // --- figures (source, ear) + legend / caption
+  drawArt(ctx);
+  if (L.layout === 'side' && !L.compact) {
+    const gy = Math.max(fieldBot + 86, L.artBottom + 18);
+    legend(ctx, gy);
+    if (sel) drawCaption(ctx, L.w / 2, gy + 26, L.w - 24);
+    else if (state.labels) {
+      text(ctx, 'Các phần tử không khí chỉ dao động quanh VTCB – năng lượng sóng truyền đi, không khí không bị đẩy theo.', L.w / 2, gy + 24, {size: fs - 0.5, weight: 600, color: C.muted});
+      text(ctx, 'Chạm vào loa / người nói / tai để xem tên và chức năng từng bộ phận', L.w / 2, gy + 44, {size: fs - 1, weight: 600, color: C.muted});
+    }
+  }
+  if (L.layout === 'stack') drawCaption(ctx, L.w / 2, 51, L.w - 20);
 }
 
 function legend(ctx, y) {
@@ -181,36 +229,100 @@ function legend(ctx, y) {
   }
 }
 
-// Placeholder source (replaced by flat loudspeaker / talker art in Phase 2): the cone face moves with u(0,t).
-function drawSource(ctx) {
-  const {fieldTop, fieldBot, airL} = L, cy = (fieldTop + fieldBot) / 2, hh = Math.min(fieldBot - fieldTop, 150);
-  const u0 = wave.u(0) * 0.8, x0 = 8, face = airL - 6 + u0;
-  ctx.lineWidth = 2; ctx.strokeStyle = C.ink2;
-  if (state.source === 'speaker') {
-    const bw = Math.min(34, (L.srcR - 8) * 0.4), bh = hh * 0.36;
-    ctx.fillStyle = '#868e96'; ctx.beginPath(); roundRect(ctx, x0 + 4, cy - bh / 2, bw, bh, 4); ctx.fill(); ctx.stroke();
-    ctx.fillStyle = '#ced4da'; ctx.beginPath();
-    ctx.moveTo(x0 + 4 + bw, cy - bh * 0.32); ctx.lineTo(face, cy - hh / 2); ctx.lineTo(face, cy + hh / 2); ctx.lineTo(x0 + 4 + bw, cy + bh * 0.32); ctx.closePath();
-    ctx.fill(); ctx.stroke();
-    ctx.lineWidth = 4; ctx.strokeStyle = C.ink; ctx.beginPath(); ctx.moveTo(face, cy - hh / 2); ctx.lineTo(face, cy + hh / 2); ctx.stroke();
-    text(ctx, 'Loa', (x0 + face) / 2, cy + hh / 2 + 16, {size: L.fs, weight: 800});
-  } else {
-    ctx.fillStyle = '#f3c9b1'; ctx.strokeStyle = '#9c5b43';
-    ctx.beginPath(); roundRect(ctx, x0, cy - hh / 2, face - x0, hh, 14); ctx.fill(); ctx.stroke();
-    ctx.lineWidth = 4; ctx.strokeStyle = '#c2255c'; ctx.beginPath(); ctx.moveTo(face, cy - 12); ctx.lineTo(face, cy + 12); ctx.stroke();
-    text(ctx, 'Người nói', Math.max((x0 + face) / 2, L.phone ? 30 : 0), cy + hh / 2 + 16, {size: L.fs, weight: 800});
+const SRC = {speaker: {names: SPK_NAMES, caps: SPK_CAPS, labels: SPK_LABELS, title: 'Loa'}, talker: {names: TALK_NAMES, caps: TALK_CAPS, labels: TALK_LABELS, title: 'Người nói'}};
+const srcFig = () => state.source === 'talker' ? talk : spk;
+const clampB = x => Math.max(-1, Math.min(1, x));
+
+function setSel(id, who) {
+  sel = id; selWho = id ? who : '';
+  spk.sel = talk.sel = ear.sel = null;
+  if (id) (who === 'ear' ? ear : srcFig()).sel = id;
+  bus.emit('change', {key: 'sel'});
+}
+
+function buildLabels(ctx) {
+  const key = L.w + 'x' + L.h + state.source + L.layout + state.labels + L.compact;
+  if (key === labelKey) return;
+  labelKey = key;
+  const lab = {src: [], ear: [], tops: {src: 1e9, ear: 1e9}};
+  L.lab = lab; L.artBottom = 0;
+  const sf = srcFig(), S = SRC[state.source];
+  const mk = (tbl, ids, side) => tbl.filter(t => !ids || ids.includes(t[0])).map(t => ({id: t[0], text: t[1], tx: t[2], ty: t[3], side: side || t[4]}));
+  for (const f of [sf, ear]) L.artBottom = Math.max(L.artBottom, f.y + f.h * f.s);
+  if (L.layout === 'bars' || L.compact || !state.labels) return;
+  if (L.layout === 'stack') {
+    lab.src = layoutLabels(ctx, sf, mk(S.labels, fitN(PHONE_LABELS[state.source], L.bandA), 'right'), {mode: 'side', size: 10.5, xR: sf.x + sf.w * sf.s + 10, xL: 0, ymin: sf.y + 26, ymax: sf.y + sf.h * sf.s - 12});
+    lab.ear = layoutLabels(ctx, ear, mk(EAR_LABELS, fitN(PHONE_LABELS.ear, L.bandB), 'left'), {mode: 'side', size: 10.5, xR: 0, xL: ear.x - 8, ymin: ear.y + 26, ymax: ear.y + ear.h * ear.s - 10});
+    return;
+  }
+  const fsz = 11;
+  lab.src = layoutLabels(ctx, sf, mk(S.labels), {mode: 'rows', size: fsz, xmin: 2, xmax: L.airL - 2, yTop: sf.y - 4, yBot: sf.y + sf.h * sf.s + 4});
+  lab.ear = layoutLabels(ctx, ear, mk(EAR_LABELS), {mode: 'rows', size: fsz, xmin: L.airR + 4, xmax: L.w - 2, yTop: ear.y - 4, yBot: ear.y + ear.h * ear.s + 4});
+  for (const [k, f] of [['src', sf], ['ear', ear]]) {
+    for (const l of lab[k]) { lab.tops[k] = Math.min(lab.tops[k], l.y - l.h / 2); L.artBottom = Math.max(L.artBottom, l.y + l.h / 2); }
+    if (lab.tops[k] > 1e8) lab.tops[k] = f.y;
   }
 }
-// Placeholder ear (Phase 2 draws the anatomy): the eardrum moves with the arriving wave u(x_ear, t).
-function drawEar(ctx) {
-  const {fieldTop, fieldBot, earL, w} = L, cy = (fieldTop + fieldBot) / 2, hh = Math.min(fieldBot - fieldTop, 150);
-  const ue = wave.u(L.airR - L.airL + 6) * 0.8, x = earL + 4 + ue;
-  ctx.fillStyle = '#f3c9b1'; ctx.strokeStyle = '#9c5b43'; ctx.lineWidth = 2;
-  ctx.beginPath(); roundRect(ctx, earL, cy - hh / 2, w - 8 - earL, hh, 14); ctx.fill(); ctx.stroke();
-  ctx.fillStyle = '#f4b183'; ctx.strokeStyle = '#9c5b43';
-  ctx.beginPath(); ctx.ellipse(x + 3, cy, 4, Math.min(22, hh * 0.18), 0, 0, 6.2832); ctx.fill(); ctx.stroke();
-  text(ctx, 'Tai', (earL + w - 8) / 2, cy + hh / 2 + 16, {size: L.fs, weight: 800});
-  if (!L.phone) text(ctx, 'Màng nhĩ', x + 10, cy - Math.min(22, hh * 0.18) - 10, {size: L.fs - 1.5, weight: 600, color: C.ink2, align: 'left'});
+
+function drawArt(ctx) {
+  buildLabels(ctx);
+  const {fieldTop, fieldBot} = L, sf = srcFig(), show = state.labels && L.layout !== 'bars' && !L.compact;
+  const u0 = wave.u(0) * 0.8, ear0 = L.airR - L.airL + 6, ue = wave.u(ear0);
+  const amp = Math.max(wave.A, 1);
+  if (L.layout === 'bars') {
+    ctx.lineCap = 'round';
+    ctx.strokeStyle = C.ink; ctx.lineWidth = 5; ctx.beginPath(); ctx.moveTo(L.airL - 6 + u0, fieldTop); ctx.lineTo(L.airL - 6 + u0, fieldBot); ctx.stroke();
+    ctx.strokeStyle = C.ink; ctx.lineWidth = 6; ctx.beginPath(); ctx.moveTo(L.airR + 6 + ue * 0.8, fieldTop + 6); ctx.lineTo(L.airR + 6 + ue * 0.8, fieldBot - 6); ctx.stroke();
+    ctx.strokeStyle = '#f4b183'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(L.airR + 6 + ue * 0.8, fieldTop + 6); ctx.lineTo(L.airR + 6 + ue * 0.8, fieldBot - 6); ctx.stroke();
+    return;
+  }
+  // source
+  const dpr = ctx.canvas.width / L.w;
+  sf.drawStatic(ctx, dpr);
+  if (state.source === 'talker') sf.drawDyn(ctx, clampB(wave.u(0) / amp));
+  else sf.drawDyn(ctx, u0 / sf.s);
+  // ear: eardrum follows the arriving air displacement; nerve pulses start when the wave front has reached the ear
+  ear.drawStatic(ctx, dpr);
+  const phase = wave.front >= ear0 ? (((wave.cycles() - ear0 / wave.lamPx) % 1) + 1) % 1 : -1;
+  ear.drawDyn(ctx, clampB(ue / amp) * 4.2, phase, show);
+  if (L.layout === 'stack') {                                           // small markers where the air meets source / ear
+    ctx.lineCap = 'round'; ctx.strokeStyle = C.ink; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(L.airL - 6 + u0, fieldTop); ctx.lineTo(L.airL - 6 + u0, fieldBot); ctx.stroke();
+    ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(L.airR + 6 + ue * 0.8, fieldTop); ctx.lineTo(L.airR + 6 + ue * 0.8, fieldBot); ctx.stroke();
+  }
+  if (!show) return;
+  const lab = L.lab; if (!lab) return;
+  drawLabels(ctx, lab.src, selWho === 'src' ? sel : null, L.layout === 'stack' ? 10.5 : 11);
+  drawLabels(ctx, lab.ear, selWho === 'ear' ? sel : null, L.layout === 'stack' ? 10.5 : 11);
+  // headings
+  const fs = L.fs + 1;
+  if (L.layout === 'side') {
+    text(ctx, SRC[state.source].title, (sf.x + L.airL) / 2 + (state.source === 'talker' ? -20 : 0), Math.min(lab.tops.src, sf.y) - 14, {size: fs, weight: 800});
+    text(ctx, 'Tai người nghe', (L.airR + L.w) / 2, Math.min(lab.tops.ear, ear.y) - 14, {size: fs, weight: 800});
+  } else {
+    text(ctx, SRC[state.source].title, sf.x + sf.w * sf.s + 10, sf.y + 8, {size: fs - 1, weight: 800, align: 'left'});
+    text(ctx, 'Tai người nghe', ear.x - 8, ear.y + 8, {size: fs - 1, weight: 800, align: 'right'});
+  }
+}
+
+// one-line caption of the selected part (shrinks, then wraps onto two lines); a muted hint when nothing is selected (phones)
+function drawCaption(ctx, cx, cy, maxW) {
+  const caps = selWho === 'ear' ? EAR_CAPS : SRC[state.source].caps;
+  const msg = sel && caps[sel];
+  if (!msg) { if (L.layout === 'stack') text(ctx, 'Chạm vào hình để xem tên và chức năng', cx, cy, {size: 11, weight: 600, color: C.muted}); return; }
+  let fs = L.phone ? 11 : 12.5, lines = [msg];
+  ctx.font = font(fs, 700);
+  if (textW(ctx, msg) + 24 > maxW) {
+    fs = L.phone ? 10.5 : 11.5; ctx.font = font(fs, 700);
+    if (textW(ctx, msg) + 24 > maxW) {
+      const words = msg.split(' '); let a = '', i = 0;
+      while (i < words.length && textW(ctx, a + words[i]) + 24 < maxW * (words.length > 10 ? 0.62 : 1) && textW(ctx, a + words[i]) < textW(ctx, msg) * 0.55 + 20) a += words[i++] + ' ';
+      lines = [a.trim(), words.slice(i).join(' ')];
+    }
+  }
+  const lh = fs + 4, w = Math.min(maxW, Math.max(...lines.map(l => textW(ctx, l))) + 24), h = lines.length * lh + 8;
+  ctx.beginPath(); roundRect(ctx, cx - w / 2, cy - h / 2, w, h, 8); ctx.fillStyle = C.ink; ctx.fill();
+  ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  lines.forEach((l, k) => ctx.fillText(l, cx, cy - h / 2 + 4 + lh * (k + 0.5) + 0.5));
 }
 
 function controls() {
@@ -266,5 +378,15 @@ export default {
     ['Môi trường', 'Rắn, lỏng, khí – không truyền trong chân không'],
     ['Ví dụ', 'Âm thanh truyền trong không khí']],
   controls, badges, layout, draw,
-  update() {}, reset() { rulerN = -1; }
+  update() {}, reset() { rulerN = -1; },
+  pointer(x, y) {
+    if (L.layout === 'bars' || L.compact) return;
+    const lab = L.lab || {src: [], ear: []};
+    let id = pickLabel(lab.src, x, y), who = 'src';
+    if (!id) { id = pickLabel(lab.ear, x, y); who = 'ear'; }
+    if (!id) { id = ear.pick(x, y); who = 'ear'; }
+    if (!id) { id = srcFig().pick(x, y); who = 'src'; }
+    setSel(id, who);
+  },
+  escape() { if (sel) setSel(null, ''); }
 };
