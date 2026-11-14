@@ -5,14 +5,14 @@ Rules for every phase: read `CLAUDE.md` + the SPEC sections listed; take "before
 finish with screenshots (desktop + phone), zero console errors, commit(s) in Vietnamese, push, deploy check, then tick the boxes
 and append one line to the **Log** at the bottom.
 
-## Phase 0 – Khung ứng dụng + deploy  `[ ]`
+## Phase 0 – Khung ứng dụng + deploy  `[x]`
 SPEC: §4, §5, §6.
-- [ ] Install checker once: `cd tools && npm i && npx playwright install chromium` (skip if already works).
-- [ ] `index.html` (lang="vi", viewport, theme-color #d7191f, preload Be Vietnam Pro 700), `css/style.css` ported from `legacy/css/style.css` (keep @font-face, tokens, header, `.brk`, `.seg`, `.chip`, `.tg`, sliders, metric cards; drop 3D/lesson/tour/coach CSS).
-- [ ] Header exactly as SPEC §4 (title "THÍ NGHIỆM MÔ PHỎNG SÓNG", school card right, icon toolbar left), mode tabs bar, empty left/right panels (`data-noscroll`), centre canvas with graph-paper grid, Play/Restart buttons.
-- [ ] `js/main.js` loop + resize + DPR cap + pause on hidden; `js/state.js` (port from legacy, trimmed); `window.__app` {play,pause,setMode}; `#mode=` routing; 4 stub modes that draw their title text.
-- [ ] Phone layout skeleton (bottom sheet, 4 icon tabs, 1-row metrics).
-- [ ] `version.json`, push, confirm Pages deploy works (enable Pages → GitHub Actions if needed; if you cannot, mark `[!]` with the click path for the owner).
+- [x] Install checker once: `cd tools && npm i && npx playwright install chromium` (skip if already works).
+- [x] `index.html` (lang="vi", viewport, theme-color #d7191f, preload Be Vietnam Pro 700), `css/style.css` ported from `legacy/css/style.css` (keep @font-face, tokens, header, `.brk`, `.seg`, `.chip`, `.tg`, sliders, metric cards; drop 3D/lesson/tour/coach CSS).
+- [x] Header exactly as SPEC §4 (title "THÍ NGHIỆM MÔ PHỎNG SÓNG", school card right, icon toolbar left), mode tabs bar, empty left/right panels (`data-noscroll`), centre canvas with graph-paper grid, Play/Restart buttons.
+- [x] `js/main.js` loop + resize + DPR cap + pause on hidden; `js/state.js` (port from legacy, trimmed); `window.__app` {play,pause,setMode}; `#mode=` routing; 4 stub modes that draw their title text.
+- [x] Phone layout skeleton (bottom sheet, 4 icon tabs, 1-row metrics).
+- [x] `version.json`, push, confirm Pages deploy works (enable Pages → GitHub Actions if needed; if you cannot, mark `[!]` with the click path for the owner).
 
 ## Phase 1 – Sóng dọc: vật lí + phần tử không khí  `[ ]`
 SPEC: §2 (Bài 8, Bài 9), §3.1 (air, ruler, controls), §6.
@@ -66,3 +66,4 @@ SPEC: §4, §6.
 
 ## Log
 <!-- one line per session: date · phase · what was done · commit hash -->
+2026-11-14 · Phase 0 · khung ứng dụng (header, 4 tab, panel, canvas giấy kẻ ô, vòng lặp, bố cục điện thoại), 4 chế độ giữ chỗ; f=440 Hz/khí → T=2,27 ms, λ=78,0 cm; FM 100 MHz → λ=3 m · 8c74cf5
