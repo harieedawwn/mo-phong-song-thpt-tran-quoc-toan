@@ -4,7 +4,7 @@
 //   tube  : {id, items:[{d, w}], fill, stroke, lw}    – thick round strokes (outline colour under fill colour)
 //   dyn:true parts are not painted into the cached static layer; the figure's own draw code paints them each frame.
 // Static parts are painted once into an offscreen canvas (rebuilt only when the size / DPR changes).
-import {C, font, textW, roundRect} from '../draw/ink.js';
+import {C, font, fx, textW, roundRect} from '../draw/ink.js';
 
 const hit = document.createElement('canvas').getContext('2d');
 
@@ -25,7 +25,7 @@ export class Figure {
       if (p.d) p.path = new Path2D(p.d);
       if (p.items) for (const it of p.items) it.path = it.path || new Path2D(it.d);
     }
-    this.x = 0; this.y = 0; this.s = 1; this.sel = null;
+    this.x = 0; this.y = 0; this.s = 1; this.sel = null; this.hov = null;
     this.cache = null; this.cacheKey = '';
     this.clip = true;
   }
@@ -84,6 +84,14 @@ export class Figure {
     if (p.items) { for (const it of p.items) { g.lineWidth = it.w + 7 / s; g.stroke(it.path); } for (const it of p.items) { g.strokeStyle = p.fill; g.lineWidth = it.w; g.stroke(it.path); } }
     else { g.lineWidth = 3.4 / s; g.stroke(p.path); }
   }
+  // mouse hover (design transform): thin red outline of a static part, so the teacher sees what a click will select
+  hoverMark(g) {
+    const p = this.hov && this.hov !== this.sel && this.by[this.hov];
+    if (!p || (p.dyn && !p.region)) return;
+    g.strokeStyle = C.red; g.lineJoin = 'round'; g.lineCap = 'round';
+    if (p.items) { for (const it of p.items) { g.lineWidth = it.w + 3.6 / this.s; g.stroke(it.path); } g.strokeStyle = p.fill; for (const it of p.items) { g.lineWidth = it.w; g.stroke(it.path); } }
+    else if (p.path) { g.lineWidth = 2.2 / this.s; g.stroke(p.path); }
+  }
   _buildCache(dpr) {
     const k = this.s.toFixed(3) + '|' + dpr.toFixed(2);
     if (this.cache && this.cacheKey === k) return;
@@ -113,6 +121,7 @@ export class Figure {
     for (const p of this.parts) if (p.after && !p.dyn) this.paint(ctx, p, this.sel === p.id);
     const sp = this.sel && this.by[this.sel];
     if (sp && !sp.dyn && !sp.after) this.mark(ctx, sp);
+    this.hoverMark(ctx);
     this.end(ctx);
   }
 }
@@ -171,7 +180,8 @@ export function layoutLabels(ctx, fig, items, o) {
   return out;
 }
 
-export function drawLabels(ctx, labels, sel, fs = 11) {
+export function drawLabels(ctx, labels, sel, fs = 11, hov = null) {
+  const ga = ctx.globalAlpha; ctx.globalAlpha = ga * fx.a;
   ctx.lineCap = 'round';
   for (const l of labels) {                                                      // leaders first, then pills on top
     ctx.strokeStyle = C.ink2; ctx.lineWidth = 1.1;
@@ -180,12 +190,13 @@ export function drawLabels(ctx, labels, sel, fs = 11) {
   }
   ctx.font = font(fs, 700); ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   for (const l of labels) {
-    const on = sel === l.id;
+    const on = sel === l.id, hv = !on && hov === l.id;
     ctx.beginPath(); roundRect(ctx, l.x - l.w / 2, l.y - l.h / 2, l.w, l.h, 6);
-    ctx.fillStyle = on ? C.red : '#fff'; ctx.fill();
-    ctx.lineWidth = 1.4; ctx.strokeStyle = on ? C.red : C.ink; ctx.stroke();
-    ctx.fillStyle = on ? '#fff' : C.ink; ctx.fillText(l.text, l.x, l.y + 0.5);
+    ctx.fillStyle = on ? C.red : hv ? '#fdecec' : '#fff'; ctx.fill();
+    ctx.lineWidth = hv ? 2 : 1.4; ctx.strokeStyle = on || hv ? C.red : C.ink; ctx.stroke();
+    ctx.fillStyle = on ? '#fff' : hv ? C.red : C.ink; ctx.fillText(l.text, l.x, l.y + 0.5);
   }
+  ctx.globalAlpha = ga;
 }
 
 // hit-test the label pills (so tapping a label selects its part)

@@ -181,7 +181,7 @@ export function mountShell({modes, onMode, onRestart, onToggle, onShot}) {
     clearBinds();
     const groups = m.controls();
     grps.replaceChildren(...groups);
-    featBody.replaceChildren(featBody.firstChild, ...m.features().map(([k, v]) => h('div', {class: 'feat-row'}, h('span', {class: 'k', text: k}), h('span', {class: 'vv', text: v}))));
+    featKey = ''; syncFeat(m);
     const ids = [...new Set(groups.map(g => g.dataset.grp)), 'feat'];
     ctrl.dataset.tab = 'none';
     dock.replaceChildren(...ids.map(k => h('button', {type: 'button', 'data-k': k, 'aria-pressed': 'false', onclick: () => { ctrl.dataset.tab = ctrl.dataset.tab === k ? 'none' : k; syncDock(); }}, icon(DOCK[k][0], 20), DOCK[k][1])));
@@ -214,7 +214,14 @@ export function mountShell({modes, onMode, onRestart, onToggle, onShot}) {
     if (key !== lastBadges) { lastBadges = key; badges.replaceChildren(...list.map(t => h('span', {class: 'badge', text: t}))); }
   }
 
-  bus.on('change', e => { if (e.key === 'muted') syncMute(); if (e.key === 'playing') syncPlay(); syncBadges(); if (cur) syncMetrics(cur); syncBinds(); });
+  let featKey = '';
+  function syncFeat(m) {
+    const f = m.features(), k = f.map(r => r.join('|')).join('/');
+    if (k === featKey) return;
+    featKey = k;
+    featBody.replaceChildren(featBody.firstChild, ...f.map(([a, b]) => h('div', {class: 'feat-row'}, h('span', {class: 'k', text: a}), h('span', {class: 'vv', text: b}))));
+  }
+  bus.on('change', e => { if (cur && e.key !== 'hover' && e.key !== 'emHover') syncFeat(cur); if (e.key === 'muted') syncMute(); if (e.key === 'playing') syncPlay(); syncBadges(); if (cur) syncMetrics(cur); syncBinds(); });
   syncMute(); syncPlay(); syncBadges();
 
   return {

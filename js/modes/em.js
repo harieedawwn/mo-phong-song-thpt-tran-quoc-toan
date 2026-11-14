@@ -21,6 +21,7 @@ const BANDS = [
 const RAINBOW = ['#e03131', '#f76707', '#fcc419', '#40c057', '#339af0', '#4263eb', '#9c36b5'];
 const BX = 0.55, BY = 0.32;               // z axis on screen: 30° up-right, foreshortened ×0.64 (cavalier) – keeps the B tip curve free of loops
 const L = {};
+let hovBand = -1;
 let xs = new Float32Array(0);
 
 function layout(w, hh) {
@@ -177,10 +178,11 @@ function drawScale(ctx, band) {
     ctx.lineJoin = 'round';
     if (b.col) { ctx.fillStyle = b.col; ctx.fillRect(x, yBlocks, ww, bh); }
     else { const sw = ww / 7; for (let s = 0; s < 7; s++) { ctx.fillStyle = RAINBOW[s]; ctx.fillRect(x + s * sw, yBlocks, Math.ceil(sw) + (s < 6 ? 0.5 : 0), bh); } }
-    ctx.strokeStyle = sel ? C.red : C.ink; ctx.lineWidth = sel ? 3.5 : 1.5; ctx.strokeRect(x, yBlocks, ww, bh);
+    const hv = !sel && i === hovBand;
+    ctx.strokeStyle = sel || hv ? C.red : C.ink; ctx.lineWidth = sel ? 3.5 : hv ? 2.2 : 1.5; ctx.strokeRect(x, yBlocks, ww, bh);
     // name below the block
     const nm = phone || L.short ? b.short : b.name, cx = x + ww / 2, ny = yBlocks + bh + 4 + L.nameH / 2;
-    const col = sel ? C.red : C.ink;
+    const col = sel || hv ? C.red : C.ink;
     const nsz = phone ? 9.5 : L.short ? fs - 1 : fs, wt = sel ? 800 : 700;
     ctx.font = font(nsz, wt);
     if (nm.indexOf(' ') > 0 && textW(ctx, nm) > ww - 4) {
@@ -215,11 +217,16 @@ function drawScale(ctx, band) {
   }
 }
 
-function pointer(x, y) {
-  if (L.micro) return;
-  if (y < L.yBlocks - 2 || y > L.yBlocks + L.bh + L.nameH + 6) return;
+function bandAt(x, y) {
+  if (L.micro || y < L.yBlocks - 2 || y > L.yBlocks + L.bh + L.nameH + 6) return -1;
   const i = Math.floor((x - L.mx) / L.bw);
-  if (i >= 0 && i < 7) set('band', i);
+  return i >= 0 && i < 7 ? i : -1;
+}
+function pointer(x, y) { const i = bandAt(x, y); if (i >= 0) set('band', i); }
+function hover(x, y) {
+  const i = x < 0 ? -1 : bandAt(x, y);
+  if (i !== hovBand) { hovBand = i; set('emHover', i); }
+  return i >= 0;
 }
 
 function controls() {
@@ -248,5 +255,5 @@ export default {
     ['Ví dụ', 'Sóng FM, lò vi sóng, ánh sáng, tia X']],
   controls,
   badges: () => L.phone || L.short ? ['Đã làm chậm rất nhiều', 'Biên độ phóng đại'] : ['Đã làm chậm rất nhiều', 'Biên độ phóng đại', 'λ vẽ theo tỉ lệ tương đối'],
-  layout, draw, pointer, update() {}, reset() {}
+  layout, draw, pointer, hover, update() {}, reset() {}
 };

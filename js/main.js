@@ -2,6 +2,7 @@
 import {state, bus, set} from './state.js';
 import {mountShell} from './ui.js';
 import {makeGrid} from './draw/grid.js';
+import {fx} from './draw/ink.js';
 import longitudinal from './modes/longitudinal.js';
 import transverse from './modes/transverse.js';
 import surface from './modes/surface.js';
@@ -12,12 +13,15 @@ const MODES = [longitudinal, transverse, surface, em];
 const byId = id => MODES.find(m => m.id === id);
 const canvas = document.getElementById('cv'), stage = document.getElementById('stage');
 const ctx = canvas.getContext('2d');
-let mode = MODES[0], W = 0, H = 0, grid = null, dirty = true, raf = 0, last = 0;
+let mode = MODES[0], W = 0, H = 0, grid = null, dirty = true, raf = 0, last = 0, fadeT0 = 0;
+const FADE = 400, calm = !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
+// labels fade in over 0,4 s while the wave starts again from the source (t = 0)
+function startFade() { if (!calm) { fx.a = 0; fadeT0 = performance.now(); } }
 
 function play() { set('playing', true); }
 function pause() { set('playing', false); }
 function toggle() { state.playing ? pause() : play(); }
-function restart() { state.t = 0; if (mode.reset) mode.reset(); dirty = true; }
+function restart() { state.t = 0; if (mode.reset) mode.reset(); startFade(); dirty = true; }
 function modeFromHash() { const m = /mode=([a-z]+)/.exec(location.hash); return m && byId(m[1]) ? m[1] : null; }
 
 const ui = mountShell({
@@ -34,7 +38,8 @@ const ui = mountShell({
 
 function setMode(id) {
   const m = byId(id) || MODES[0];
-  mode = m; state.t = 0; if (m.reset) m.reset();
+  if (mode.hover) mode.hover(-1, -1);
+  mode = m; state.t = 0; if (m.reset) m.reset(); startFade(); canvas.style.cursor = '';
   set('mode', m.id);
   set('slow', m.defaults.slow);
   m.layout(W, H);
@@ -67,6 +72,7 @@ function draw() {
 function frame(ts) {
   raf = requestAnimationFrame(frame);
   const dt = Math.min(0.05, (ts - last) / 1000); last = ts;
+  if (fx.a < 1) { const e = Math.min(1, Math.max(0, (performance.now() - fadeT0) / FADE)); fx.a = e * (2 - e); dirty = true; }
   if (state.playing) { const sdt = dt * state.slow; state.t += sdt; mode.update(sdt); draw(); dirty = false; }
   else if (dirty) { draw(); dirty = false; }
 }
@@ -80,6 +86,15 @@ canvas.addEventListener('pointerdown', e => {
   mode.pointer((e.clientX - r.left) * (W / r.width), (e.clientY - r.top) * (H / r.height));
   dirty = true;
 });
+// mouse hover over a tappable part (anatomy, spectrum block): highlight + hand cursor. Touch has no hover: tap selects.
+canvas.addEventListener('pointermove', e => {
+  if (e.pointerType !== 'mouse' || !mode.hover) return;
+  const r = canvas.getBoundingClientRect();
+  const on = mode.hover((e.clientX - r.left) * (W / r.width), (e.clientY - r.top) * (H / r.height));
+  const c = on ? 'pointer' : '';
+  if (canvas.style.cursor !== c) canvas.style.cursor = c;
+});
+canvas.addEventListener('pointerleave', () => { if (mode.hover) mode.hover(-1, -1); canvas.style.cursor = ''; });
 addEventListener('keydown', e => {
   if (e.key === 'Escape') { if (mode.escape) { mode.escape(); dirty = true; } return; }
   if (e.ctrlKey || e.metaKey || e.altKey) return;

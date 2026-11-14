@@ -25,7 +25,7 @@ const spk = makeSpeaker(), talk = makeTalker(), ear = makeEar();
 // phone: labels in priority order – as many as fit beside the figure
 const PHONE_LABELS = {ear: ['drum', 'cochlea', 'nerve', 'malleus', 'pinna'], talker: ['cords', 'mouth', 'throat', 'tongue'], speaker: ['cone', 'coil', 'magnet']};
 const fitN = (ids, band) => ids.slice(0, Math.max(1, Math.min(ids.length, Math.floor((band - 30) / 23))));
-let sel = null, selWho = '', labelKey = '';
+let sel = null, selWho = '', labelKey = '', hov = null, hovWho = '';
 
 function layout(w, hh) {
   const phone = w < 600;
@@ -234,6 +234,14 @@ const SRC = {speaker: {names: SPK_NAMES, caps: SPK_CAPS, labels: SPK_LABELS, tit
 const srcFig = () => state.source === 'talker' ? talk : spk;
 const clampB = x => Math.max(-1, Math.min(1, x));
 
+function partAt(x, y) {
+  const lab = L.lab || {src: [], ear: []};
+  let id = pickLabel(lab.src, x, y), who = 'src';
+  if (!id) { id = pickLabel(lab.ear, x, y); who = 'ear'; }
+  if (!id) { id = ear.pick(x, y); who = 'ear'; }
+  if (!id) { id = srcFig().pick(x, y); who = 'src'; }
+  return [id, who];
+}
 function setSel(id, who) {
   sel = id; selWho = id ? who : '';
   spk.sel = talk.sel = ear.sel = null;
@@ -292,8 +300,8 @@ function drawArt(ctx) {
   }
   if (!show) return;
   const lab = L.lab; if (!lab) return;
-  drawLabels(ctx, lab.src, selWho === 'src' ? sel : null, L.layout === 'stack' ? 10.5 : 11);
-  drawLabels(ctx, lab.ear, selWho === 'ear' ? sel : null, L.layout === 'stack' ? 10.5 : 11);
+  drawLabels(ctx, lab.src, selWho === 'src' ? sel : null, L.layout === 'stack' ? 10.5 : 11, hovWho === 'src' ? hov : null);
+  drawLabels(ctx, lab.ear, selWho === 'ear' ? sel : null, L.layout === 'stack' ? 10.5 : 11, hovWho === 'ear' ? hov : null);
   // headings
   const fs = L.fs + 1;
   if (L.layout === 'side') {
@@ -382,12 +390,19 @@ export default {
   update() {}, reset() { rulerN = -1; },
   pointer(x, y) {
     if (L.layout === 'bars' || L.compact) return;
-    const lab = L.lab || {src: [], ear: []};
-    let id = pickLabel(lab.src, x, y), who = 'src';
-    if (!id) { id = pickLabel(lab.ear, x, y); who = 'ear'; }
-    if (!id) { id = ear.pick(x, y); who = 'ear'; }
-    if (!id) { id = srcFig().pick(x, y); who = 'src'; }
+    const [id, who] = partAt(x, y);
     setSel(id, who);
+  },
+  // mouse hover: highlight the part + its label; returns true when something tappable is under the pointer
+  hover(x, y) {
+    let [id, who] = x < 0 || L.layout === 'bars' || L.compact ? [null, ''] : partAt(x, y);
+    if (id !== hov || who !== hovWho) {
+      hov = id; hovWho = id ? who : '';
+      spk.hov = talk.hov = ear.hov = null;
+      if (id) (who === 'ear' ? ear : srcFig()).hov = id;
+      bus.emit('change', {key: 'hover'});
+    }
+    return !!id;
   },
   escape() { if (sel) setSel(null, ''); }
 };

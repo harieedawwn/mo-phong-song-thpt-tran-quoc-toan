@@ -33,7 +33,9 @@ function layout(w, hh) {
   L.N = clamp(Math.round(L.ropeW / (phone ? 9 : 14)), 24, 48);
   L.dx = L.ropeW / (L.N - 1);
   L.r = phone ? 3.4 : 4.4;
-  const fixed = L.top0 + (phone ? 22 + 26 + 26 + 22 : 28 + 30 + 30 + 24 + 24);   // ruler, label, label, legend (+ arrow row)
+  let fixed = L.top0 + (phone ? 22 + 26 + 26 + 22 : 28 + 30 + 30 + 24 + 24);     // ruler, label, label, legend (+ arrow row)
+  L.noArrow = !phone && L.band - fixed < 40;           // low stage (phone landscape): drop the propagation-arrow row so labels never overlap
+  if (L.noArrow) fixed -= 24;
   L.amax = L.micro ? clamp((hh - 80) / 2, 6, 30) : clamp((L.band - fixed) / 2, 12, 64);
   L.ppc = L.amax / A_MAX;                              // px per cm of amplitude (enlarged)
   L.cy = L.micro ? hh * 0.52 : L.top0 + (phone ? 22 + 26 : 28 + 30) + L.amax + Math.max(0, (L.band - fixed - 2 * L.amax) / 2);
@@ -156,14 +158,14 @@ function draw(ctx) {
 
   // --- legend row (propagation arrow, oscillation arrow, in-phase pair)
   const ly = L.band - 16, ay = L.phone ? ly : ly - 26;
-  if (!L.phone && !L.micro) {
+  if (!L.phone && !L.micro && !L.noArrow) {
     arrow(ctx, ropeL, ay, L.w - 12, ay, {width: 2, size: 9, color: C.ink2});
     if (state.labels) pill(ctx, 'Phương truyền sóng', ropeL + ropeW / 2, ay, {size: fs, fill: C.paper, stroke: null, color: C.ink2});
   }
   if (lbl) {
     ctx.font = font(fs, 700);
     const items = [['v', 'Phương dao động'], ['h', 'Phương truyền sóng'], ['p', 'Cùng pha (cách nhau λ)']];
-    const keep = L.phone ? items : [items[0], items[2]];
+    const keep = L.phone || L.noArrow ? items : [items[0], items[2]];
     let total = 0; for (const it of keep) total += textW(ctx, it[1]) + 36;
     let xx = L.phone && total > L.w - 12 ? 8 : Math.max(8, (L.w - total) / 2);
     for (const [k, t] of keep) {

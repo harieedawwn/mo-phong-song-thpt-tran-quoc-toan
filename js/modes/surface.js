@@ -94,7 +94,8 @@ function drawInner(ctx) {
   const cols = P.deep ? L.cols : Math.round(L.cols * 0.72), rows = P.deep ? L.rows : 6, dx = w / (cols - 0.5);
   const dz = P.hd / (rows - 1), n = Math.ceil(w / 5) + 2;
   ctx.lineJoin = 'round'; ctx.lineCap = 'round';
-  const yBed = y0 + P.hd + (P.deep ? dz * 0.7 : 6);
+  // deep water continues below the picture: fill to the stage bottom (no gap); shallow water ends on the bed
+  const yBed = P.deep ? L.h + 2 : y0 + P.hd + 6;
 
   // --- water body in 3 stepped blues (material lines at 1/3 and 2/3 of the depth)
   const x1 = w - 3;
@@ -106,13 +107,12 @@ function drawInner(ctx) {
   }
   // seabed / tank bottom
   if (!P.deep) {
-    ctx.fillStyle = BED; ctx.fillRect(0, yBed, w, L.h - yBed - L.legend + 6);
+    ctx.fillStyle = BED; ctx.fillRect(0, yBed, w, L.h - yBed + 2);
     ctx.strokeStyle = C.ink; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(0, yBed); ctx.lineTo(w, yBed); ctx.stroke();
     ctx.lineWidth = 1.2; ctx.strokeStyle = '#a08a62'; ctx.beginPath();
     for (let x = 14; x < w; x += 26) { ctx.moveTo(x, yBed + 6); ctx.lineTo(x - 7, yBed + 14); }
     ctx.stroke();
-  } else {
-    ctx.strokeStyle = WINK; ctx.lineWidth = 1.5; ctx.setLineDash([6, 5]); ctx.beginPath(); ctx.moveTo(0, yBed); ctx.lineTo(w, yBed); ctx.stroke(); ctx.setLineDash([]);
+    if (state.labels && !L.micro) pill(ctx, 'Đáy nước nông', w / 2, yBed + 34, {size: fs - 1, fill: '#fff', stroke: '#a08a62', color: '#6b5a3a'});
   }
   // VTCB level of the surface
   ctx.strokeStyle = C.muted; ctx.lineWidth = 1; ctx.setLineDash([5, 5]); ctx.beginPath(); ctx.moveTo(0, y0); ctx.lineTo(w, y0); ctx.stroke(); ctx.setLineDash([]);
@@ -159,7 +159,7 @@ function drawInner(ctx) {
     ctx.fillStyle = '#fff'; ctx.fill(); ctx.lineWidth = 1.8; ctx.strokeStyle = C.ink; ctx.stroke();
     ctx.fillStyle = C.red; ctx.fillRect(-6, -12, 12, 10); ctx.strokeRect(-6, -12, 12, 10);
     ctx.restore();
-    if (state.labels) pill(ctx, 'Phao', px, py - 30, {size: fs - 1, fill: C.paper, stroke: C.ink2, color: C.ink2});
+    if (state.labels) pill(ctx, 'Phao', px, py - 30, {size: fs - 1});   // same white label pill as the anatomy labels
   }
 
   // --- labels: crest / trough, direction, λ ruler

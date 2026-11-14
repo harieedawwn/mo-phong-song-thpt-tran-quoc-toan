@@ -140,6 +140,7 @@ export function makeEar() {
     // static parts over the moving ones + selection mark of a static part
     const sp = fig.sel && P(fig.sel);
     if (sp && !sp.dyn) fig.mark(ctx, sp);
+    fig.hoverMark(ctx);
     // nerve pulses (dark dots running to the brain)
     if (phase >= 0) {
       ctx.fillStyle = C.ink; ctx.strokeStyle = '#fff'; ctx.lineWidth = 1;

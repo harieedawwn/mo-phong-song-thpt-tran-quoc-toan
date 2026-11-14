@@ -132,6 +132,7 @@ export function makeTalker() {
       if (sp.region) { ctx.fillStyle = 'rgba(215,25,31,0.16)'; ctx.fill(sp.path); }   // flat translucent tint, no glow
       fig.mark(ctx, sp);
     }
+    fig.hoverMark(ctx);
     fig.end(ctx);
   };
   return fig;

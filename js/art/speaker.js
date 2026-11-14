@@ -33,6 +33,7 @@ export function makeSpeaker() {
     ctx.restore();
     const sp = fig.sel && P(fig.sel);
     if (sp && !sp.dyn) fig.mark(ctx, sp);
+    fig.hoverMark(ctx);
     fig.end(ctx);
   };
   return fig;
