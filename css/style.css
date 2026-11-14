@@ -208,6 +208,29 @@ button{-webkit-tap-highlight-color:transparent}
  .spd{display:none}
  #app:has(#ctrl:not([data-tab=none])) #badges{display:none}
 }
+
+/* ===== Điện thoại nằm ngang: cột trái nhỏ + sân khấu chiếm toàn bộ chiều cao ===== */
+@media (max-height:520px) and (orientation:landscape){
+ #app{grid-template-columns:212px minmax(0,1fr);grid-template-rows:auto auto auto minmax(0,1fr) auto;gap:5px 8px;
+  padding:6px max(8px,env(safe-area-inset-right)) 6px max(8px,env(safe-area-inset-left));
+  grid-template-areas:"top stage" "tabs stage" "info stage" "ctrl stage" "ctrl stage"}
+ #top{grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"title title" "school tools";gap:4px}
+ #title{padding:4px 6px}#title h1{font-size:12.5px;line-height:1.2}
+ #school{font-size:8px;padding:2px 5px;line-height:1.25}
+ #tools .tbtn{width:34px;height:34px}
+ #tabs{display:grid;grid-template-columns:1fr 1fr;gap:2px}
+ #tabs button{flex-direction:row;min-height:34px;gap:4px;font-size:10.5px;padding:2px 3px}
+ #tabs button svg{width:15px;height:15px}
+ #metrics{grid-template-columns:1fr 1fr}
+ .metric{padding:2px 5px}
+ #ctrl{align-self:end;position:relative}
+ #ctrl .grps{position:absolute;left:calc(100% + 8px);bottom:0;width:min(340px,calc(100vw - 240px));max-height:calc(100dvh - 12px);z-index:6;background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow)}
+ .dock-tabs button{min-height:40px;font-size:10px}
+ #btn-play{min-height:40px}
+ #play-wrap{bottom:6px}
+ #badges{top:auto;bottom:8px;right:auto;flex-direction:column;align-items:flex-start}
+ #app:has(#ctrl:not([data-tab=none])) #badges{display:flex}
+}
 @media (max-width:420px){#school{font-size:9.5px}}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{transition-duration:.01ms!important;animation-duration:.01ms!important}}
 .grp[data-grp=feat]:empty{display:none}

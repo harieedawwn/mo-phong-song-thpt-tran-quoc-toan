@@ -101,11 +101,12 @@ export const group = (tab, title, ...nodes) => h('section', {class: 'grp', 'data
 
 const FEAT_TITLE = 'Đặc điểm';
 const HELP = [
-  'Chọn loại sóng ở thanh phía trên: sóng dọc, sóng ngang, sóng mặt, sóng điện từ.',
-  'Nhấn Phát / Tạm dừng. Nút ↻ cho sóng xuất phát lại từ nguồn.',
+  'Chọn loại sóng ở thanh phía trên (hoặc nhấn phím 1–4): sóng dọc, sóng ngang, sóng mặt, sóng điện từ.',
+  'Nhấn Phát / Tạm dừng (phím cách). Nút ↻ cho sóng xuất phát lại từ nguồn.',
   'Kéo thanh Làm chậm để quan sát rõ dao động của từng phần tử.',
   'Số liệu bên phải là giá trị thật (f, T, λ, v); hình vẽ đã làm chậm và phóng đại biên độ.',
-  'λ = v·T = v/f: tăng tần số thì bước sóng ngắn lại (cùng môi trường).'
+  'λ = v·T = v/f: tăng tần số thì bước sóng ngắn lại (cùng môi trường).',
+  'Chạm vào bộ phận trên hình để xem tên; nhấn Esc hoặc chạm chỗ trống để bỏ chọn.'
 ];
 
 /* ---- app shell ---- */

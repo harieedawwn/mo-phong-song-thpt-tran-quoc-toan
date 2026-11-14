@@ -52,7 +52,7 @@ SPEC: §2 (Bài 11 table – verbatim), §3.4.
 - [x] Spectrum scale of 7 flat blocks (visible light = 7 solid stripes), tap to select, shows λ range, f range, example, λ = c/f readout.
 - [x] Toggles E / B / mũi tên, làm chậm; metrics (f, T, λ, v = c) and Đặc điểm card.
 
-## Phase 6 – Hoàn thiện giao diện + điện thoại + Zalo  `[ ]`
+## Phase 6 – Hoàn thiện giao diện + điện thoại + Zalo  `[~]`
 SPEC: §4, §6.
 - [ ] Help modal (≤ 6 bullets), screenshot button, mute, fullscreen hidden when unsupported, keyboard: Space play/pause, 1–4 modes, Esc.
 - [ ] Run `node tools/shot.mjs final-<mode> mode=<mode> --all` for all 4 modes; fix every clipping/overlap/scroll problem; landscape phone usable.

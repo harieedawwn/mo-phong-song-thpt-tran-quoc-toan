@@ -80,7 +80,15 @@ canvas.addEventListener('pointerdown', e => {
   mode.pointer((e.clientX - r.left) * (W / r.width), (e.clientY - r.top) * (H / r.height));
   dirty = true;
 });
-addEventListener('keydown', e => { if (e.key === 'Escape' && mode.escape) { mode.escape(); dirty = true; } });
+addEventListener('keydown', e => {
+  if (e.key === 'Escape') { if (mode.escape) { mode.escape(); dirty = true; } return; }
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
+  const t = e.target, tag = t && t.tagName;
+  if (tag === 'INPUT' && t.type !== 'range') return;
+  if (e.key >= '1' && e.key <= String(MODES.length)) { setMode(MODES[+e.key - 1].id); return; }
+  // Space toggles play/pause unless a button/link has focus (it would click it itself)
+  if ((e.key === ' ' || e.code === 'Space') && tag !== 'BUTTON' && tag !== 'A' && tag !== 'SELECT') { e.preventDefault(); toggle(); }
+});
 new ResizeObserver(resize).observe(stage);
 addEventListener('hashchange', () => { const id = modeFromHash(); if (id && id !== mode.id) setMode(id); });
 document.addEventListener('visibilitychange', () => { if (document.hidden) cancelAnimationFrame(raf); else startLoop(); });
