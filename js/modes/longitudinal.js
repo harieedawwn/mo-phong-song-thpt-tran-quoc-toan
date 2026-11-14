@@ -69,8 +69,8 @@ function layout(w, hh) {
     const cy = (L.fieldTop + L.fieldBot) / 2, rowsH = L.compact ? 0 : 56;        // room for 2 label rows above / below a figure
     const fitS = (sw, up, dn) => Math.max(0.3, Math.min(sw, (cy - 38 - rowsH) / up, (hh - bottom - rowsH - cy) / dn));
     if (talker) {
-      const s = fitS((srcW - 2) / 231, MOUTH[1], TALK_H - MOUTH[1]);
-      talk.s = s; talk.x = L.airL - 4 - 231 * s; talk.y = cy - MOUTH[1] * s;
+      const s = fitS((srcW - 2) / TALK_W, MOUTH[1], TALK_H - MOUTH[1]);
+      talk.s = s; talk.x = L.airL - 4 - TALK_W * s; talk.y = cy - MOUTH[1] * s;
     } else {
       const s = fitS((srcW - 6) / 124, 85, 85);
       spk.s = s; spk.x = L.airL - 6 - SPK_RIM * s; spk.y = cy - 85 * s;

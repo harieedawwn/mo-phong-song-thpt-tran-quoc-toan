@@ -1,97 +1,122 @@
-// Flat sagittal cross-section of a speaking person (head + neck, face to the right).
-// Vocal tract from the source: dây thanh âm (larynx) → họng (pharynx) → khoang miệng → môi.
-// Design units: 232 × 285, mouth opening at (212, 149).
+// Speaking person (Art v2): calm adult side profile facing right, with a midline (sagittal) cut of the vocal tract
+// as in the "Places of articulation" diagram: nasal cavity, hard + soft palate, tongue, teeth, lips, oral cavity,
+// pharynx (họng), epiglottis, larynx with the vibrating vocal folds (dây thanh âm), trachea, cervical vertebrae.
+// Air spaces are paper-coloured with a pink mucosa lining, so the airway reads as one open channel to the lips.
+// Proportions: eye ≈ head mid-height, ear from brow to nose bottom, mouth at 1/3 between nose bottom and chin.
+// Design units: 236 × 300, mouth opening at (216, 154).
 import {Figure} from './figure.js';
 import {C, roundRect} from '../draw/ink.js';
 
-export const TALK_W = 232, TALK_H = 285, MOUTH = [213, 149];
-const SKIN = '#f3c9b1', SKIN_L = '#9c5b43', IN = '#e98f93', TONGUE = '#d9727a', TOOTH = '#f4ecd8', BONE_L = '#a08a62', VERT = '#efe3c6', CORD = '#c2255c';
+export const TALK_W = 236, TALK_H = 300, MOUTH = [216, 154];
+const SKIN = '#f3c9b1', SKIN_L = '#9c5b43', SKIN_D = '#e9b598', LINING = '#e98f93', LINING_D = '#c46a72', AIR = '#fbf4ef';
+const TONGUE = '#d9727a', TONGUE_L = '#a8424a', SOFT = '#e27f86', TOOTH = '#f4ecd8', BONE_L = '#a08a62', VERT = '#efe3c6', CORD = '#c2255c', CORD_L = '#7a1236';
+const HAIR = '#4a3a2e', HAIR_L = '#2e241c', FLOW = '#3b6e9e';
+const FY = 222, FX0 = 112, FX1 = 128.5;                      // vocal folds: level and the two side walls of the larynx
 
-const SLIT_END = ' L 206 147.5 L 206 151.5 ';
-const SILHOUETTE = 'M 176 -10 C 188 10 196 34 198 56 C 198 64 194 70 195 74 C 203 88 216 104 229 114 C 231 120 224 125 212 126 L 209 130 ' +
-  'C 213 134 217 140 216 146 L 206 147.5 L 206 151.5 L 215 153 C 218 157 218 160 213 164 C 207 166 206 172 210 180 C 214 190 210 204 198 210 C 184 214 160 214 146 218 ' +
-  'L 140 224 C 149 230 149 246 140 252 L 140 296 L 36 296 L 36 226 C 36 200 28 180 20 160 C 8 130 4 90 6 50 C 8 20 30 -10 70 -10 Z';
+// Head + neck silhouette (clockwise from the crown). The mouth gap (y 151.5 – 156.5) stays open in the outline.
+const GAP = 'L 213 156.5 ';
+const SILHOUETTE = 'M 118 4 C 160 2 192 22 200 52 C 203 64 202 76 206 85 C 207 90 203 93 203 97 ' +
+  'C 210 108 222 119 230 127 C 234 131 231 137 225 137 C 220 137 216 136 213 138 C 213 141 216 144 217 147.5 ' +
+  'C 217.5 150 216 151.5 213 151.5 ' + GAP + 'C 217 157 218 161 215 166 C 212 169 207 170 207 173 C 208 177 213 183 213 189 ' +
+  'C 213 196 207 200 198 201 C 182 203 160 204 146 206 C 141 207 139 210 140 214 C 142 219 141 224 138 229 ' +
+  'C 136 250 137 280 139 304 L 46 304 C 48 260 52 214 58 186 C 46 170 30 148 24 110 C 18 70 40 8 118 4 Z';
+
+// One open airway: nasal cavity + nasopharynx + oral cavity + pharynx + larynx + trachea (palate and tongue are painted over it).
+const AIRWAY = 'M 215 151.5 L 207 151 L 205 140 L 206 134 L 209 128 C 211 119 205 108 193 104 C 174 100 148 102 130 107 ' +
+  'C 116 111 105 120 104 134 L 104 200 C 104 208 110 211 112 216 L 112 304 L 128.5 304 L 128.5 232 ' +
+  'C 128.5 222 131 214 131 206 C 131 198 128 192 124 188 L 160 200 L 200 176 L 204 168 L 206 158 L 215 156.5 Z';
 
 function vertebrae() {
-  const p = new Path2D(), sp = new Path2D();
-  for (let i = 0; i < 12; i++) {
-    const y = 118 + i * 24, x = 66 + 4 * Math.sin(i * 0.5 + 0.4);
-    roundRect(p, x, y, 22, 19, 4);
+  const p = new Path2D();
+  for (let i = 0; i < 7; i++) {
+    const y = 142 + i * 24, x = 77 - 3 * Math.sin(i * 0.45 + 0.3);
+    roundRect(p, x, y, 21, 20, 4);
     // spinous process pointing back (to the left)
-    sp.moveTo(x + 1, y + 6); sp.lineTo(x - 22, y + 12); sp.lineTo(x - 22, y + 16); sp.lineTo(x + 1, y + 15); sp.closePath();
+    p.moveTo(x + 1, y + 6); p.lineTo(x - 12, y + 11); p.lineTo(x - 12, y + 15.5); p.lineTo(x + 1, y + 15); p.closePath();
   }
-  p.addPath(sp);
+  return p;
+}
+function rings() {
+  const p = new Path2D();
+  for (let i = 0; i < 4; i++) roundRect(p, 128.5, 250 + i * 13, 5, 6.5, 2);
   return p;
 }
 
-export const TALK_NAMES = {mouth: 'Khoang miệng', throat: 'Họng', tongue: 'Lưỡi', cords: 'Dây thanh âm', nasal: 'Khoang mũi', spine: 'Cột sống cổ', teeth: 'Răng', lips: 'Môi', larynx: 'Thanh quản', trachea: 'Khí quản', epi: 'Nắp thanh quản', jaw: 'Xương hàm dưới'};
+export const TALK_NAMES = {mouth: 'Khoang miệng', throat: 'Họng', tongue: 'Lưỡi', cords: 'Dây thanh âm', nasal: 'Khoang mũi', spine: 'Cột sống cổ', teeth: 'Răng', lips: 'Môi', larynx: 'Thanh quản', trachea: 'Khí quản', epi: 'Nắp thanh quản', jaw: 'Xương hàm dưới', palate: 'Vòm miệng', velum: 'Vòm miệng mềm'};
 export const TALK_CAPS = {
-  cords: 'Dây thanh âm: rung lên khi nói, là nguồn dao động phát ra âm.',
-  throat: 'Họng: dẫn sóng âm từ thanh quản lên khoang miệng.',
+  cords: 'Dây thanh âm: luồng khí từ phổi làm chúng rung lên – đây là nguồn dao động phát ra âm.',
+  throat: 'Họng: ống dẫn luồng khí và sóng âm từ thanh quản lên khoang miệng, khoang mũi.',
   mouth: 'Khoang miệng: định dạng âm thanh; sóng âm truyền ra không khí qua môi.',
   tongue: 'Lưỡi: thay đổi hình dạng khoang miệng nên thay đổi âm sắc của giọng.',
-  nasal: 'Khoang mũi: khoang rỗng phía trên vòm miệng.',
+  nasal: 'Khoang mũi: khoang rỗng phía trên vòm miệng, cộng hưởng làm giọng vang hơn.',
   spine: 'Cột sống cổ: các đốt sống phía sau họng.',
   teeth: 'Răng: cùng với môi và lưỡi tạo ra các phụ âm.',
   lips: 'Môi: mở ra để sóng âm truyền ra không khí.',
-  larynx: 'Thanh quản: sụn bao quanh dây thanh âm.',
+  larynx: 'Thanh quản: sụn bao quanh và bảo vệ dây thanh âm.',
   trachea: 'Khí quản: ống dẫn không khí từ phổi lên thanh quản.',
   epi: 'Nắp thanh quản: đóng lối vào khí quản khi nuốt.',
-  jaw: 'Xương hàm dưới: nâng đỡ lưỡi và môi dưới.'
+  jaw: 'Xương hàm dưới: nâng đỡ lưỡi và răng dưới.',
+  palate: 'Vòm miệng cứng: tấm xương ngăn khoang miệng với khoang mũi.',
+  velum: 'Vòm miệng mềm (có lưỡi gà): nâng lên hay hạ xuống để đóng, mở đường lên khoang mũi.'
 };
+// [id, text, target x, target y, side] – ≤ 5 labels; targets spread in x so the leaders never cross
 export const TALK_LABELS = [
-  ['nasal', 'Khoang mũi', 150, 98, 'top'], ['mouth', 'Khoang miệng', 165, 137, 'top'], ['throat', 'Họng', 104, 170, 'top'],
-  ['tongue', 'Lưỡi', 150, 172, 'bottom'], ['cords', 'Dây thanh âm (nguồn dao động)', 108, 228, 'bottom']
+  ['throat', 'Họng', 110, 168, 'top'], ['nasal', 'Khoang mũi', 146, 114, 'top'], ['mouth', 'Khoang miệng', 188, 148, 'top'],
+  ['cords', 'Dây thanh âm (nguồn dao động)', 120, FY, 'bottom'], ['tongue', 'Lưỡi', 166, 176, 'bottom']
 ];
 
 export function makeTalker() {
   const parts = [
     {id: 'skin', d: SILHOUETTE, fill: SKIN, pick: false},
-    {id: 'hair', d: 'M 176 -10 L 70 -10 C 30 -10 8 20 6 50 C 4 90 8 130 20 160 L 28 164 C 26 140 22 118 22 94 C 22 56 42 28 78 14 C 112 6 150 8 182 22 Z', fill: '#5b4636', stroke: '#3b2c20', lw: 1.5, pick: false},
-    {id: 'ear', d: 'M 56 76 C 44 72 40 86 46 100 C 50 110 60 114 66 110 C 72 104 70 86 66 78 C 64 74 60 74 56 76 Z', fill: '#eab69b', stroke: SKIN_L, lw: 1.4, pick: false},
-    {id: 'nasal', d: 'M 212 120 C 206 104 198 92 188 86 C 166 82 136 90 118 100 C 108 106 100 112 98 124 L 98 142 L 108 142 C 114 132 120 124 130 118 C 152 108 188 114 207 132 Z', fill: '#f7c5c8', stroke: '#c2255c', lw: 1.3},
-    {id: 'turb', d: 'M 142 97 C 158 95 172 99 180 105 M 128 107 C 150 104 168 110 178 116', fill: null, stroke: '#d9727a', lw: 1.5, pick: false},
-    {id: 'maxilla', d: 'M 206 130 C 188 114 152 108 130 118 L 132 127 C 152 118 182 126 197 138 L 207 140 Z', fill: TOOTH, stroke: BONE_L, lw: 1.4, pick: false},
-    {id: 'spine', d: null, path: vertebrae(), fill: VERT, stroke: BONE_L, lw: 1.5},
-    {id: 'tract', d: 'M 212 147.4 L 199 147 L 197 138 C 182 126 152 118 132 127 C 122 132 114 144 110 156 C 106 162 98 158 97 150 L 96 296 L 116 296 L 116 232 C 116 218 119 206 120 198 C 119 190 117 184 117 178 C 118 168 126 158 140 153 C 160 148 180 154 197 156 L 199 152.4 L 212 152.6 Z', fill: IN, pick: false},
-    {id: 'tractline', d: 'M 212 147.4 L 199 147 L 197 138 C 182 126 152 118 132 127 C 122 132 114 144 110 156 C 106 162 98 158 97 150 L 96 296 M 116 296 L 116 232 C 116 218 119 206 120 198 C 119 190 117 184 117 178 C 118 168 126 158 140 153 C 160 148 180 154 197 156 L 199 152.4 L 212 152.6', fill: null, stroke: '#a8424a', lw: 1.4, pick: false},
-    {id: 'tongue', d: 'M 197 156 C 180 154 160 148 140 153 C 126 158 118 168 117 178 L 120 200 C 134 208 164 192 182 180 C 192 174 198 168 197 156 Z', fill: TONGUE, stroke: '#a8424a', lw: 1.5},
-    {id: 'jaw', d: 'M 198 164 C 206 176 210 190 204 202 C 198 212 182 214 150 214 L 148 204 C 170 200 186 196 194 186 C 198 180 198 172 196 168 Z', fill: TOOTH, stroke: BONE_L, lw: 1.4},
-    {id: 'epi', d: 'M 119 198 C 124 190 130 184 128 174 C 123 178 117 186 116 196 Z', fill: '#c9737d', stroke: '#a8424a', lw: 1.2, thin: true},
-    {id: 'larynx', d: 'M 116 206 C 128 204 138 212 138 226 C 138 242 128 252 116 254 L 116 244 C 123 242 127 236 127 228 C 127 220 123 216 116 216 Z', fill: TOOTH, stroke: BONE_L, lw: 1.4},
-    {id: 'trachea', d: 'M 116 264 h 9 v 6 h -9 z M 116 278 h 9 v 6 h -9 z M 116 290 h 9 v 6 h -9 z', fill: TOOTH, stroke: BONE_L, lw: 1.2, thin: true},
-    {id: 'teeth', d: 'M 198.5 132 Q 198.5 130 201 130 L 205 130 Q 207 130 207 132 L 206.5 144 Q 206 147 203 147 L 200 147 Q 198.5 146.5 198.5 144 Z M 199 154 Q 199 152 201 152 L 205 152 Q 206.5 152 206.5 154 L 206.5 164 Q 206.5 166 204 166 L 201 166 Q 199 166 199 164 Z', fill: TOOTH, stroke: BONE_L, lw: 1.3, thin: true},
-    {id: 'lips', d: 'M 207 129 L 209 130 C 213 134 217 140 216 146 L 206 147.5 Z M 206 151.5 L 215 153 C 218 157 218 160 213 164 L 207 166 Z', fill: '#e58a8c', stroke: SKIN_L, lw: 1.3, thin: true},
-    {id: 'outline', d: SILHOUETTE.replace(SLIT_END.trim(), 'M 206 151.5').replace(/ Z$/, ' L 176 -10'), fill: null, stroke: SKIN_L, lw: 2, pick: false},
-    {id: 'eye', d: 'M 177 73 Q 187 65 196 72 Q 187 79 177 73 Z', fill: '#fff', stroke: C.ink2, lw: 1.1, pick: false},
-    {id: 'iris', d: 'M 184.4 72.4 a 3.6 3.6 0 1 0 7.2 0 a 3.6 3.6 0 1 0 -7.2 0 Z', fill: '#5b4636', pick: false},
-    {id: 'brow', d: 'M 175 60 Q 187 53 199 59', fill: null, stroke: '#5b4636', lw: 2.6, pick: false},
-    // sub-regions of the vocal tract (pick + highlight only)
-    {id: 'mouth', ghost: true, src: 'tract', clip: 'M 126 100 L 230 100 L 230 160 L 126 160 Z'},
-    {id: 'throat', ghost: true, src: 'tract', clip: 'M 90 140 L 126 140 L 126 205 L 90 205 Z'},
-    {id: 'air1', d: 'M 104 224 L 104 190 L 99 190 L 106 176 L 113 190 L 108 190 L 108 224 Z', fill: '#fff', stroke: SKIN_L, lw: 0.9, pick: false},
-    {id: 'air2', d: 'M 134 136.5 L 178 138.5 L 178 135 L 190 140 L 178 145 L 178 141.5 L 134 139.5 Z', fill: '#fff', stroke: SKIN_L, lw: 0.9, pick: false},
-    {id: 'cords', dyn: true, thin: true, fill: CORD, stroke: '#7a1236', lw: 1.2, d: 'M 96 226 L 112 226'}
+    {id: 'ear', d: 'M 97 92 C 92 86 80 86 75 94 C 70 102 71 116 76 126 C 79 133 84 138 90 138 C 94 138 96 133 96 128 C 96 123 100 120 100 114 C 100 106 98 100 97 92 Z', fill: SKIN_D, stroke: SKIN_L, lw: 1.4, pick: false},
+    {id: 'earIn', d: 'M 93 97 C 86 94 79 99 79 108 C 79 117 83 125 88 128 M 93 108 C 88 106 85 111 88 116 C 90 118 93 118 94 115', fill: null, stroke: SKIN_L, lw: 1.2, pick: false},
+    {id: 'spine', path: vertebrae(), fill: VERT, stroke: BONE_L, lw: 1.3},
+    {id: 'air', d: AIRWAY, fill: AIR, stroke: LINING, lw: 4.5, lineFirst: true, pick: false},
+    {id: 'turb', d: 'M 138 110 C 158 105 180 105 196 111 C 182 114 158 114 138 110 Z M 140 121 C 160 116 184 117 202 125 C 186 128 160 127 140 121 Z', fill: '#f2b3b5', stroke: LINING_D, lw: 1.1, pick: false},
+    {id: 'palate', d: 'M 206 134 C 190 134.5 168 135.5 150 137.5 L 150 143.5 C 168 142.5 188 142.5 203 141.5 Z', fill: TOOTH, stroke: BONE_L, lw: 1.3, thin: true},
+    {id: 'velum', d: 'M 150 137.5 C 140 138.5 132 141 128 146 C 125 150 124 154 126 157 C 128.5 157.5 130 153.5 132 151 C 137 147 144 144 150 143.5 Z', fill: SOFT, stroke: TONGUE_L, lw: 1.2, thin: true},
+    {id: 'tongue', d: 'M 203 168 C 202 161 197 158 187 157.5 C 170 157 150 157 138 162 C 127 167 121 175 122 186 C 124 196 134 202 150 203 C 172 203 192 192 201 178 Z', fill: TONGUE, stroke: TONGUE_L, lw: 1.5},
+    {id: 'tongueIn', d: 'M 140 170 C 156 166 176 166 192 170', fill: null, stroke: '#c45a63', lw: 1.1, pick: false},
+    {id: 'epi', d: 'M 125.5 200 C 119 194 115 186 116 176 C 120 180 125 190 129 197 Z', fill: SOFT, stroke: TONGUE_L, lw: 1.1, thin: true},
+    {id: 'hyoid', d: 'M 132 202.5 C 134 200 140 200 142 202.5 C 140 205 134 205 132 202.5 Z', fill: TOOTH, stroke: BONE_L, lw: 1, pick: false},
+    {id: 'jaw', d: 'M 204 172 C 209 178 210 188 206 194 C 199 199 180 199 160 200 L 160 195 C 178 195 194 193 199 187 C 202 182 202 177 200 173 Z', fill: TOOTH, stroke: BONE_L, lw: 1.2, thin: true},
+    {id: 'larynx', d: 'M 131 204 C 136 205 138.5 212 138 222 C 137.5 233 134.5 241 129 246 L 129 238 C 132 234 133.5 228 133.5 222 C 133.5 215 132.5 211 131 210 Z', fill: TOOTH, stroke: BONE_L, lw: 1.2, thin: true},
+    {id: 'trachea', path: rings(), fill: TOOTH, stroke: BONE_L, lw: 1.1, thin: true},
+    {id: 'teeth', d: 'M 202 140.5 L 206 140.5 C 208 143.5 209 147 208.6 150.6 C 206.5 151.4 204.8 151 204 150 C 203 147 202.2 143.5 202 140.5 Z M 205 170 L 201.2 170 C 201 166 202 160.5 204 157 C 206 156.4 207.5 156.6 208 157.6 C 208.2 161.5 207 166 205 170 Z', fill: '#fffaf0', stroke: BONE_L, lw: 1.1, thin: true},
+    {id: 'lips', d: 'M 213 141 C 215 143 216.6 145 217 147.5 C 217.5 150 216 151.5 213 151.5 C 211 151.5 209.5 150.5 209 149 C 210 146 211.5 143 213 141 Z M 213 156.5 C 217 157 218 161 215 166 C 213 167.5 210.5 167.5 209 166 C 208.5 162 209.5 158.5 213 156.5 Z', fill: '#df8a86', stroke: SKIN_L, lw: 1.1, thin: true},
+    {id: 'outline', d: SILHOUETTE.replace(GAP, 'M 213 156.5 ').replace(/ Z$/, ''), fill: null, stroke: SKIN_L, lw: 2, pick: false},
+    {id: 'hair', d: 'M 197 40 C 186 12 150 1 116 1.5 C 50 4 12 50 19 108 C 21 120 25 128 30 134 C 36 118 50 96 70 85 C 86 77 100 78 108 84 C 110 90 110 96 113 98 C 117 92 117 82 121 76 C 146 68 178 58 197 40 Z', fill: HAIR, stroke: HAIR_L, lw: 1.5, pick: false},
+    {id: 'nostril', d: 'M 214 131 C 217 127 223 127 225 131', fill: null, stroke: SKIN_L, lw: 1.3, pick: false},
+    {id: 'eye', d: 'M 183 99 C 187 95 193 94.5 197 96.5 L 197.5 101 C 193 102.5 187 102 183 99 Z', fill: '#fff', stroke: C.ink2, lw: 1.1, pick: false},
+    {id: 'iris', d: 'M 191 98.6 a 2.8 2.8 0 1 0 5.6 0 a 2.8 2.8 0 1 0 -5.6 0 Z', fill: HAIR, pick: false},
+    {id: 'lid', d: 'M 182.5 99 C 187 94.5 193 93.5 197.5 96', fill: null, stroke: C.ink2, lw: 1.8, pick: false},
+    {id: 'brow', d: 'M 181 89 C 187 85.5 195 85 202 87.5', fill: null, stroke: HAIR, lw: 2.6, pick: false},
+    // air flow: lungs → trachea → vocal folds → pharynx → mouth → out through the lips
+    {id: 'flow', d: 'M 120 297 L 120 243 M 109.5 205 L 109.5 178 C 109.5 162 116 154.5 133 154 L 192 152.8', fill: null, stroke: FLOW, lw: 1.7, pick: false},
+    {id: 'flowHead', d: 'M 120 237 L 116.2 245 L 123.8 245 Z M 199 152.6 L 191 148.8 L 191 156.6 Z', fill: FLOW, stroke: FLOW, lw: 0.8, pick: false},
+    // sub-regions of the airway (pick + highlight only, painted only when selected)
+    {id: 'nasal', dyn: true, region: true, d: 'M 209 128 C 211 119 205 108 193 104 C 174 100 148 102 130 107 L 130 140.5 C 138 139 145 138 150 137.5 C 168 135.5 190 134.5 206 134 Z'},
+    {id: 'mouth', dyn: true, region: true, d: 'M 214 152 L 207.5 151.2 L 203 141.5 C 188 142.5 168 142.5 150 143.5 C 144 144 137 147 132 151 C 130 153.5 128.5 157.5 126.5 157.5 C 127 160 131 161.5 138 162 C 150 157 170 157 187 157.5 C 197 158 202 161 204.5 157 L 214 156.5 Z'},
+    {id: 'throat', dyn: true, region: true, d: 'M 130 107 C 116 111 105 120 104 134 L 104 200 C 104 208 110 211 112 214 L 130 214 C 131 206 131 198 124 188 C 121 178 122 168 128 160 C 125 154 126 148 130 142 Z'},
+    {id: 'cords', dyn: true, thin: true, fill: CORD, stroke: CORD_L, lw: 1.2, d: `M ${FX0} ${FY - 9} L ${FX1} ${FY - 9} L ${FX1} ${FY + 9} L ${FX0} ${FY + 9} Z`}
   ];
   const fig = new Figure(TALK_W, TALK_H, parts);
-  for (const p of parts) if (p.ghost) { p.clipPath = new Path2D(p.clip); p.path = fig.by[p.src].path; }
   fig.mouth = MOUTH;
-  const P = id => fig.by[id];
-  // b ∈ [-1, 1]: opening of the vocal folds (follows u(0,t) – they open and close at the sound frequency)
+  // b ∈ [-1, 1]: opening of the vocal folds (follows u(0,t) – they open and close at the sound frequency). No allocation.
   fig.drawDyn = (ctx, b) => {
     fig.begin(ctx);
-    const h = 4.5 + 4 * b, s = fig.s, sel = fig.sel === 'cords';
+    const g = 2.6 + 2.2 * b, mid = (FX0 + FX1) / 2, s = fig.s, sel = fig.sel === 'cords';
     ctx.lineJoin = 'round'; ctx.lineCap = 'round';
-    const wedge = (x0, x1) => { ctx.beginPath(); ctx.moveTo(x0, 216); ctx.lineTo(x1, 226); ctx.lineTo(x0, 236); ctx.closePath(); };
-    for (const [x0, x1] of [[116, 106 + h], [96, 106 - h]]) {
-      wedge(x0, x1); ctx.fillStyle = CORD; ctx.fill();
-      ctx.strokeStyle = sel ? C.red : '#7a1236'; ctx.lineWidth = sel ? 3.4 / s : 1.4; ctx.stroke();
-    }
+    ctx.beginPath();                                            // back fold (from the posterior wall)
+    ctx.moveTo(FX0, FY - 8); ctx.quadraticCurveTo(mid - g - 1, FY - 3, mid - g, FY + 0.5); ctx.lineTo(FX0, FY + 6); ctx.closePath();
+    ctx.moveTo(FX1, FY - 8); ctx.quadraticCurveTo(mid + g + 1, FY - 3, mid + g, FY + 0.5); ctx.lineTo(FX1, FY + 6); ctx.closePath();
+    ctx.fillStyle = CORD; ctx.fill();
+    ctx.strokeStyle = sel ? C.red : CORD_L; ctx.lineWidth = sel ? 3.2 / s : 1.3; ctx.stroke();
     // selected static part: red outline
-    const sp = fig.sel && P(fig.sel);
-    if (sp && !sp.dyn) {
-      if (sp.ghost) { ctx.save(); ctx.clip(sp.clipPath); ctx.strokeStyle = C.red; ctx.lineWidth = 3.4 / s; ctx.stroke(sp.path); ctx.restore(); }
-      else fig.mark(ctx, sp);
+    const sp = fig.sel && fig.by[fig.sel];
+    if (sp && (!sp.dyn || sp.region)) {
+      if (sp.region) { ctx.fillStyle = 'rgba(215,25,31,0.16)'; ctx.fill(sp.path); }   // flat translucent tint, no glow
+      fig.mark(ctx, sp);
     }
     fig.end(ctx);
   };

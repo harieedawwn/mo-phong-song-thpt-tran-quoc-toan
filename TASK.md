@@ -64,7 +64,7 @@ SPEC: §4, §6.
 - [x] Final `--all` screenshots of 4 modes, zero errors, deploy check, set `version.json` phase "final".
 - [x] Report: link + 3 lines + anything the owner should test on a real phone / in Zalo.
 
-## Phase 8 – Vẽ lại Người nói (Art v2)  `[ ]`
+## Phase 8 – Vẽ lại Người nói (Art v2)  `[~]`
 SPEC: §7 (Người nói), §5 palette. Recommended model: **Opus** (drawing). Before screenshot first: `node tools/shot.mjs before8` with source = Người nói.
 - [ ] Download the §7 references into `docs/ref/web/` and look at them; write 3 bullet "what makes it recognisable" notes in the Log.
 - [ ] Rebuild `js/art/talker.js`: proportioned side profile + sagittal vocal tract, vibrating vocal folds, air-flow arrow, ≤ 5 de-collided labels.

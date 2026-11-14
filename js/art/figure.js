@@ -70,8 +70,10 @@ export class Figure {
       for (const it of p.items) { g.strokeStyle = p.stroke; g.lineWidth = it.w + lw * 2; g.stroke(it.path); }
       for (const it of p.items) { g.strokeStyle = p.fill; g.lineWidth = it.w; g.stroke(it.path); }
     } else {
+      // lineFirst: a thick lining stroke painted under the fill (only its outer half shows; overlaps stay clean)
+      if (p.lineFirst && p.stroke) { g.strokeStyle = p.stroke; g.lineWidth = lw; g.stroke(p.path); }
       if (p.fill) { g.fillStyle = p.fill; g.fill(p.path); }
-      if (p.stroke) { g.strokeStyle = p.stroke; g.lineWidth = lw; g.stroke(p.path); }
+      if (p.stroke && !p.lineFirst) { g.strokeStyle = p.stroke; g.lineWidth = lw; g.stroke(p.path); }
     }
     if (sel) this.mark(g, p);
   }

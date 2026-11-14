@@ -96,6 +96,7 @@ if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { di
 
 if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) state.playing = false;
 window.__app = {play, pause, restart, setMode, get mode() { return mode.id; }, state};
+if (/src=talker/.test(location.hash)) state.source = 'talker';   // checker / teacher link: #mode=longitudinal&src=talker
 setMode(modeFromHash() || 'longitudinal');
 resize();
 startLoop();
