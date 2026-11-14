@@ -65,11 +65,25 @@ export const TALK_LABELS = [
   ['cords', 'Dây thanh âm (nguồn dao động)', 120, FY, 'bottom'], ['tongue', 'Lưỡi', 166, 176, 'bottom']
 ];
 
+// Head shapes shared with the listener figure (ear.js): plain data; each Figure builds its own Path2D from them.
+export const HEAD = {
+  skin: {id: 'skin', d: SILHOUETTE, fill: SKIN, pick: false},
+  ear: {id: 'ear', d: 'M 97 92 C 92 86 80 86 75 94 C 70 102 71 116 76 126 C 79 133 84 138 90 138 C 94 138 96 133 96 128 C 96 123 100 120 100 114 C 100 106 98 100 97 92 Z', fill: SKIN_D, stroke: SKIN_L, lw: 1.4, pick: false},
+  earIn: {id: 'earIn', d: 'M 93 97 C 86 94 79 99 79 108 C 79 117 83 125 88 128 M 93 108 C 88 106 85 111 88 116 C 90 118 93 118 94 115', fill: null, stroke: SKIN_L, lw: 1.2, pick: false},
+  outline: {id: 'outline', d: SILHOUETTE.replace(GAP, 'M 213 156.5 ').replace(/ Z$/, ''), fill: null, stroke: SKIN_L, lw: 2, pick: false},
+  hair: {id: 'hair', d: 'M 197 40 C 186 12 150 1 116 1.5 C 50 4 12 50 19 108 C 21 120 25 128 30 134 C 36 118 50 96 70 85 C 86 77 100 78 108 84 C 110 90 110 96 113 98 C 117 92 117 82 121 76 C 146 68 178 58 197 40 Z', fill: HAIR, stroke: HAIR_L, lw: 1.5, pick: false},
+  nostril: {id: 'nostril', d: 'M 214 131 C 217 127 223 127 225 131', fill: null, stroke: SKIN_L, lw: 1.3, pick: false},
+  eye: {id: 'eye', d: 'M 183 99 C 187 95 193 94.5 197 96.5 L 197.5 101 C 193 102.5 187 102 183 99 Z', fill: '#fff', stroke: C.ink2, lw: 1.1, pick: false},
+  iris: {id: 'iris', d: 'M 191 98.6 a 2.8 2.8 0 1 0 5.6 0 a 2.8 2.8 0 1 0 -5.6 0 Z', fill: HAIR, pick: false},
+  lid: {id: 'lid', d: 'M 182.5 99 C 187 94.5 193 93.5 197.5 96', fill: null, stroke: C.ink2, lw: 1.8, pick: false},
+  brow: {id: 'brow', d: 'M 181 89 C 187 85.5 195 85 202 87.5', fill: null, stroke: HAIR, lw: 2.6, pick: false}
+};
+
 export function makeTalker() {
   const parts = [
-    {id: 'skin', d: SILHOUETTE, fill: SKIN, pick: false},
-    {id: 'ear', d: 'M 97 92 C 92 86 80 86 75 94 C 70 102 71 116 76 126 C 79 133 84 138 90 138 C 94 138 96 133 96 128 C 96 123 100 120 100 114 C 100 106 98 100 97 92 Z', fill: SKIN_D, stroke: SKIN_L, lw: 1.4, pick: false},
-    {id: 'earIn', d: 'M 93 97 C 86 94 79 99 79 108 C 79 117 83 125 88 128 M 93 108 C 88 106 85 111 88 116 C 90 118 93 118 94 115', fill: null, stroke: SKIN_L, lw: 1.2, pick: false},
+    HEAD.skin,
+    HEAD.ear,
+    HEAD.earIn,
     {id: 'spine', path: vertebrae(), fill: VERT, stroke: BONE_L, lw: 1.3},
     {id: 'air', d: AIRWAY, fill: AIR, stroke: LINING, lw: 4.5, lineFirst: true, pick: false},
     {id: 'turb', d: 'M 138 110 C 158 105 180 105 196 111 C 182 114 158 114 138 110 Z M 140 121 C 160 116 184 117 202 125 C 186 128 160 127 140 121 Z', fill: '#f2b3b5', stroke: LINING_D, lw: 1.1, pick: false},
@@ -84,13 +98,13 @@ export function makeTalker() {
     {id: 'trachea', path: rings(), fill: TOOTH, stroke: BONE_L, lw: 1.1, thin: true},
     {id: 'teeth', d: 'M 202 140.5 L 206 140.5 C 208 143.5 209 147 208.6 150.6 C 206.5 151.4 204.8 151 204 150 C 203 147 202.2 143.5 202 140.5 Z M 205 170 L 201.2 170 C 201 166 202 160.5 204 157 C 206 156.4 207.5 156.6 208 157.6 C 208.2 161.5 207 166 205 170 Z', fill: '#fffaf0', stroke: BONE_L, lw: 1.1, thin: true},
     {id: 'lips', d: 'M 213 141 C 215 143 216.6 145 217 147.5 C 217.5 150 216 151.5 213 151.5 C 211 151.5 209.5 150.5 209 149 C 210 146 211.5 143 213 141 Z M 213 156.5 C 217 157 218 161 215 166 C 213 167.5 210.5 167.5 209 166 C 208.5 162 209.5 158.5 213 156.5 Z', fill: '#df8a86', stroke: SKIN_L, lw: 1.1, thin: true},
-    {id: 'outline', d: SILHOUETTE.replace(GAP, 'M 213 156.5 ').replace(/ Z$/, ''), fill: null, stroke: SKIN_L, lw: 2, pick: false},
-    {id: 'hair', d: 'M 197 40 C 186 12 150 1 116 1.5 C 50 4 12 50 19 108 C 21 120 25 128 30 134 C 36 118 50 96 70 85 C 86 77 100 78 108 84 C 110 90 110 96 113 98 C 117 92 117 82 121 76 C 146 68 178 58 197 40 Z', fill: HAIR, stroke: HAIR_L, lw: 1.5, pick: false},
-    {id: 'nostril', d: 'M 214 131 C 217 127 223 127 225 131', fill: null, stroke: SKIN_L, lw: 1.3, pick: false},
-    {id: 'eye', d: 'M 183 99 C 187 95 193 94.5 197 96.5 L 197.5 101 C 193 102.5 187 102 183 99 Z', fill: '#fff', stroke: C.ink2, lw: 1.1, pick: false},
-    {id: 'iris', d: 'M 191 98.6 a 2.8 2.8 0 1 0 5.6 0 a 2.8 2.8 0 1 0 -5.6 0 Z', fill: HAIR, pick: false},
-    {id: 'lid', d: 'M 182.5 99 C 187 94.5 193 93.5 197.5 96', fill: null, stroke: C.ink2, lw: 1.8, pick: false},
-    {id: 'brow', d: 'M 181 89 C 187 85.5 195 85 202 87.5', fill: null, stroke: HAIR, lw: 2.6, pick: false},
+    HEAD.outline,
+    HEAD.hair,
+    HEAD.nostril,
+    HEAD.eye,
+    HEAD.iris,
+    HEAD.lid,
+    HEAD.brow,
     // air flow: lungs → trachea → vocal folds → pharynx → mouth → out through the lips
     {id: 'flow', d: 'M 120 297 L 120 246 M 109.5 205 L 109.5 178 C 109.5 162 116 154.5 133 154 L 192 152.8', fill: null, stroke: FLOW, lw: 1.7, pick: false},
     {id: 'flowHead', d: 'M 120 239 L 116.2 247 L 123.8 247 Z M 199 152.6 L 191 148.8 L 191 156.6 Z', fill: FLOW, stroke: FLOW, lw: 0.8, pick: false},

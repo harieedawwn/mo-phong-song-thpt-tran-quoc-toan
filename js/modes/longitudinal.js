@@ -38,16 +38,17 @@ function layout(w, hh) {
   const talker = state.source === 'talker';
   labelKey = '';
   if (L.layout === 'stack') {
-    L.cols = 26; L.rows = 6;
+    L.cols = 26;
     L.airL = 12; L.airR = w - 12; L.airW = L.airR - L.airL; L.dx = L.airW / L.cols;
     const top0 = 74, avail = hh - top0 - 70;
-    L.bandA = clamp(avail * 0.28, 84, 140); L.bandB = clamp(avail * 0.26, 80, 130);
-    L.above = 46; L.below = 64;
-    L.dy = clamp((avail - L.bandA - L.bandB - L.above - L.below) / L.rows, 7, 17);
+    L.rows = avail < 340 ? 4 : 6;                                    // short phone: fewer rows keep room for the ear
+    L.bandA = talker ? clamp(avail * 0.27, 92, 130) : clamp(avail * 0.2, 62, 100); L.bandB = clamp(avail * 0.4, 128, 200) - (talker ? 8 : 0);   // the ear (head + magnifier) needs the most room
+    L.above = 42; L.below = avail < 340 ? 54 : 52;
+    L.dy = clamp((avail - L.bandA - L.bandB - L.above - L.below) / L.rows, 8, 17);
     L.fieldTop = top0 + L.bandA + L.above; L.fieldBot = L.fieldTop + L.rows * L.dy;
     // figures: source top-left, ear bottom-right
     (talker ? talk : spk).place(6, top0, w * 0.4, L.bandA - 4, 0, 0.5);
-    ear.place(w - 6 - w * 0.62, L.fieldBot + L.below, w * 0.62, L.bandB - 2, 1, 0.5);
+    ear.place(6, L.fieldBot + L.below, w - 12, L.bandB - 2, 1, 0.5);
   } else if (L.layout === 'bars') {
     L.cols = 24; L.rows = 8;
     L.airL = 14; L.airR = w - 14; L.airW = L.airR - L.airL; L.dx = L.airW / L.cols;
@@ -57,7 +58,7 @@ function layout(w, hh) {
     const block = L.above + L.rows * L.dy + L.below;
     L.fieldTop = top + Math.max(0, (hh - top - bottom - block) / 2) + L.above; L.fieldBot = L.fieldTop + L.rows * L.dy;
   } else {
-    const srcW = talker ? clamp(w * 0.3, 150, 235) : clamp(w * 0.19, 100, 150), earW = clamp(w * 0.32, 160, 250);
+    const srcW = talker ? clamp(w * 0.27, 140, 235) : clamp(w * 0.19, 100, 150), earW = clamp(w * 0.36, 190, 300);
     L.airL = srcW + 12; L.airR = w - earW - 8; L.airW = L.airR - L.airL;
     L.cols = clamp(Math.round(L.airW / 9), 24, 40); L.rows = 12; L.dx = L.airW / L.cols;
     const top = L.tiny ? 4 : L.compact ? 8 : 46, bottom = L.compact ? 66 : 76;
@@ -75,8 +76,8 @@ function layout(w, hh) {
       const s = fitS((srcW - 6) / 124, 85, 85);
       spk.s = s; spk.x = L.airL - 6 - SPK_RIM * s; spk.y = cy - 85 * s;
     }
-    const se = fitS(earW / 234, 100, 100);
-    ear.s = se; ear.x = L.airR + 6 - 16 * se; ear.y = cy - 100 * se;
+    const se = fitS(earW / EAR_W, 134, 116);
+    ear.s = se; ear.x = L.airR + 4; ear.y = cy - 134 * se;
   }
   L.r = clamp(Math.min(L.dx, L.dy) * 0.24, 1.6, 3.4);
   L.trackCol = Math.round(L.cols * 0.27);
@@ -247,7 +248,7 @@ function buildLabels(ctx) {
   const lab = {src: [], ear: [], tops: {src: 1e9, ear: 1e9}};
   L.lab = lab; L.artBottom = 0;
   const sf = srcFig(), S = SRC[state.source];
-  const mk = (tbl, ids, side) => tbl.filter(t => !ids || ids.includes(t[0])).map(t => ({id: t[0], text: t[1], tx: t[2], ty: t[3], side: side || t[4]}));
+  const mk = (tbl, ids, side) => tbl.filter(t => !ids || ids.includes(t[0])).map(t => ({id: t[0], text: t[1], tx: t[2], ty: t[3], side: side || t[4], row: t[5]}));
   for (const f of [sf, ear]) L.artBottom = Math.max(L.artBottom, f.y + f.h * f.s);
   if (L.layout === 'bars' || L.compact || !state.labels) return;
   if (L.layout === 'stack') {
@@ -300,7 +301,7 @@ function drawArt(ctx) {
     text(ctx, 'Tai người nghe', (L.airR + L.w) / 2, Math.min(lab.tops.ear, ear.y) - 14, {size: fs, weight: 800});
   } else {
     text(ctx, SRC[state.source].title, sf.x + sf.w * sf.s + 10, sf.y + 8, {size: fs - 1, weight: 800, align: 'left'});
-    text(ctx, 'Tai người nghe', ear.x - 8, ear.y + 8, {size: fs - 1, weight: 800, align: 'right'});
+    if (L.h >= 520) text(ctx, 'Tai người nghe', ear.x - 8, ear.y + 8, {size: fs - 1, weight: 800, align: 'right'});
   }
 }
 

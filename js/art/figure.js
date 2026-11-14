@@ -56,7 +56,7 @@ export class Figure {
   _hit(p, dx, dy, tol) {
     if (p.ghost) return hit.isPointInPath(p.clipPath, dx, dy) && hit.isPointInPath(p.path, dx, dy);
     if (p.items) {
-      for (const it of p.items) { hit.lineWidth = it.w + 2 + tol; hit.lineCap = 'round'; hit.lineJoin = 'round'; if (hit.isPointInStroke(it.path, dx, dy)) return true; }
+      for (const it of p.items) { hit.lineWidth = it.w + 2 + tol + (p.fat || 0); hit.lineCap = 'round'; hit.lineJoin = 'round'; if (hit.isPointInStroke(it.path, dx, dy)) return true; }
       return false;
     }
     if (tol) { hit.lineWidth = tol * 2; return hit.isPointInPath(p.path, dx, dy) || hit.isPointInStroke(p.path, dx, dy); }
@@ -93,7 +93,11 @@ export class Figure {
     g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, c.width, c.height);
     g.setTransform(dpr * this.s, 0, 0, dpr * this.s, 0, 0);
     g.beginPath(); g.rect(0, 0, this.w, this.h); g.clip();
-    for (const p of this.parts) if (!p.dyn && !p.after) this.paint(g, p, false);
+    for (const p of this.parts) {
+      if (p.clipOn) { g.save(); g.clip(p.path); continue; }              // clip markers: everything until clipOff is cut to this shape
+      if (p.clipOff) { g.restore(); continue; }
+      if (!p.dyn && !p.after) this.paint(g, p, false);
+    }
     this.cacheKey = k; this.dpr = dpr;
   }
   // static layer + selection mark of the selected static part
@@ -147,7 +151,7 @@ export function layoutLabels(ctx, fig, items, o) {
   for (const a of arr) {
     const list = placedRows[a.side], offs = [0, -0.3, 0.3, -0.6, 0.6, -0.9, 0.9];
     let best = null;
-    for (let pass = 0; pass < 2 && !best; pass++) search: for (let k = 0; k < 6; k++) for (const f of offs) {
+    for (let pass = 0; pass < 2 && !best; pass++) search: for (let k = a.it.row || 0; k < 6; k++) for (const f of offs) {
       const x = fit(a.tx + f * a.w, a.w);
       let ok = true;
       for (const r of list) {
