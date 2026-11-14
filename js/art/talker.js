@@ -92,8 +92,8 @@ export function makeTalker() {
     {id: 'lid', d: 'M 182.5 99 C 187 94.5 193 93.5 197.5 96', fill: null, stroke: C.ink2, lw: 1.8, pick: false},
     {id: 'brow', d: 'M 181 89 C 187 85.5 195 85 202 87.5', fill: null, stroke: HAIR, lw: 2.6, pick: false},
     // air flow: lungs → trachea → vocal folds → pharynx → mouth → out through the lips
-    {id: 'flow', d: 'M 120 297 L 120 243 M 109.5 205 L 109.5 178 C 109.5 162 116 154.5 133 154 L 192 152.8', fill: null, stroke: FLOW, lw: 1.7, pick: false},
-    {id: 'flowHead', d: 'M 120 237 L 116.2 245 L 123.8 245 Z M 199 152.6 L 191 148.8 L 191 156.6 Z', fill: FLOW, stroke: FLOW, lw: 0.8, pick: false},
+    {id: 'flow', d: 'M 120 297 L 120 246 M 109.5 205 L 109.5 178 C 109.5 162 116 154.5 133 154 L 192 152.8', fill: null, stroke: FLOW, lw: 1.7, pick: false},
+    {id: 'flowHead', d: 'M 120 239 L 116.2 247 L 123.8 247 Z M 199 152.6 L 191 148.8 L 191 156.6 Z', fill: FLOW, stroke: FLOW, lw: 0.8, pick: false},
     // sub-regions of the airway (pick + highlight only, painted only when selected)
     {id: 'nasal', dyn: true, region: true, d: 'M 209 128 C 211 119 205 108 193 104 C 174 100 148 102 130 107 L 130 140.5 C 138 139 145 138 150 137.5 C 168 135.5 190 134.5 206 134 Z'},
     {id: 'mouth', dyn: true, region: true, d: 'M 214 152 L 207.5 151.2 L 203 141.5 C 188 142.5 168 142.5 150 143.5 C 144 144 137 147 132 151 C 130 153.5 128.5 157.5 126.5 157.5 C 127 160 131 161.5 138 162 C 150 157 170 157 187 157.5 C 197 158 202 161 204.5 157 L 214 156.5 Z'},
@@ -105,11 +105,11 @@ export function makeTalker() {
   // b ∈ [-1, 1]: opening of the vocal folds (follows u(0,t) – they open and close at the sound frequency). No allocation.
   fig.drawDyn = (ctx, b) => {
     fig.begin(ctx);
-    const g = 2.6 + 2.2 * b, mid = (FX0 + FX1) / 2, s = fig.s, sel = fig.sel === 'cords';
+    const g = 2 + 1.8 * b, mid = (FX0 + FX1) / 2, s = fig.s, sel = fig.sel === 'cords';
     ctx.lineJoin = 'round'; ctx.lineCap = 'round';
-    ctx.beginPath();                                            // back fold (from the posterior wall)
-    ctx.moveTo(FX0, FY - 8); ctx.quadraticCurveTo(mid - g - 1, FY - 3, mid - g, FY + 0.5); ctx.lineTo(FX0, FY + 6); ctx.closePath();
-    ctx.moveTo(FX1, FY - 8); ctx.quadraticCurveTo(mid + g + 1, FY - 3, mid + g, FY + 0.5); ctx.lineTo(FX1, FY + 6); ctx.closePath();
+    ctx.beginPath();                                            // two folds from the side walls, the gap between them opens and closes
+    ctx.moveTo(FX0 - 1, FY - 11); ctx.quadraticCurveTo(mid - g - 1.5, FY - 4, mid - g, FY + 1); ctx.lineTo(FX0 - 1, FY + 8); ctx.closePath();
+    ctx.moveTo(FX1 + 1, FY - 11); ctx.quadraticCurveTo(mid + g + 1.5, FY - 4, mid + g, FY + 1); ctx.lineTo(FX1 + 1, FY + 8); ctx.closePath();
     ctx.fillStyle = CORD; ctx.fill();
     ctx.strokeStyle = sel ? C.red : CORD_L; ctx.lineWidth = sel ? 3.2 / s : 1.3; ctx.stroke();
     // selected static part: red outline
