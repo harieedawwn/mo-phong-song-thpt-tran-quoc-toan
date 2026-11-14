@@ -1,4 +1,4 @@
-// Tiny store + event bus (ported from legacy, trimmed for the 2D app).
+// Tiny store + event bus.
 const listeners = new Map();
 export const bus = {
   on(evt, fn) { let s = listeners.get(evt); if (!s) { s = new Set(); listeners.set(evt, s); } s.add(fn); return () => s.delete(fn); },

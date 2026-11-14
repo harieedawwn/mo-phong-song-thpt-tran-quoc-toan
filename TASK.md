@@ -59,10 +59,10 @@ SPEC: §4, §6.
 - [x] Performance: no per-frame allocations in hot loops, offscreen cache for static art, check fps with `performance.now()` logging (remove logs after).
 - [x] Before/after comparison of each mode; revert anything not clearly better.
 
-## Phase 7 – Dọn dẹp + bàn giao  `[ ]`
-- [ ] Delete `legacy/` (and old refs not used), update `CLAUDE.md` code map to the final files, write a short Vietnamese `README.md` (cách dùng, link).
-- [ ] Final `--all` screenshots of 4 modes, zero errors, deploy check, set `version.json` phase "final".
-- [ ] Report: link + 3 lines + anything the owner should test on a real phone / in Zalo.
+## Phase 7 – Dọn dẹp + bàn giao  `[x]`
+- [x] Delete `legacy/` (and old refs not used), update `CLAUDE.md` code map to the final files, write a short Vietnamese `README.md` (cách dùng, link).
+- [x] Final `--all` screenshots of 4 modes, zero errors, deploy check, set `version.json` phase "final".
+- [x] Report: link + 3 lines + anything the owner should test on a real phone / in Zalo.
 
 ## Log
 <!-- one line per session: date · phase · what was done · commit hash -->

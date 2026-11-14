@@ -1,4 +1,4 @@
-// WebAudio tone for the sound-wave mode (ported from legacy/js/audio.js, trimmed).
+// WebAudio tone for the sound-wave mode.
 // The AudioContext is created on the first user tap (autoplay rules, Zalo in-app browser).
 // Sounds only while: mode = longitudinal, playing, not muted, f inside 20 Hz – 20 kHz.
 import {state, bus} from './state.js';

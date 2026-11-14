@@ -5,7 +5,15 @@
 (`.github/workflows/pages.yml` uploads the whole folder).
 Live: https://harieedawwn.github.io/mo-phong-song-thpt-tran-quoc-toan/
 
-Read `SPEC.md` (what to build) and `TASK.md` (phases + checklist) before working. `legacy/` = files from the old 3D project to port from (see `legacy/README.md`).
+Read `SPEC.md` (what to build) and `TASK.md` (phases + checklist) before working. Reference images: `docs/ref/`.
+
+## Code map
+- `index.html`, `css/style.css`, `fonts/` – shell, tokens, header, panels (phone layouts at the end of the CSS).
+- `js/main.js` – loop, resize/DPR, mode routing (`#mode=`), `window.__app`. `js/state.js` – store + bus. `js/ui.js` – DOM helpers, controls, tabs, toolbar, help. `js/fmt.js` – Vietnamese number formatting.
+- `js/physics.js` – speeds, λ, pitch text. `js/audio.js` – WebAudio tone/voice.
+- `js/modes/` – `longitudinal.js` (sóng âm), `transverse.js` (sóng ngang), `surface.js` (sóng mặt), `em.js` (sóng điện từ).
+- `js/art/` – `speaker.js`, `talker.js`, `ear.js`, `figure.js` (anatomy drawings). `js/draw/` – `grid.js` (graph paper), `ink.js` (outline helpers).
+- `tools/` – `serve.mjs`, `shot.mjs` (checker).
 
 ## Hard rules
 - **User-facing text is Vietnamese** (correct diacritics). Reports to the owner: Vietnamese, short. Code/comments: English.

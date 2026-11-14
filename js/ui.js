@@ -1,4 +1,4 @@
-// DOM helpers + control builders (ported from legacy/js/ui.js) and the app shell (tabs, panels, toolbar, play button).
+// DOM helpers + control builders and the app shell (tabs, panels, toolbar, play button).
 import {state, bus, set} from './state.js';
 import {num, freqParts, timeParts, lenParts, speedParts, slowText} from './fmt.js';
 
