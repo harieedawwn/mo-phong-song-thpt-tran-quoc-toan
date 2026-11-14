@@ -10,7 +10,7 @@ simple to operate, rich in what it shows, never childish. **No lessons, no quizz
 |---|---|---|
 | `longitudinal` (default) | Sóng dọc – Sóng âm | Loudspeaker (or speaking person) → air layers → listener's ear, compressions/rarefactions |
 | `transverse` | Sóng ngang | Wave on a rope/string of beads driven at one end |
-| `surface` | Sóng mặt nước | Ripples on water: top view + side cross-section with water particles' motion |
+| `surface` | Sóng mặt | Surface wave: cross-section of a particle grid; particles move on circles (both longitudinal and transverse) |
 | `em` | Sóng điện từ | E and B fields perpendicular to each other and to the propagation direction + KNTT spectrum scale |
 
 All modes share: Play/Pause, **slow-motion** factor, frequency f, amplitude A, "show λ ruler", "track one particle",
@@ -32,10 +32,19 @@ Core relations shown on screen: **λ = v·T = v/f**, **f = 1/T**.
     same formula so they always sit where the dots are actually crowded.
   - Speeds (m/s): không khí 343, nước 1482, thép 5960 (port `SPEED` from `legacy/js/physics.js`). Hearing range 20 Hz – 20 kHz:
     warn outside it ("hạ âm" < 20 Hz, "siêu âm" > 20 kHz).
-- **Sóng mặt nước (teacher request "sóng mặt"):** KNTT treats water-surface waves as approximately transverse (surface elements
-  move up and down). Show that, plus an honest side view: near the surface, water particles move on **circles** of radius
-  A·e^(−k·depth) (deep-water model), shrinking with depth, so students see why it is "approximately" transverse.
-  One-line caption: "SGK coi gần đúng sóng mặt nước là sóng ngang; thực tế phần tử nước chuyển động gần tròn."
+- **Sóng mặt (surface wave – teacher request; refs `docs/ref/surface-wave-*.png`):** a wave travelling along the boundary
+  of a medium (e.g. the water surface). It has **both** a longitudinal and a transverse component, so each particle moves on a
+  **closed loop** around its VTCB: parallel AND perpendicular to the direction of propagation. Use linear (Airy) wave theory,
+  wave travelling to +x, η = A·cos(kx − ωt), depth d ≥ 0 below the still surface, water depth h:
+  - horizontal displacement ξ = −a(d)·sin(kx₀ − ωt), vertical ζ = b(d)·cos(kx₀ − ωt) (y up).
+  - **Nước sâu** (default, h ≥ λ/2): a = b = A·e^(−k·d) → **circles** shrinking with depth.
+  - **Nước nông** (toggle): a = A·cosh(k(h−d))/sinh(kh), b = A·sinh(k(h−d))/sinh(kh) → **ellipses** that flatten to a back-and-forth
+    line at the bottom (matches ref B in `surface-wave-orbits-deep-shallow.png`).
+  - Sense of rotation for a wave moving right: **clockwise** on screen (forward at the crest, backward in the trough, down on the
+    front side). The particles carry no net drift: energy moves, water does not.
+  - Crests come out sharper and troughs flatter automatically from the particle motion – do not fake the surface curve, draw it through the top-row particles.
+  Captions (short): "Sóng mặt: phần tử dao động theo cả phương dọc và phương ngang → quỹ đạo tròn", "Càng xuống sâu, dao động càng yếu".
+  If a caption must relate to the textbook: KNTT only classifies sóng ngang / sóng dọc; present sóng mặt as their combination, never contradict them.
 - **Bài 11 (Sóng điện từ):** EM wave = coupled oscillating **E** and **B**, in phase, **E ⟂ B ⟂ phương truyền** → it is a
   *sóng ngang*; travels in vacuum at **c = 3·10⁸ m/s**; λ = c/f. Spectrum scale = **Bảng 11.1 SGK KNTT** (use these values verbatim):
 
@@ -84,13 +93,15 @@ Layout of the canvas, left → right: **source** · air region · **listener's e
 - Bottom strip: **u–x graph** (live snapshot with axis labels "x (cm)", "u (cm)") and **u–t graph** of the tracked bead (scrolling).
 - Controls: f (0,2 – 5 Hz visual), A, v (tốc độ truyền, e.g. 0,5 – 4 m/s), làm chậm, "Dừng hình" (freeze to read the graph).
 
-### 3.3 Sóng mặt nước
-- Top view (left ~60%): point source S (a small vibrating stylus) making circular ripples; crests drawn as **flat concentric rings**
-  in 2–3 stepped blues (no gradient), amplitude falling with distance (∝ 1/√r). A floating **phao/vịt** at distance d bobs up and down
-  without drifting away (energy travels, matter does not).
-- Side view (right ~40% or below on phones): water surface profile with ~6×4 tracked water particles moving on circles that shrink with depth,
-  the phao bobbing on the surface, wavelength ruler.
-- Controls: f, A, v (or "độ sâu" simplified to v), làm chậm, toggle "quỹ đạo phần tử".
+### 3.3 Sóng mặt
+Match the look of `docs/ref/surface-wave-particle-grid.png` (cross-section of a dot grid) and the orbits of `surface-wave-orbits-deep-shallow.png`, redrawn flat.
+- Main view: cross-section of the medium as a grid of ~30×10 dots (phone ~20×8), surface row on top drawn as a solid ink line through
+  the top-row particles, water below filled with **2–3 stepped flat blues by depth band** (no gradient), air above = graph paper.
+- 2–3 **tracked particles** at different depths in one column, red, each with its thin orbit outline (circle/ellipse) and a small
+  arrow showing the sense of rotation; their VTCB marked with a "+" tick. Toggle "Quỹ đạo phần tử".
+- A floating **phao** (small flat float) on the surface that moves on its circle and returns – no drift.
+- Labels: "Đỉnh sóng", "Hõm sóng", "Phương truyền sóng →", λ ruler between two crests, legend "dao động dọc + dao động ngang".
+- Controls: f, A, v (tốc độ truyền), Nước sâu | Nước nông, làm chậm. Đặc điểm card: Phương dao động = "cả dọc và ngang (quỹ đạo tròn/elip)".
 
 ### 3.4 Sóng điện từ
 - Oblique 2D projection (x → right, y ↑, z drawn at −30° "into the page"). Draw E as vertical arrows (sampled every λ/12) in one colour

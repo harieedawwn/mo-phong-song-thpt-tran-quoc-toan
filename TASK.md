@@ -39,11 +39,12 @@ SPEC: §2, §3.2.
 - [ ] u–x graph and scrolling u–t graph (Canvas 2D, axes labelled in Vietnamese, mono numbers), "Dừng hình".
 - [ ] Controls (f, A, v, làm chậm), metrics, Đặc điểm card.
 
-## Phase 4 – Sóng mặt nước  `[ ]`
-SPEC: §2 (water note), §3.3.
-- [ ] Top view: stylus source, stepped-blue flat ring bands, amplitude ∝ 1/√r, bobbing phao/vịt that does not drift.
-- [ ] Side view: surface profile + particles on circles shrinking with depth, toggle "quỹ đạo phần tử", caption about SGK approximation.
-- [ ] Controls, metrics, Đặc điểm card; phone layout stacks the two views.
+## Phase 4 – Sóng mặt (surface wave)  `[ ]`
+SPEC: §2 (Sóng mặt), §3.3. Refs: `docs/ref/surface-wave-*.png`.
+- [ ] Particle-grid cross-section with Airy motion (deep: circles, shallow: ellipses), surface line through top-row particles, stepped flat blues by depth.
+- [ ] Tracked particles at 2–3 depths with orbit outlines + rotation arrows (clockwise for a wave moving right), VTCB ticks, phao on the surface (no drift).
+- [ ] Labels (đỉnh/hõm, phương truyền, λ), toggles (quỹ đạo, nước sâu/nông), controls, metrics, Đặc điểm card.
+- [ ] Check: top particle moves forward at the crest and backward in the trough; orbit radius at depth λ/2 ≈ 4 % of surface (e^(−π)).
 
 ## Phase 5 – Sóng điện từ  `[ ]`
 SPEC: §2 (Bài 11 table – verbatim), §3.4.
