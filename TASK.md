@@ -14,14 +14,14 @@ SPEC: §4, §5, §6.
 - [x] Phone layout skeleton (bottom sheet, 4 icon tabs, 1-row metrics).
 - [x] `version.json`, push, confirm Pages deploy works (enable Pages → GitHub Actions if needed; if you cannot, mark `[!]` with the click path for the owner).
 
-## Phase 1 – Sóng dọc: vật lí + phần tử không khí  `[~]`
+## Phase 1 – Sóng dọc: vật lí + phần tử không khí  `[x]`
 SPEC: §2 (Bài 8, Bài 9), §3.1 (air, ruler, controls), §6.
-- [ ] `js/physics.js`: u(x,t) with propagating front, −∂u/∂x, SPEED, visLambda clamp, describe pitch (port from legacy).
-- [ ] Air dot grid displaced along x, 3 flat shade classes from −∂u/∂x, tracked red particle with VTCB tick + ↔ arrow, outlined layer column.
-- [ ] λ ruler between compression centres (real λ label), labels "Vùng nén"/"Vùng giãn", badges (làm chậm, biên độ phóng đại, rút gọn).
-- [ ] Left-panel controls (f log slider + chips, độ to, môi trường, làm chậm); right-panel metrics + Đặc điểm card.
-- [ ] `js/audio.js` ported (tone + voice timbres, starts on tap, mute button works); placeholder rectangles for source and ear.
-- [ ] Check: dots visibly crowd exactly where "Vùng nén" is labelled; at 440 Hz in air λ shows 78,0 cm (343/440 = 0,7795 m).
+- [x] `js/physics.js`: u(x,t) with propagating front, −∂u/∂x, SPEED, visLambda clamp, describe pitch (port from legacy).
+- [x] Air dot grid displaced along x, 3 flat shade classes from −∂u/∂x, tracked red particle with VTCB tick + ↔ arrow, outlined layer column.
+- [x] λ ruler between compression centres (real λ label), labels "Vùng nén"/"Vùng giãn", badges (làm chậm, biên độ phóng đại, rút gọn).
+- [x] Left-panel controls (f log slider + chips, độ to, môi trường, làm chậm); right-panel metrics + Đặc điểm card.
+- [x] `js/audio.js` ported (tone + voice timbres, starts on tap, mute button works); placeholder rectangles for source and ear.
+- [x] Check: dots visibly crowd exactly where "Vùng nén" is labelled; at 440 Hz in air λ shows 78,0 cm (343/440 = 0,7795 m).
 
 ## Phase 2 – Sóng dọc: hình vẽ loa, người nói, tai (giải phẫu)  `[ ]`
 SPEC: §3.1 (source + ear), §5 (anatomy palette, accuracy). Reference: `docs/ref/ear-voice-reference.png`.
@@ -67,3 +67,4 @@ SPEC: §4, §6.
 ## Log
 <!-- one line per session: date · phase · what was done · commit hash -->
 2026-11-14 · Phase 0 · khung ứng dụng (header, 4 tab, panel, canvas giấy kẻ ô, vòng lặp, bố cục điện thoại), 4 chế độ giữ chỗ; f=440 Hz/khí → T=2,27 ms, λ=78,0 cm; FM 100 MHz → λ=3 m · 8c74cf5
+2026-11-14 · Phase 1 · sóng dọc: u=A·sin(ωt−kx) (pha đầu −π/2 để mặt sóng liên tục), lưới chấm không khí 3 màu từ −∂u/∂x, nhãn nén/giãn, thước λ, phần tử đỏ + VTCB, điều khiển f/độ to/môi trường/làm chậm, âm thanh WebAudio; kiểm: khí 440 Hz → λ=78,0 cm, nước 440 Hz → 3,37 m, thép 4 kHz → 1,49 m; điện thoại ngang còn chật (để Phase 6) · d207202
