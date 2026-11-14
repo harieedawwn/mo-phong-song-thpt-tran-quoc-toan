@@ -1,8 +1,45 @@
 <!doctype html>
 <html lang="vi">
+<head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#d7191f">
+<meta name="description" content="Thí nghiệm mô phỏng sóng 2D – Vật lí 11 (Kết nối tri thức). Trường THPT Trần Quốc Toản (Đồng Tháp).">
 <title>Thí nghiệm mô phỏng sóng – THPT Trần Quốc Toản</title>
-<style>body{margin:0;display:grid;place-items:center;min-height:100vh;font:700 18px system-ui,sans-serif;color:#d7191f;background:#fbfaf6;text-align:center}</style>
-<p>THÍ NGHIỆM MÔ PHỎNG SÓNG<br><small style="color:#5d6470">Trường THPT Trần Quốc Toản (Đồng Tháp) – đang xây dựng</small></p>
+<link rel="preload" href="fonts/be-vietnam-pro-vietnamese-700-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/be-vietnam-pro-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="css/style.css">
+<link rel="icon" href="data:,">
+</head>
+<body>
+<div id="app">
+  <header id="top">
+    <div id="tools" class="panel brk" role="toolbar" aria-label="Công cụ"></div>
+    <div id="title"><h1>THÍ NGHIỆM MÔ PHỎNG SÓNG</h1></div>
+    <div id="school">TRƯỜNG THPT TRẦN QUỐC TOẢN (ĐỒNG THÁP)</div>
+  </header>
+  <nav id="tabs" class="seg" role="tablist" aria-label="Loại sóng"></nav>
+  <aside id="ctrl" class="panel brk" aria-label="Bảng điều khiển">
+    <div id="grps" class="grps" data-noscroll></div>
+    <nav id="dock" class="dock-tabs" aria-label="Nhóm điều khiển"></nav>
+  </aside>
+  <main id="stage" aria-label="Sân khấu mô phỏng">
+    <canvas id="cv" aria-label="Hình mô phỏng sóng"></canvas>
+    <div id="badges"></div>
+    <div id="play-wrap"></div>
+  </main>
+  <aside id="info" class="panel brk" aria-label="Số liệu">
+    <div id="info-in" data-noscroll>
+      <h2 class="grp-h">Số liệu</h2>
+      <div id="metrics"></div>
+      <div id="formula" class="formula"></div>
+    </div>
+  </aside>
+</div>
+<div id="modal" hidden role="dialog" aria-modal="true" aria-label="Hướng dẫn sử dụng">
+  <div class="card"><h2>Cách dùng</h2><ul></ul><button type="button" class="btn">Đã hiểu</button></div>
+</div>
+<noscript><p style="padding:24px;text-align:center">Trang này cần bật JavaScript để chạy thí nghiệm mô phỏng sóng.</p></noscript>
+<script type="module" src="js/main.js"></script>
+</body>
 </html>
