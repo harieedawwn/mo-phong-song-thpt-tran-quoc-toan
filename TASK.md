@@ -33,11 +33,11 @@ This is the hardest drawing phase. Work section by section and screenshot after 
 - [x] Portrait phone composition works (source top, ear bottom or scaled), nothing clipped.
 - [x] Self-review against the reference: list 3 differences in the commit message body and fix the worst one before finishing.
 
-## Phase 3 – Sóng ngang (dây)  `[ ]`
+## Phase 3 – Sóng ngang (dây)  `[x]`
 SPEC: §2, §3.2.
-- [ ] Rope of beads + vibrator, propagating front, đỉnh/hõm labels, ↕ vs → arrows, λ between crests, in-phase pair.
-- [ ] u–x graph and scrolling u–t graph (Canvas 2D, axes labelled in Vietnamese, mono numbers), "Dừng hình".
-- [ ] Controls (f, A, v, làm chậm), metrics, Đặc điểm card.
+- [x] Rope of beads + vibrator, propagating front, đỉnh/hõm labels, ↕ vs → arrows, λ between crests, in-phase pair.
+- [x] u–x graph and scrolling u–t graph (Canvas 2D, axes labelled in Vietnamese, mono numbers), "Dừng hình".
+- [x] Controls (f, A, v, làm chậm), metrics, Đặc điểm card.
 
 ## Phase 4 – Sóng mặt (surface wave)  `[ ]`
 SPEC: §2 (Sóng mặt), §3.3. Refs: `docs/ref/surface-wave-*.png`.
@@ -69,3 +69,4 @@ SPEC: §4, §6.
 2026-11-14 · Phase 0 · khung ứng dụng (header, 4 tab, panel, canvas giấy kẻ ô, vòng lặp, bố cục điện thoại), 4 chế độ giữ chỗ; f=440 Hz/khí → T=2,27 ms, λ=78,0 cm; FM 100 MHz → λ=3 m · 8c74cf5
 2026-11-14 · Phase 1 · sóng dọc: u=A·sin(ωt−kx) (pha đầu −π/2 để mặt sóng liên tục), lưới chấm không khí 3 màu từ −∂u/∂x, nhãn nén/giãn, thước λ, phần tử đỏ + VTCB, điều khiển f/độ to/môi trường/làm chậm, âm thanh WebAudio; kiểm: khí 440 Hz → λ=78,0 cm, nước 440 Hz → 3,37 m, thép 4 kHz → 1,49 m; điện thoại ngang còn chật (để Phase 6) · d207202
 2026-11-14 · Phase 2 · hình vẽ phẳng loa (màng loa dao động theo u(0,t)), người nói (cắt dọc: dây thanh âm rung, họng, miệng, lưỡi, mũi, cột sống), tai (vành tai→ống tai→màng nhĩ→búa–đe–bàn đạp→cửa sổ bầu dục→ốc tai→dây thần kinh, xung thần kinh chạy lên não); chạm bộ phận → viền đỏ + chú thích, Esc/chạm trống để bỏ; điện thoại dọc xếp loa/người nói trên, tai dưới; kiểm: khí 440 Hz → λ=78,0 cm · 1fd991b
+2026-11-14 · Phase 3 · sóng ngang: dây 24–48 hạt + cần rung, u=A·sin(ωt−kx) có mặt sóng, nhãn đỉnh/hõm, thước λ giữa 2 đỉnh, 2 phần tử cách λ cùng pha (đường đứt cùng độ cao), đồ thị u–x và u–t cuộn (trục cm/s), Dừng hình; kiểm: f=1 Hz, v=2 m/s → T=1 s, λ=2 m; điện thoại ngang chỉ hiện dây · PENDING

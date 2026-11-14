@@ -19,6 +19,10 @@ export const state = {
   level: 70,        // dB (độ to) → drawn amplitude + audio gain
   medium: 'air',    // air | water | steel
   source: 'speaker',// speaker | talker
-  sound: 'tone'     // tone (âm đơn) | voice (giọng nói)
+  sound: 'tone',    // tone (âm đơn) | voice (giọng nói)
+  // sóng ngang – dây
+  tf: 1,            // Hz (real, 0,2–5)
+  tA: 5,            // cm (real amplitude)
+  tv: 2             // m/s (real propagation speed)
 };
 export function set(key, value) { state[key] = value; bus.emit('change', {key, value}); }
