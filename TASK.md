@@ -71,12 +71,12 @@ SPEC: §7 (Người nói), §5 palette. Recommended model: **Opus** (drawing). B
 - [x] Works at desktop and phone sizes (Path2D cached per size, no per-frame allocation).
 - [x] Side-by-side check vs `docs/ref/v1-talker.png` and the references: must be clearly better, else iterate (max 3 rounds).
 
-## Phase 9 – Vẽ lại Tai người nghe với kính lúp (Art v2)  `[ ]`
+## Phase 9 – Vẽ lại Tai người nghe với kính lúp (Art v2)  `[x]`
 SPEC: §7 (Tai). Recommended model: **Opus** (drawing).
-- [ ] Small listener head (same style as Phase 8) + magnifier callout + large coronal ear cross-section in correct anatomical order.
-- [ ] Motion: eardrum, ossicles, nerve pulses synced to the arriving wave; click part → highlight + caption; empty click/Esc clears.
-- [ ] ≤ 7 labels, no overlaps, phone layout works.
-- [ ] Side-by-side check vs `docs/ref/v1-ear.png`: a non-expert must instantly see "an ear"; iterate (max 3 rounds).
+- [x] Small listener head (same style as Phase 8) + magnifier callout + large coronal ear cross-section in correct anatomical order.
+- [x] Motion: eardrum, ossicles, nerve pulses synced to the arriving wave; click part → highlight + caption; empty click/Esc clears.
+- [x] ≤ 7 labels, no overlaps, phone layout works.
+- [x] Side-by-side check vs `docs/ref/v1-ear.png`: a non-expert must instantly see "an ear"; iterate (max 3 rounds).
 
 ## Phase 10 – Đánh bóng: rõ, đẹp, cuốn hút (không nặng máy)  `[ ]`
 SPEC: §4, §5. Model: Sonnet (High).
