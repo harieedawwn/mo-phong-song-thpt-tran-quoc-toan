@@ -223,7 +223,7 @@ function layout(w, hh) {
     const srcW = talker ? clamp(w * 0.24, 140, 235) : clamp(w * 0.2, 120, 245);
     const top = L.tiny ? 4 : L.compact ? 8 : 46, bottom = L.compact ? 66 : 76;
     const eTop = L.compact ? 8 : 60, eBot = L.compact ? 70 : 100;                        // room above / below the disc for the label rows and the play button
-    const se = Math.max(0.3, Math.min(w * (L.compact ? 0.5 : 0.55) / EAR_W, (hh - eTop - eBot) / (2 * RB)));
+    const se = Math.max(0.3, Math.min(w * (L.compact ? 0.5 : 0.38) / EAR_W, (hh - eTop - eBot) / (2 * RB) * (L.compact ? 1 : 0.72)));
     const earW = EAR_W * se, earCy = (eTop + hh - eBot) / 2;
     L.airL = srcW + 12; L.airR = w - earW - 8; L.airW = L.airR - L.airL;
     L.cols = clamp(Math.round(L.airW / 9), 24, 40); L.rows = 12; L.dx = L.airW / (L.cols + 1);
