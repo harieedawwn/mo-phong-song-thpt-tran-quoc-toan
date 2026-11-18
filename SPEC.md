@@ -74,37 +74,41 @@ direction of oscillation differs. Seg control "Cả hai | Sóng ngang | Sóng d�
 - Controls: f (0,2 – 5 Hz, log slider + chips 0,5/1/2/4), A, v (0,5 – 4 m/s), làm chậm, lane seg, toggle "Phần tử đỏ".
 
 ### 3.2 `sound` – Sóng âm
-Layout left → right: source · medium · receiver. Medium seg **Không khí | Nước | Thép** (physically honest scenes):
+Layout left → right: source · medium · receiver. Medium seg **Không khí | Nước** (v4: Thép removed by the owner; physically honest scenes):
 - **Không khí:** source chips **Loa | Người nói**; receiver = listener head + magnifier with the ear cross-section (v2 composition).
 - **Nước:** the scene becomes a **bể nước** (glass tank, water with depth gradient). Source = **đầu phát âm dưới nước** (piezo
   transducer, `art/transducer.svg`) immersed and touching the water; receiver = **máy thu âm dưới nước** (the same SVG mirrored).
   Particles = water (blue spheres). No loudspeaker, no ear in this scene.
-- **Thép:** a clamped **thanh thép** (brushed-metal gradient). Source = the same transducer **pressed against the left end face**;
-  receiver = the same sensor on the right end face. Particles = lattice atoms (grey spheres in a regular grid inside the bar).
-- Reason (keep it in the help text, 1 bullet): a loudspeaker in air cannot push sound into a steel block the way it pushes air, so
-  water/steel use a source in contact with the medium.
+- Air vs water must look **different and honest**: the same px-per-metre for both media, so at the same f the water λ is 4,32× longer
+  and the wave front runs 4,32× faster on screen (clamp only if λ < 14 px; then say so on the pause line 2).
+- Help bullet: a loudspeaker in air cannot push sound into water well, so water uses an underwater transducer in contact with it.
+- **Transducer (v4 fix):** the moving part is a **membrane flush with the housing front** (flexes/bulges a few px, like a drum skin),
+  never a separate bar sliding in and out in front of the device.
 - **Air column (fixes v2):** particles exist only in the column directly in front of the cone mouth: rows span the cone rim height,
   columns from the cone face to the receiver. No particles behind or around the speaker. The first layer's rest position is the cone
   face's rest position, and the cone uses the same u(0,t), so they move together and never overlap. Same rule for the talker (column
   in front of the lips, a bit narrower) and the transducer face.
-- **Loudspeaker (realistic, fixes v2):** cabinet front panel + driver in side cut-away. **Static:** cabinet, frame/basket (khung loa),
+- **Loudspeaker (v4):** only the cut-away view exists (the closed-cabinet "outside" view `speaker-out.svg` and its toggle are deleted). Cabinet drawn in section (wall thickness, rounded wood/black finish, front baffle) + driver in side cut-away. **Static:** cabinet, frame/basket (khung loa),
   magnet, top plate, pole piece. **Moving (translate x by u(0,t)):** cone (màng loa) + dust cap + voice coil (cuộn dây). The surround (gờ
   treo) and spider are short canvas curves connecting the static frame to the moving cone rim, so they stretch instead of sliding.
 - Particles: uniform blue spheres while running (crowding alone shows the wave); paused → tinted nén/giãn bands + labels.
+- **Sound enters the ear (v4):** inside the magnifier, the ear canal holds its own small air column (2–4 rows of spheres from the canal
+  entrance to the eardrum) moved by the **same u(x,t)** continued from the outside column (x of the head's canal entrance → eardrum,
+  magnified), so compressions are seen travelling down the canal and hitting the eardrum exactly when it bulges in.
 - Receiver motion: eardrum bulges with the arriving pressure, ossicles rock, nerve pulses run toward "Não" (pulses also while running –
   they are not text). Sensor: a small cone/needle moves with the arriving u.
 - **Paused:** Vùng nén / Vùng giãn, λ ruler, red particle VTCB tick + ↔, part names (≤ 4 speaker: Màng loa, Cuộn dây, Nam châm, Khung loa;
   ≤ 5 talker: Dây thanh âm, Họng, Khoang miệng, Khoang mũi, Lưỡi; ≤ 7 ear: Vành tai, Ống tai, Màng nhĩ, Xương búa – đe – bàn đạp, Ốc tai,
-  Ống bán khuyên, Dây thần kinh thính giác; water/steel: Đầu phát, Máy thu), de-collided leaders, readout chip
+  Ống bán khuyên, Dây thần kinh thính giác; water: Đầu phát, Máy thu), de-collided leaders, readout chip
   (adds "Âm trung · tai nghe được" / "Siêu âm · tai không nghe được").
-- Controls: môi trường, nguồn (only in air), loại âm (Âm đơn / Giọng nói), f (log 10 Hz – 40 kHz + chips 100/262/440/1k/4k), độ to (dB),
+- Controls: môi trường, nguồn (only in air), f (tone only – "Giọng nói" removed in v4) (log 10 Hz – 40 kHz + chips 100/262/440/1k/4k), độ to (dB),
   làm chậm, toggle "Phần tử đỏ". Sound is **muted by default**; AudioContext starts on the first tap.
 
 ### 3.3 `surface` – Sóng mặt
-v2 behaviour kept (grid of ~30×10 particles, phao, 2–3 red tracked particles with orbit outlines, Nước sâu | Nước nông).
+v2 behaviour kept (grid of ~30×10 particles, a small cute **rubber duck** (`art/duck.svg`, v4) instead of the phao, 2–3 red tracked particles with orbit outlines, Nước sâu | Nước nông).
 v3: spheres, water filled with a vertical gradient (light at the surface → deep blue), glossy surface line, sand bed with gradient
-in shallow mode. Orbit outlines may stay while running (they are geometry, not text). **Paused:** Đỉnh/Hõm sóng, λ ruler,
-"Phương truyền sóng →", "Quỹ đạo tròn = dao động dọc + dao động ngang" (one pill), "Càng sâu dao động càng yếu", Phao, readout chip.
+in shallow mode. Orbit outlines are **dashed** red lines (v4) and may stay while running (they are geometry, not text). **Paused:** Đỉnh/Hõm sóng, λ ruler,
+"Phương truyền sóng →", "Quỹ đạo tròn = dao động dọc + dao động ngang" (one pill), "Càng sâu dao động càng yếu", Vịt (phần tử mặt nước), readout chip.
 
 ### 3.4 `em` – Sóng điện từ
 - Oblique view as v2 (E vertical, orange; B along z at 30°, blue; in phase), arrows with depth (darker outline, slightly thicker),
@@ -122,14 +126,21 @@ in shallow mode. Orbit outlines may stay while running (they are geometry, not t
   QUỐC TOẢN (ĐỒNG THÁP)"** red uppercase in a white card with a red left bar – **always one line** (`white-space:nowrap`, font size
   `clamp()` by viewport; on phones it sits on its own line under the title); left: icon toolbar (help, mute, fullscreen if supported,
   screenshot, restart).
-- **Desktop grid:** `top` row, then `ctrl | tabs` and `ctrl | stage`. Columns `var(--ctrl-w) minmax(0,1fr)` – the old `#info` column is
-  removed and the stage takes all the width. Bottom-centre of the stage: restart icon button, big red **Phát / Tạm dừng** pill, speed chip.
+- **Mode tabs (v4):** centred on the page under the title pill (same centre x as the title), not centred over the stage.
+- **Desktop grid:** `top` row, then tabs, then `ctrl | stage`. Columns `var(--ctrl-w) minmax(0,1fr)` – the old `#info` column is
+  removed and the stage takes all the width. Bottom-centre of the stage: restart icon button, big red **Phát / Tạm dừng** pill (the speed chip is deleted in v4; speed lives on the slider).
 - **Phones (< 1000 px or height ≤ 520 px):** title, school line, 4 icon tabs, stage, bottom dock (2 groups max: "Sóng", "Hiển thị").
   No metrics row.
 - **No scrollbar anywhere** (page, panels) on all checker viewports: `html,body{overflow:hidden}`, `#app` 100dvh (100vh fallback),
   safe-area padding. The checker fails on any page scroll or wrapped/overflowing school name.
-- Help modal ≤ 5 short bullets (how to play/pause, pause shows labels, sliders, keys, the water/steel note).
+- Help modal ≤ 5 short bullets (how to play/pause, pause shows labels, sliders, keys, the water note, zoom).
 - Controls style kept: `.brk` corners, `.seg` (active black), `.chip` (active red), `.tg`, red-filled sliders. Toggle labels one line.
+
+- **Left panel (v4):** controls card shrinks to its content; under it a **"Phần tử đỏ" mini-scope** card fills the column: live li độ u of
+  the red particle vs time (waves: both lanes, ngang = orange, dọc = blue; sound: pressure at the eardrum; surface: the red top particle's
+  orbit trace ξ–ζ; em: E and B at one point). Canvas, only axis letters while running; paused → value ticks (A, T) appear. Hidden on phones.
+- **Zoom (v4):** mouse wheel (and pinch on touch) zooms the stage content 1×–4× around the pointer, drag pans when zoomed, double-click /
+  a small "1:1" button resets; mode switch resets. Implemented once in `main.js` as a canvas transform; pointer hits use the inverse transform.
 
 ## 5. Visual system v3
 - **Stage background:** warm paper `#fbfaf6`, faint graph grid (minor `#efebe2`, major every 5 cells `#e4ddcf`) plus a very soft radial

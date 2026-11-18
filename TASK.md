@@ -77,6 +77,29 @@ Before: `node tools/shot.mjs before20 mode=sound --paused --all`.
 - [x] Phone portrait: magnifier full stage width under the air column; phone landscape: right half of the stage. If a part is unclear at large size (e.g. ossicles, oval window, round window), refine that part in `ear.svg` (≤ 1 round, `--page` shot).
 - [x] Check (`--all --paused`): at 1366×768 the circle diameter ≥ 450 px, each ossicle clearly distinguishable; 440 Hz air → λ = 78,0 cm; ≥ 50 fps with `--perf` in sound mode.
 
+## Phase 21 – Sửa nhanh giao diện + sóng âm (bỏ Thép, bỏ Giọng nói, nước đúng)  `[ ]`  · Sonnet (Medium)
+SPEC §3.2, §3.3 (dashed orbits), §4 (tabs, speed chip). Files: `css/style.css` (tabs/header), `js/ui.js` (play bar, help), `js/modes/sound.js` (grep `steel|voice|medium|wave.set|spkOut`), `js/modes/surface.js` (grep `orbit`), `js/audio.js` (voice), `js/main.js` (hash `med=`), `art/transducer.svg`.
+- [ ] Mode tabs centred under the title pill (page centre), all sizes; delete the "Làm chậm ×N" chip next to Phát/Tạm dừng.
+- [ ] Sound: delete "Giọng nói" (control + audio voice code); delete Thép (scene, lattice, clamps, `med=steel` → air); delete `speaker-out.svg` + "Xem bên trong loa" toggle (cut-away only).
+- [ ] Water honest: same px/m as air (λ 4,32× longer, front 4,32× faster at the same f); transducer membrane flush with the housing (no sliding bar) for source and receiver.
+- [ ] Surface: orbit outlines dashed (`setLineDash`, reset after).
+- [ ] Check: 440 Hz air → 78,0 cm, water → 3,37 m and visibly longer λ; `--all --paused` for sound + surface.
+
+## Phase 22 – Loa bên ngoài đẹp + âm thanh đi vào ống tai  `[ ]`  · Sonnet (High)
+SPEC §3.2 (Loudspeaker v4, Sound enters the ear). Files: `art/speaker.svg`, `art/ear.svg` (canal anchors only), `js/modes/sound.js` (grep `spk|ear|canal|drum`).
+Before: `node tools/shot.mjs before22 mode=sound --paused`.
+- [ ] Redraw the cabinet in section in `speaker.svg` (wall thickness, rounded edges, realistic finish, front baffle holding the driver); the moving part is the cone + dust cap + coil only – nothing else moves. Iterate with `--page` (≤ 2 rounds).
+- [ ] Ear canal air column inside the magnifier: anchors `a-canal-in`, `a-canal-drum` (+ canal half-height) in `ear.svg`; 2–4 rows of small spheres between them, displaced by the same u(x,t) continued from the head's canal entrance (magnified scale), eardrum bulge = −∂u/∂x at the drum; spheres never enter the eardrum (k·A ≤ 0,8 at that scale).
+- [ ] Paused: label "Sóng âm vào ống tai" + nén/giãn tint inside the canal too.
+- [ ] Check: a compression reaches the drum exactly when it bulges inward (pause and look); ≥ 50 fps `--perf`.
+
+## Phase 23 – Vịt cao su + zoom bằng lăn chuột + mini-scope bên trái  `[ ]`  · Sonnet (Medium)
+SPEC §3.3 (duck), §4 (Left panel v4, Zoom v4). Files: `js/main.js`, `js/ui.js`, `css/style.css` (left column), `js/modes/surface.js` (grep `phao|buoy|float`), each mode's red-particle getter (grep `track`).
+- [ ] `art/duck.svg` (small cute yellow rubber duck, shaded, orange beak, eye highlight) replaces the phao: sits on the surface, follows the top particle's orbit, tilts with the local slope.
+- [ ] Zoom per SPEC §4 in `main.js` (wheel + pinch, drag pan, double-click / "1:1" button resets, clamp so the content never leaves the stage); EM band tap and the ear magnifier tap still hit correctly when zoomed.
+- [ ] Controls card shrinks to content; "Phần tử đỏ" mini-scope card below it (each mode exposes `probe()` → values for one sample; ring buffer, no allocation per frame); hidden on phones and when "Phần tử đỏ" is off.
+- [ ] Check: `--all --paused` 4 modes; zoom 3× on waves (springs readable) then reset; ≥ 50 fps `--perf`.
+
 ## Log
 <!-- one line per session: date · phase · what · numbers checked · hash -->
 2026-11-18 · P11 · bỏ panel phải/badges/chú thích/toggle, main.js annotate() chỉ khi dừng + chip số liệu, longitudinal+surface tách nhãn · --all --paused OK, λ=78,0 cm @440 Hz không khí, tên trường 1 dòng ở 5 cỡ · (hash ghi ở commit)
