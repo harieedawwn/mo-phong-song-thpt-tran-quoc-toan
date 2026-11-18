@@ -505,6 +505,12 @@ function earDrive() {
   // eardrum bulge ∝ −∂u/∂x at the drum = pressure: it goes in exactly when a compression reaches it
   return {d: wave.s(drumX) * 2.4, phase: wave.front >= ear0 ? (((wave.cycles() - ear0 / wave.lamPx) % 1) + 1) % 1 : -1};
 }
+// pressure at the eardrum ∝ −∂u/∂x: simulated time tt → value / (kA)
+const SC_SOUND = {kind: 't', colors: ['#1c7ed6'], names: ['Áp suất tại màng nhĩ'], T: () => 1 / state.f};
+function probe(tt, out) {
+  const ear0 = L.airR - L.airL + 6, x = state.medium === 'air' ? ear0 + (CAN.x1 - CAN.x0) * wave.lamPx / LAMC : ear0;
+  out[0] = tt * wave.lamPx * wave.f >= x ? Math.cos(wave.w * tt - wave.k * x) : 0;
+}
 const zoomOn = () => zoom && state.medium === 'air' && L.layout !== 'bars';
 
 function drawArt(ctx) {
@@ -684,6 +690,6 @@ export default {
   defaults: {get slow() { return niceSlow(state.f); }},
   metrics: () => ({f: state.f, v: SPEED[state.medium] || SPEED.air}),
   readout: () => readout(),
-  controls, layout, draw, annotate, pointer,
+  probe, scope: () => SC_SOUND, controls, layout, draw, annotate, pointer,
   update() {}, reset() { rulerN = -1; }, leave() { setZoom(false); }
 };

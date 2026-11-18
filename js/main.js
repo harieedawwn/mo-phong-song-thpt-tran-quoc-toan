@@ -9,6 +9,7 @@ import waves from './modes/waves.js';
 import sound from './modes/sound.js';
 import surface from './modes/surface.js';
 import em from './modes/em.js';
+import {makeScope} from './scope.js';
 import './audio.js';
 
 const MODES = [waves, sound, surface, em];
@@ -16,6 +17,17 @@ const ALIAS = {transverse: 'waves', longitudinal: 'sound'};   // old #mode= link
 const byId = id => MODES.find(m => m.id === (ALIAS[id] || id));
 const canvas = document.getElementById('cv'), stage = document.getElementById('stage');
 const ctx = canvas.getContext('2d');
+const scope = makeScope(document.getElementById('sc')), scopeEl = document.getElementById('scope'), zbtn = document.getElementById('zreset');
+let scopeOn = false;
+// stage zoom (1×–4×): canvas transform x' = z·x + px, y' = z·y + py; pointer hits use the inverse
+const view = {z: 1, px: 0, py: 0};
+const clampView = () => { view.px = Math.min(0, Math.max(W * (1 - view.z), view.px)); view.py = Math.min(0, Math.max(H * (1 - view.z), view.py)); };
+function zoomAt(mx, my, z2) {
+  z2 = Math.min(4, Math.max(1, z2)); if (z2 < 1.02) z2 = 1;
+  view.px = mx - (mx - view.px) * z2 / view.z; view.py = my - (my - view.py) * z2 / view.z; view.z = z2;
+  clampView(); zbtn.hidden = view.z === 1; dirty = true;
+}
+const resetView = () => { view.z = 1; view.px = view.py = 0; zbtn.hidden = true; dirty = true; };
 let mode = MODES[0], W = 0, H = 0, grid = null, dirty = true, raf = 0, last = 0, fadeT0 = 0;
 const FADE = 250, calm = !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
 // annotations (annotate()) exist only while paused: fade in over 0,25 s after Pause, vanish at once on Play
@@ -42,7 +54,7 @@ const ui = mountShell({
 function setMode(id) {
   const m = byId(id) || MODES[0];
   if (mode && mode !== m && mode.leave) mode.leave();
-  mode = m; state.t = 0; if (m.reset) m.reset();
+  mode = m; state.t = 0; resetView(); if (m.reset) m.reset();
   set('mode', m.id);
   set('slow', m.defaults.slow);
   m.layout(W, H);
@@ -62,6 +74,7 @@ function resize() {
   grid = makeGrid(W, H, dpr);
   mode.layout(W, H);
   bus.emit('change', {key: 'layout'});
+  clampView(); scopeOn = scopeEl.offsetParent !== null && scope.resize();
   dirty = true;
 }
 
@@ -88,14 +101,17 @@ function draw(annotate) {
   if (!grid) return;
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.drawImage(grid, 0, 0);
-  ctx.setTransform(canvas.width / W, 0, 0, canvas.height / H, 0, 0);
+  const k = canvas.width / W;
+  ctx.setTransform(k * view.z, 0, 0, k * view.z, k * view.px, k * view.py);
   mode.draw(ctx, W, H);
   if (annotate && fx.a > 0) {
     ctx.globalAlpha = fx.a; fx.shadow = true;
     if (mode.annotate) mode.annotate(ctx, W, H);
+    ctx.setTransform(k, 0, 0, k, 0, 0);
     chip();
     fx.shadow = false; ctx.globalAlpha = 1;
   }
+  if (scopeOn) { scopeEl.hidden = !state.track; if (state.track) scope.draw(mode, state.t, !!annotate); }
 }
 
 function frame(ts) {
@@ -111,13 +127,41 @@ bus.on('change', e => {
   if (e.key === 'playing') { if (state.playing) fx.a = 0; else startFade(); }
   dirty = true;
 });
-// taps on the stage go to the current mode (only the em spectrum bar uses them)
+// stage pointer: tap → mode.pointer (inverse zoom transform); wheel / pinch zoom, drag pans, double-click resets
+const pts = new Map();
+let g0 = null;                                     // gesture start: {x, y, px, py, moved, d, z}
+const local = e => { const r = canvas.getBoundingClientRect(); return [(e.clientX - r.left) * (W / r.width), (e.clientY - r.top) * (H / r.height)]; };
+canvas.addEventListener('wheel', e => {
+  e.preventDefault(); const [x, y] = local(e);
+  zoomAt(x, y, view.z * Math.exp(-e.deltaY * (e.deltaMode ? 0.05 : 0.0016)));
+}, {passive: false});
+canvas.addEventListener('dblclick', resetView);
+zbtn.addEventListener('click', resetView);
 canvas.addEventListener('pointerdown', e => {
-  if (!mode.pointer || (e.button && e.button !== 0)) return;
-  const r = canvas.getBoundingClientRect();
-  mode.pointer((e.clientX - r.left) * (W / r.width), (e.clientY - r.top) * (H / r.height));
-  dirty = true;
+  if (e.button && e.button !== 0) return;
+  const [x, y] = local(e); pts.set(e.pointerId, [x, y]);
+  try { canvas.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ }
+  g0 = {x, y, px: view.px, py: view.py, moved: false, d: 0, z: view.z};
+  if (pts.size === 2) { const [a, b] = [...pts.values()]; g0.d = Math.hypot(a[0] - b[0], a[1] - b[1]) || 1; g0.moved = true; }
 });
+canvas.addEventListener('pointermove', e => {
+  if (!pts.has(e.pointerId) || !g0) return;
+  const [x, y] = local(e); pts.set(e.pointerId, [x, y]);
+  if (pts.size >= 2 && g0.d) {
+    const [a, b] = [...pts.values()], d = Math.hypot(a[0] - b[0], a[1] - b[1]);
+    zoomAt((a[0] + b[0]) / 2, (a[1] + b[1]) / 2, g0.z * d / g0.d); return;
+  }
+  if (!g0.moved && Math.hypot(x - g0.x, y - g0.y) < 6) return;
+  g0.moved = true;
+  if (view.z > 1) { view.px = g0.px + x - g0.x; view.py = g0.py + y - g0.y; clampView(); dirty = true; }
+});
+function up(e) {
+  if (!pts.has(e.pointerId)) return;
+  const tap = g0 && !g0.moved && pts.size === 1 && e.type === 'pointerup';
+  pts.delete(e.pointerId); if (pts.size === 0) { if (tap && mode.pointer) { const [x, y] = local(e); mode.pointer((x - view.px) / view.z, (y - view.py) / view.z); dirty = true; } g0 = null; }
+  else if (g0) { g0.moved = true; g0.d = 0; }
+}
+canvas.addEventListener('pointerup', up); canvas.addEventListener('pointercancel', up);
 addEventListener('keydown', e => {
   if (e.key === 'Escape') return;
   if (e.ctrlKey || e.metaKey || e.altKey) return;
@@ -134,7 +178,7 @@ if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { di
 
 if (calm) state.playing = false;
 fx.a = state.playing ? 0 : 1;
-window.__app = {play, pause, restart, setMode, get mode() { return mode.id; }, state};
+window.__app = {play, pause, restart, setMode, zoomAt: (z, x = W / 2, y = H / 2) => zoomAt(x, y, z), resetView, get mode() { return mode.id; }, state};
 if (/src=talker/.test(location.hash)) state.source = 'talker';   // checker / teacher link: #mode=sound&src=talker
 { const mm = /med=(air|water)/.exec(location.hash); if (mm) state.medium = mm[1]; }   // checker / teacher link: #mode=sound&med=water
 setMode(modeFromHash() || 'waves');

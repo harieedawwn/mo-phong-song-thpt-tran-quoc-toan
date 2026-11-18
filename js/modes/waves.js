@@ -247,7 +247,14 @@ function controls() {
   ];
 }
 
+// red element of the rope / spring at simulated time tt (same u for both lanes: ngang orange, dọc blue) – values / A
+const SC = {both: {kind: 't', colors: ['#e8590c', '#1c7ed6'], names: ['Sóng ngang', 'Sóng dọc']}, rope: {kind: 't', colors: ['#e8590c'], names: ['Sóng ngang']}, spring: {kind: 't', colors: ['#1c7ed6'], names: ['Sóng dọc']}};
+function probe(tt, out) {
+  const x = L.tI * L.dx, v = tt * wave.lamPx * wave.f >= x ? Math.sin(wave.w * tt - wave.k * x) : 0;
+  out[0] = v; out[1] = v;
+}
 export default {
+  probe, scope: () => { const o = SC[state.lane] || SC.both; o.T = () => 1 / state.tf; return o; },
   id: 'waves', title: 'Sóng ngang – Sóng dọc', short: 'Ngang – Dọc', icon: 'transverse',
   defaults: {slow: 1},
   metrics: () => ({f: state.tf, v: state.tv}),

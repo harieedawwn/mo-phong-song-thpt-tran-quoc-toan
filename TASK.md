@@ -93,12 +93,12 @@ Before: `node tools/shot.mjs before22 mode=sound --paused`.
 - [x] Paused: label "Sóng âm vào ống tai" + nén/giãn tint inside the canal too.
 - [x] Check: a compression reaches the drum exactly when it bulges inward (pause and look); ≥ 50 fps `--perf`.
 
-## Phase 23 – Vịt cao su + zoom bằng lăn chuột + mini-scope bên trái  `[ ]`  · Sonnet (Medium)
+## Phase 23 – Vịt cao su + zoom bằng lăn chuột + mini-scope bên trái  `[x]`  · Sonnet (Medium)
 SPEC §3.3 (duck), §4 (Left panel v4, Zoom v4). Files: `js/main.js`, `js/ui.js`, `css/style.css` (left column), `js/modes/surface.js` (grep `phao|buoy|float`), each mode's red-particle getter (grep `track`).
-- [ ] `art/duck.svg` (small cute yellow rubber duck, shaded, orange beak, eye highlight) replaces the phao: sits on the surface, follows the top particle's orbit, tilts with the local slope.
-- [ ] Zoom per SPEC §4 in `main.js` (wheel + pinch, drag pan, double-click / "1:1" button resets, clamp so the content never leaves the stage); EM band tap and the ear magnifier tap still hit correctly when zoomed.
-- [ ] Controls card shrinks to content; "Phần tử đỏ" mini-scope card below it (each mode exposes `probe()` → values for one sample; ring buffer, no allocation per frame); hidden on phones and when "Phần tử đỏ" is off.
-- [ ] Check: `--all --paused` 4 modes; zoom 3× on waves (springs readable) then reset; ≥ 50 fps `--perf`.
+- [x] `art/duck.svg` (small cute yellow rubber duck, shaded, orange beak, eye highlight) replaces the phao: sits on the surface, follows the top particle's orbit, tilts with the local slope.
+- [x] Zoom per SPEC §4 in `main.js` (wheel + pinch, drag pan, double-click / "1:1" button resets, clamp so the content never leaves the stage); EM band tap and the ear magnifier tap still hit correctly when zoomed.
+- [x] Controls card shrinks to content; "Phần tử đỏ" mini-scope card below it (each mode exposes `probe()` → values for one sample; ring buffer, no allocation per frame); hidden on phones and when "Phần tử đỏ" is off.
+- [x] Check: `--all --paused` 4 modes; zoom 3× on waves (springs readable) then reset; ≥ 50 fps `--perf`.
 
 ## Log
 <!-- one line per session: date · phase · what · numbers checked · hash -->
@@ -115,3 +115,4 @@ SPEC §3.3 (duck), §4 (Left panel v4, Zoom v4). Files: `js/main.js`, `js/ui.js`
 2026-11-18 · P20 · kính lúp tai to (đĩa Ø≈485 px ở 1366×768 = 75 % chiều cao sân khấu; đầu người nhỏ ≈ 18 %), ear.svg rasterise ở scale lớn, chạm đĩa / nút tròn kính lúp± / Esc / đổi chế độ = phóng to ↔ thu nhỏ (#zoom=1), nhãn 7 + Não (cột bên hoặc hàng trên/dưới), điện thoại dọc: đĩa dưới cột khí + gợi ý chạm, ngang: nửa phải · shot --all --paused exit 0, 440 Hz → λ=78,0 cm, --perf sound 56 fps · (hash ở commit)
 2026-11-18 · P21 · tab căn giữa trang, bỏ chip Làm chậm; sóng âm: bỏ Thép/Giọng nói/loa ngoài (speaker-out.svg); nước cùng px/m với không khí (λ 3,37 m vs 78,0 cm), màng đầu phát/máy thu phẳng với vỏ và phồng ở giữa; quỹ đạo sóng mặt nét đứt.
 2026-11-18 · P22 · thùng loa vẽ mặt cắt dày (vách gỗ vân, bo góc, tấm chắn trước, vít, chân cao su; chỉ màng+chụp bụi+cuộn dây chuyển động); ống tai trong kính lúp có 4 hàng bi × 6 cột chuyển động theo cùng u(x,t) (λ ống tai 64 đv, A=6, k·A=0,59 ≤ 0,8, cách màng nhĩ ≥ A+r+2,5), màng nhĩ phồng ∝ −∂u/∂x (nén tới màng ⇒ phồng vào), tô nén/giãn + nhãn "Sóng âm vào ống tai"; --perf sound 59,8 fps.
+2026-11-18 · P23 · art/duck.svg (vịt cao su vàng, bám mặt nước + nghiêng theo độ dốc, nhãn "Vịt cao su"); zoom 1×–4× trong main.js (lăn chuột/pinch/kéo/nhấn đúp/nút 1:1, pointer dùng phép biến đổi ngược; chạm dải em vẫn đúng khi 2×); thẻ điều khiển co theo nội dung + mini-scope "Phần tử đỏ" (js/scope.js; mỗi mode có probe(tt,out) tính theo thời gian, không đệm/không cấp phát; ẩn trên điện thoại) · --all --paused 4 chế độ exit 0, --perf waves 60,1 · sound 60,2 · surface 59,6 · em 60,1 fps · (hash ở commit)

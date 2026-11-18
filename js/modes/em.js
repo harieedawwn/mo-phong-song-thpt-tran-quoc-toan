@@ -239,7 +239,11 @@ function controls() {
   ];
 }
 
+// E and B at one point (in phase): period of the drawn wave = λ_px / drawn speed
+const SC_EM = {kind: 't', colors: ['#e8590c', '#1c7ed6'], names: ['Điện trường E', 'Từ trường B'], T: () => lamPx(state.band) / L.vis};
+function probe(tt, out) { const c = Math.cos(TAU * tt / SC_EM.T()); out[0] = c; out[1] = c; }
 export default {
+  probe, scope: () => SC_EM,
   id: 'em', title: 'Sóng điện từ', short: 'Sóng điện từ', icon: 'em',
   defaults: {slow: 1},
   metrics: () => ({f: BANDS[state.band].f, v: CC}),

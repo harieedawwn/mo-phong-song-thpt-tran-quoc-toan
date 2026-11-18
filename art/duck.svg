@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 56" width="64" height="56">
+  <defs>
+    <radialGradient id="bd" cx="38%" cy="30%" r="80%"><stop offset="0" stop-color="#fff3a0"/><stop offset=".55" stop-color="#ffd21f"/><stop offset="1" stop-color="#e29a00"/></radialGradient>
+    <radialGradient id="hd" cx="38%" cy="30%" r="80%"><stop offset="0" stop-color="#fff6b0"/><stop offset=".55" stop-color="#ffd926"/><stop offset="1" stop-color="#e8a300"/></radialGradient>
+    <linearGradient id="bk" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffa63a"/><stop offset="1" stop-color="#e5600f"/></linearGradient>
+    <linearGradient id="wg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffe45c"/><stop offset="1" stop-color="#e9a400"/></linearGradient>
+  </defs>
+  <!-- tail -->
+  <path d="M8 30 Q1 22 3 15 Q11 18 15 27 Z" fill="url(#bd)" stroke="#2b2f36" stroke-width="1.6" stroke-linejoin="round"/>
+  <!-- body -->
+  <path d="M6 33 C6 45 16 50 32 50 C48 50 56 43 54 33 C52 27 40 24 28 25 C16 26 6 27 6 33 Z" fill="url(#bd)" stroke="#2b2f36" stroke-width="1.8" stroke-linejoin="round"/>
+  <!-- wing -->
+  <path d="M15 33 C19 27 31 27 37 33 C34 41 22 43 15 33 Z" fill="url(#wg)" stroke="#2b2f36" stroke-width="1.4" stroke-linejoin="round"/>
+  <path d="M20 35 Q27 32 33 35" fill="none" stroke="#b97a00" stroke-width="1" stroke-linecap="round"/>
+  <!-- beak -->
+  <path d="M46 14 C54 12 62 15 62 19 C62 22 54 23 46 21 Z" fill="url(#bk)" stroke="#2b2f36" stroke-width="1.6" stroke-linejoin="round"/>
+  <path d="M48 18.5 Q55 19.5 60 18.6" fill="none" stroke="#9a3c05" stroke-width="1" stroke-linecap="round"/>
+  <!-- head -->
+  <circle cx="40" cy="15" r="12" fill="url(#hd)" stroke="#2b2f36" stroke-width="1.8"/>
+  <!-- eye + highlight, cheek -->
+  <circle cx="43.5" cy="11.5" r="2.6" fill="#1b1e23"/><circle cx="44.4" cy="10.6" r=".9" fill="#fff"/>
+  <ellipse cx="46" cy="17" rx="2.4" ry="1.6" fill="#ff9d6b" opacity=".6"/>
+  <path d="M33 8 Q37 4 42 5" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round" opacity=".75"/>
+  <!-- waterline anchor (bottom-centre of the body) -->
+  <circle class="anchor" id="a-water" cx="30" cy="44" r="0"/>
+</svg>

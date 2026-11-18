@@ -2,12 +2,16 @@
 //   φ = k·x₀ − ωt ;  ξ = −a·sin φ (ngang),  η = b·cos φ (đứng)  → clockwise on screen for a wave moving right.
 //   deep:    a = b = A·e^(−k·d)            shallow: a = A·cosh(k(h−d))/sinh(kh), b = A·sinh(k(h−d))/sinh(kh)
 // The surface line is drawn through the (displaced) top-row particles, so sharper crests / flatter troughs come out by themselves.
-import {state, set} from '../state.js';
+import {state, set, bus} from '../state.js';
 import {h, chip, toggle, slider, group, lab, seg, slowControl} from '../ui.js';
 import {lenParts, freqParts, slowText} from '../fmt.js';
 import {clamp, TAU} from '../physics.js';
 import {C, font, pill, text, arrow, ruler, head, textW} from '../draw/ink.js';
-import {ball, drawBall, BALL} from '../draw/ball.js';
+import {ball, drawBall, BALL, ballDpr} from '../draw/ball.js';
+import {loadArt} from '../art/sprite.js';
+
+const duck = loadArt('duck');      // rubber duck riding the surface (replaces the old phao)
+duck.ready.then(() => { bus.emit('change', {key: 'art'}); });
 
 const F_MIN = 0.2, F_MAX = 2, V_MIN = 0.5, V_MAX = 4, A_MAX = 10;
 const SHOW_M = 6;
@@ -40,6 +44,7 @@ function layout(w, hh) {
   L.cols = phone ? 20 : 30; L.rows = phone ? 8 : 10;
   L.dx = w / (L.cols - 0.5);
   L.r = phone ? 3.5 : 4.2; spr = null;
+  L.ds = (phone ? 38 : 50) / 64; duck.render(L.ds, ballDpr());
   L.amax = L.micro ? 14 : clamp(hh * 0.075, 14, 44);
   L.legend = L.micro ? 0 : 52;
   L.top0 = L.micro ? 10 : phone ? 100 : 78;           // room for ruler + crest labels
@@ -154,19 +159,16 @@ function drawInner(ctx) {
     }
   }
 
-  // --- phao (float): rides the surface point and its slope, returns to the same place
+  // --- rubber duck: rides the surface point and its slope, returns to the same place
   const xp = Math.round(cols * 0.7) * dx;
   if (!L.micro) {
     particle(xp, 0); const px = ox, py = oy;
     particle(xp - 6, 0); const ax = ox, ay = oy; particle(xp + 6, 0);
-    const ang = Math.atan2(oy - ay, ox - ax);
+    const ang = Math.atan2(oy - ay, ox - ax), wp = duck.pt('a-water') || {x: 30, y: 44};
     ctx.save(); ctx.translate(px, py); ctx.rotate(ang);
-    ctx.beginPath(); ctx.moveTo(-14, -2); ctx.lineTo(14, -2); ctx.lineTo(10, -12); ctx.lineTo(-10, -12); ctx.closePath();
-    ctx.fillStyle = '#fff'; ctx.fill(); ctx.lineWidth = 1.8; ctx.strokeStyle = C.ink; ctx.stroke();
-    ctx.fillStyle = C.red; ctx.fillRect(-6, -12, 12, 10); ctx.strokeRect(-6, -12, 12, 10);
+    duck.draw(ctx, -wp.x * L.ds, -wp.y * L.ds);
     ctx.restore();
   }
-
 }
 
 function readout() {
@@ -189,7 +191,7 @@ function annotate(ctx) {
   }
   if (L.micro) return;
   // phao
-  particle(xp, 0); pill(ctx, 'Phao', ox, oy - 30, {size: fs - 1});
+  particle(xp, 0); pill(ctx, 'Vịt cao su', ox, oy - 40, {size: fs - 1});
   // đỉnh sóng / hõm sóng
   const every = Math.max(1, Math.ceil(100 / lam));
   for (let m = 0; m < 40; m += every) {
@@ -243,7 +245,14 @@ function controls() {
   ];
 }
 
+// red top-row particle: orbit trace (ξ horizontal, ζ up), both ∈ [−1, 1] of its own amplitude
+const SC_SURF = {kind: 'xy', colors: ['#e03131'], T: () => 1 / state.sf};
+function probe(tt, out) {
+  const x0 = Z.tx0 || 0, e = clamp((P.lam * state.sf * tt - x0) / (P.lam * 0.75 || 1), 0, 1), ph = P.k * x0 - P.w * tt;
+  out[0] = -e * Math.sin(ph); out[1] = e * Math.cos(ph);
+}
 export default {
+  probe, scope: () => SC_SURF,
   id: 'surface', title: 'Sóng mặt', short: 'Sóng mặt', icon: 'surface',
   defaults: {slow: 1},
   metrics: () => ({f: state.sf, v: state.sv}),
