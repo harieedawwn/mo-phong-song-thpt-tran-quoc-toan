@@ -14,7 +14,6 @@ export const state = {
   t: 0,             // simulated physical time since the wave started (s)
   muted: true,      // sound off on first open; the speaker button turns it on
   track: true,
-  labels: false, ruler: false,   // legacy shim for em (rewritten in phase 14): main.js sets both = paused
   lane: 'both',     // waves: both | rope | spring
   // sóng dọc – sóng âm
   f: 440,           // Hz (real)
@@ -33,7 +32,7 @@ export const state = {
   deep: true,       // nước sâu | nước nông
   orbits: true,     // show orbit outlines of the tracked particles
   // sóng điện từ
-  band: 0,          // index into the 7 bands of Bảng 11.1
+  band: 6,          // index into the 7 bands of Bảng 11.1 (0 = gamma … 6 = vô tuyến, default)
   emE: true, emB: true, emArrows: true
 };
 export function set(key, value) { state[key] = value; bus.emit('change', {key, value}); }

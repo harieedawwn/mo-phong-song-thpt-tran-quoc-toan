@@ -20,8 +20,6 @@ let mode = MODES[0], W = 0, H = 0, grid = null, dirty = true, raf = 0, last = 0,
 const FADE = 250, calm = !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
 // annotations (annotate()) exist only while paused: fade in over 0,25 s after Pause, vanish at once on Play
 function startFade() { if (calm) fx.a = 1; else { fx.a = 0; fadeT0 = performance.now(); } }
-// legacy mode em still gates its labels on state.labels / state.ruler → "on" only while paused (until phase 14)
-function syncLegacy() { state.labels = state.ruler = !state.playing; }
 
 function play() { set('playing', true); }
 function pause() { set('playing', false); }
@@ -109,7 +107,7 @@ function frame(ts) {
 function startLoop() { cancelAnimationFrame(raf); last = performance.now(); raf = requestAnimationFrame(frame); }
 
 bus.on('change', e => {
-  if (e.key === 'playing') { syncLegacy(); if (state.playing) fx.a = 0; else startFade(); }
+  if (e.key === 'playing') { if (state.playing) fx.a = 0; else startFade(); }
   dirty = true;
 });
 // taps on the stage go to the current mode (only the em spectrum bar uses them)
@@ -134,7 +132,7 @@ document.addEventListener('visibilitychange', () => { if (document.hidden) cance
 if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { dirty = true; });
 
 if (calm) state.playing = false;
-syncLegacy(); fx.a = state.playing ? 0 : 1;
+fx.a = state.playing ? 0 : 1;
 window.__app = {play, pause, restart, setMode, get mode() { return mode.id; }, state};
 if (/src=talker/.test(location.hash)) state.source = 'talker';   // checker / teacher link: #mode=sound&src=talker
 setMode(modeFromHash() || 'waves');

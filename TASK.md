@@ -27,11 +27,11 @@ SPEC §2, §3.1, §6. Files: `js/modes/transverse.js` (reuse wave/rope logic), `
 - [x] Delete `transverse.js`; `git mv longitudinal.js sound.js` (id `sound`); tabs waves, sound, surface, em; aliases `transverse`→`waves`, `longitudinal`→`sound`; default `waves`.
 - [x] Check (`--all --paused`): f = 1 Hz, v = 2 m/s → λ = 2 m on both rulers; crowded beads exactly under "Vùng nén".
 
-## Phase 14 – Sóng điện từ  `[ ]`  · Sonnet (High)
+## Phase 14 – Sóng điện từ  `[x]`  · Sonnet (High)
 SPEC §2 table, §3.4. Files: `js/modes/em.js`, `js/state.js`.
-- [ ] BANDS gamma → vô tuyến, default vô tuyến; rounded 7-segment gradient bar, rainbow segment, short names, "bước sóng tăng →"; tap selects. Delete info card + band chips.
-- [ ] Arrow depth + faint E/B planes; all words in `annotate()`; chip shows band λ/f range + example.
-- [ ] Check: 100 MHz → 3 m, 2,45 GHz → 12,2 cm, 5·10¹⁴ Hz → 600 nm, 3·10²⁰ Hz → 1 pm; E and B maxima at the same x.
+- [x] BANDS gamma → vô tuyến, default vô tuyến; rounded 7-segment gradient bar, rainbow segment, short names, "bước sóng tăng →"; tap selects. Delete info card + band chips.
+- [x] Arrow depth + faint E/B planes; all words in `annotate()`; chip shows band λ/f range + example.
+- [x] Check: 100 MHz → 3 m, 2,45 GHz → 12,2 cm, 5·10¹⁴ Hz → 600 nm, 3·10²⁰ Hz → 1 pm; E and B maxima at the same x.
 
 ## Phase 15 – Loa thật + cột không khí đúng  `[ ]`  · Sonnet (High)
 SPEC §2, §3.2 (Loudspeaker, Air column), §5, §6. Files: `js/modes/sound.js` (speaker + air parts, grep), `js/art/sprite.js`, old `js/art/speaker.js` (delete after).
@@ -71,3 +71,4 @@ SPEC §3.3, §6. Files: grep first.
 2026-11-18 · P11 · bỏ panel phải/badges/chú thích/toggle, main.js annotate() chỉ khi dừng + chip số liệu, longitudinal+surface tách nhãn · --all --paused OK, λ=78,0 cm @440 Hz không khí, tên trường 1 dòng ở 5 cỡ · (hash ghi ở commit)
 2026-11-18 · P12 · ball.js (cầu 3D), nền lưới nhạt + vignette, nước gradient + đường mặt bóng + đáy gradient, pill đổ bóng khi dừng, sprite.js (đã thử tải/xoay layer, chưa dùng) · shot --all longitudinal+surface exit 0, r=4,2px desk / 3,5px phone · (hash ở commit)
 2026-11-18 · P13 · art/driver.svg (+ sprite.js: clipY, render trước khi tải), waves.js (dây + lò xo song song, máy rung đứng/nằm, trục O/x/u, k·A≤0,8), longitudinal→sound, bỏ transverse, tab waves/sound/surface/em + alias · shot --all --paused exit 0; f=1 Hz, v=2 m/s → λ=2 m cả hai thước, hạt dồn đúng dưới "Vùng nén"; lane rope/spring/both không lỗi · (hash ở commit)
+2026-11-18 · P14 · em.js: BANDS gamma→vô tuyến (mặc định vô tuyến), thanh phổ bo tròn 7 đoạn + gradient + cầu vồng, mũi tên viền tối + mặt phẳng E/B mờ, toàn bộ chữ trong annotate(), chip dòng 2 = dải; bỏ thẻ info + chip dải · shot desk/phone(+paused) exit 0; 100 MHz→3 m, 2,45 GHz→12,2 cm, 5·10¹⁴→600 nm, 3·10²⁰→1 pm · (hash ở commit)
