@@ -7,10 +7,22 @@ import {h, chip, toggle, slider, group, lab, seg, slowControl} from '../ui.js';
 import {lenParts, freqParts, slowText} from '../fmt.js';
 import {clamp, TAU} from '../physics.js';
 import {C, font, pill, text, arrow, ruler, head, textW} from '../draw/ink.js';
+import {ball, drawBall, BALL} from '../draw/ball.js';
 
 const F_MIN = 0.2, F_MAX = 2, V_MIN = 0.5, V_MAX = 4, A_MAX = 10;
 const SHOW_M = 6;
-const W1 = '#a5d8ff', W2 = '#74c0fc', W3 = '#4dabf7', WINK = '#1864ab', BED = '#e9dfc3';
+const WINK = '#1864ab', BED = '#e9dfc3';
+let wGrad = null, wKey = '', bGrad = null, bKey = '', spr = null;   // cached gradients (rebuilt only when the geometry changes) + sphere sprites
+function waterGrad(ctx, y0, y1) {
+  const k = y0.toFixed(1) + '|' + y1.toFixed(1);
+  if (k !== wKey || !wGrad) { wKey = k; wGrad = ctx.createLinearGradient(0, y0 - 30, 0, y1); wGrad.addColorStop(0, '#d0ebff'); wGrad.addColorStop(0.5, '#a5d8ff'); wGrad.addColorStop(1, '#74c0fc'); }
+  return wGrad;
+}
+function bedGrad(ctx, y0, y1) {
+  const k = y0.toFixed(1) + '|' + y1.toFixed(1);
+  if (k !== bKey || !bGrad) { bKey = k; bGrad = ctx.createLinearGradient(0, y0, 0, y1); bGrad.addColorStop(0, '#eadfc0'); bGrad.addColorStop(1, '#c9b78a'); }
+  return bGrad;
+}
 const L = {};
 const dec = (x, d = 3) => String(+x.toPrecision(d)).replace('.', ',');
 const fPos = f => Math.round(1000 * Math.log(f / F_MIN) / Math.log(F_MAX / F_MIN));
@@ -27,7 +39,7 @@ function layout(w, hh) {
   L.micro = hh < 300;
   L.cols = phone ? 20 : 30; L.rows = phone ? 8 : 10;
   L.dx = w / (L.cols - 0.5);
-  L.r = phone ? 3.2 : 3.8;
+  L.r = phone ? 3.5 : 4.2; spr = null;
   L.amax = L.micro ? 14 : clamp(hh * 0.075, 14, 44);
   L.legend = L.micro ? 0 : 52;
   L.top0 = L.micro ? 10 : phone ? 100 : 78;           // room for ruler + crest labels
@@ -97,17 +109,12 @@ function drawInner(ctx) {
   // deep water continues below the picture: fill to the stage bottom (no gap); shallow water ends on the bed
   const yBed = P.deep ? L.h + 2 : y0 + P.hd + 6;
 
-  // --- water body in 3 stepped blues (material lines at 1/3 and 2/3 of the depth)
-  const x1 = w - 3;
-  ctx.fillStyle = W1; ctx.beginPath(); curve(0, n); pathCurve(ctx, n, true);
+  // --- water body: one vertical gradient under the surface curve
+  ctx.fillStyle = waterGrad(ctx, y0, yBed); ctx.beginPath(); curve(0, n); pathCurve(ctx, n, true);
   ctx.lineTo(sx[n - 1], yBed); ctx.lineTo(sx[0], yBed); ctx.closePath(); ctx.fill();
-  for (const [f, col] of [[0.34, W2], [0.67, W3]]) {
-    ctx.fillStyle = col; ctx.beginPath(); curve(f * P.hd, n); pathCurve(ctx, n, true);
-    ctx.lineTo(sx[n - 1], yBed); ctx.lineTo(sx[0], yBed); ctx.closePath(); ctx.fill();
-  }
   // seabed / tank bottom
   if (!P.deep) {
-    ctx.fillStyle = BED; ctx.fillRect(0, yBed, w, L.h - yBed + 2);
+    ctx.fillStyle = bedGrad(ctx, yBed, L.h); ctx.fillRect(0, yBed, w, L.h - yBed + 2);
     ctx.strokeStyle = C.ink; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(0, yBed); ctx.lineTo(w, yBed); ctx.stroke();
     ctx.lineWidth = 1.2; ctx.strokeStyle = '#a08a62'; ctx.beginPath();
     for (let x = 14; x < w; x += 26) { ctx.moveTo(x, yBed + 6); ctx.lineTo(x - 7, yBed + 14); }
@@ -120,17 +127,18 @@ function drawInner(ctx) {
   for (const r of rowsT) { const rr = Math.min(rows - 1, r); if (tr.indexOf(rr) < 0) tr.push(rr); }
   Z.cols = cols; Z.rows = rows; Z.dx = dx; Z.dz = dz; Z.tx0 = tx0; Z.tr = tr; Z.xp = Math.round(cols * 0.7) * dx;
   const isT = (i, j) => state.track && i === tc && tr.indexOf(j) >= 0;
-  ctx.fillStyle = '#1f2933'; ctx.beginPath();
+  if (!spr) spr = [ball(BALL.blue, L.r), ball(BALL.red, L.r + 1.8)];
+  const sb = spr[0];
   for (let j = 0; j < rows; j++) for (let i = -1; i <= cols; i++) {
     if (isT(i, j)) continue;
     particle(i * dx, j * dz);
-    ctx.moveTo(ox + L.r, oy); ctx.arc(ox, oy, L.r, 0, TAU);
+    drawBall(ctx, sb, ox, oy);
   }
-  ctx.fill();
 
   // --- surface line through the top-row particles (dense Lagrangian curve – same formula, more points)
   curve(0, n);
-  ctx.strokeStyle = WINK; ctx.lineWidth = 3; ctx.beginPath(); pathCurve(ctx, n, true); ctx.stroke();
+  ctx.strokeStyle = WINK; ctx.lineWidth = 3.4; ctx.beginPath(); pathCurve(ctx, n, true); ctx.stroke();
+  ctx.save(); ctx.translate(0, -1.2); ctx.strokeStyle = 'rgba(255,255,255,.7)'; ctx.lineWidth = 1.1; ctx.beginPath(); pathCurve(ctx, n, true); ctx.stroke(); ctx.restore();   // glossy highlight
 
   // --- tracked column: VTCB tick, orbit, red particle, rotation arrow
   if (state.track) {
@@ -140,7 +148,7 @@ function drawInner(ctx) {
     }
     for (const j of tr) {
       particle(tx0, j * dz);
-      ctx.fillStyle = C.track; ctx.strokeStyle = C.ink; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(ox, oy, L.r + 1.8, 0, TAU); ctx.fill(); ctx.stroke();
+      drawBall(ctx, spr[1], ox, oy);
     }
   }
 

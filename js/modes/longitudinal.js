@@ -4,6 +4,7 @@ import {h, seg, chip, toggle, slider, group, lab, slowControl} from '../ui.js';
 import {lenParts, freqParts, slowText} from '../fmt.js';
 import {SPEED, MEDIUM, HEARING, clamp, describePitch, niceSlow, makeWave} from '../physics.js';
 import {C, font, pill, text, arrow, ruler, roundRect, textW} from '../draw/ink.js';
+import {ball, drawBall, BALL} from '../draw/ball.js';
 import {layoutLabels, drawLabels} from '../art/figure.js';
 import {makeSpeaker, SPK_RIM, SPK_NAMES, SPK_CAPS, SPK_LABELS} from '../art/speaker.js';
 import {makeTalker, TALK_W, TALK_H, MOUTH, TALK_NAMES, TALK_CAPS, TALK_LABELS} from '../art/talker.js';
@@ -27,6 +28,7 @@ const PHONE_LABELS = {ear: ['drum', 'cochlea', 'pinna', 'canal', 'canals'], talk
 const fitN = (ids, band) => ids.slice(0, Math.max(1, Math.min(ids.length, Math.floor((band - 30) / 23))));
 let labelKey = '';
 
+let spr = null;   // sphere sprites (blue, orange, pale, red), rebuilt after every layout / resize
 function layout(w, hh) {
   const phone = w < 600;
   L.w = w; L.h = hh; L.phone = phone; L.srcKey = state.source;
@@ -79,11 +81,11 @@ function layout(w, hh) {
     const se = fitS(earW / EAR_W, 134, 116);
     ear.s = se; ear.x = L.airR + 4; ear.y = cy - 134 * se;
   }
-  L.r = clamp(Math.min(L.dx, L.dy) * 0.24, 1.6, 3.4);
+  L.r = clamp(Math.min(L.dx, L.dy) * 0.3, 3, 4.4);
   L.trackCol = Math.round(L.cols * 0.27);
   restX = new Float32Array(L.cols);
   for (let i = 0; i < L.cols; i++) restX[i] = (i + 0.5) * L.dx;
-  rulerN = -1;
+  rulerN = -1; spr = null;
 }
 
 // recompute the drawn wave from the state (cheap, no allocation)
@@ -104,29 +106,33 @@ function draw(ctx) {
   const lam = wave.lamPx, cyc = wave.cycles(), front = wave.front;
   ctx.lineJoin = 'round'; ctx.lineCap = 'round';
 
-  // --- thin bar above the field: vùng nén (orange) / vùng giãn (blue), same formula as the dots
-  const by = fieldTop - 12;
-  for (const [col, sign] of [[C.comp, 1], [C.rare, -1]]) {
-    ctx.fillStyle = col; ctx.beginPath();
-    for (let i = 0; i < cols; i++) { const s = wave.s(restX[i]) * sign; if (s > TH) ctx.rect(airL + restX[i] - dx / 2, by - 3, dx + 0.5, 6); }
-    ctx.fill();
+  // --- paused only: faint nén / giãn column bands behind the particles + thin bar above the field (same formula as the particles)
+  const still = !state.playing;
+  if (still) {
+    const by = fieldTop - 12;
+    for (const [col, band, sign] of [[C.comp, 'rgba(232,89,12,.11)', 1], [C.rare, 'rgba(28,126,214,.09)', -1]]) {
+      ctx.fillStyle = band; ctx.beginPath();
+      for (let i = 0; i < cols; i++) { const s = wave.s(restX[i]) * sign; if (s > TH) ctx.rect(airL + restX[i] - dx / 2, fieldTop, dx, rows * dy); }
+      ctx.fill();
+      ctx.fillStyle = col; ctx.beginPath();
+      for (let i = 0; i < cols; i++) { const s = wave.s(restX[i]) * sign; if (s > TH) ctx.rect(airL + restX[i] - dx / 2, by - 3, dx + 0.5, 6); }
+      ctx.fill();
+    }
   }
 
-  // --- air dots: three flat colour batches (nén / bình thường / giãn)
-  for (let pass = 0; pass < 3; pass++) {
-    ctx.fillStyle = pass === 0 ? C.neutral : pass === 1 ? C.comp : C.rare;
-    ctx.beginPath();
+  // --- air spheres: uniform blue while running; paused → nén orange / giãn pale blue (one sprite per class, drawImage only)
+  if (!spr) spr = [ball(BALL.blue, r), ball(BALL.orange, r), ball(BALL.pale, r), ball(BALL.red, r + 1.8)];
+  const sprites = spr;
+  for (let pass = 0; pass < (still ? 3 : 1); pass++) {
+    const sp = sprites[pass];
     for (let i = 0; i < cols; i++) {
-      const s = wave.s(restX[i]), cls = s > TH ? 1 : s < -TH ? 2 : 0;
-      if (cls !== pass) continue;
+      if (still) { const s = wave.s(restX[i]), cls = s > TH ? 1 : s < -TH ? 2 : 0; if (cls !== pass) continue; }
       const x = airL + restX[i] + wave.u(restX[i]);
       for (let j = 0; j < rows; j++) {
         if (state.track && i === L.trackCol && j === rows - 1) continue;
-        const y = fieldTop + (j + 0.5) * dy;
-        ctx.moveTo(x + r, y); ctx.arc(x, y, r, 0, 6.2832);
+        drawBall(ctx, sp, x, fieldTop + (j + 0.5) * dy);
       }
     }
-    ctx.fill();
   }
 
   // --- one air layer outlined + tracked particle (red) with VTCB tick and ↔ arrow
@@ -135,8 +141,7 @@ function draw(ctx) {
     ctx.strokeStyle = C.ink2; ctx.lineWidth = 1.5;
     ctx.beginPath(); roundRect(ctx, x - dx * 0.46, fieldTop + 1, dx * 0.92, rows * dy - 2, 4); ctx.stroke();
     const yd = fieldTop + (rows - 0.5) * dy;
-    ctx.fillStyle = C.track; ctx.strokeStyle = C.ink; ctx.lineWidth = 1.2;
-    ctx.beginPath(); ctx.arc(x, yd, r + 1.6, 0, 6.2832); ctx.fill(); ctx.stroke();
+    drawBall(ctx, spr[3], x, yd);
   }
 
   drawArt(ctx);

@@ -2,6 +2,7 @@
 import {state, bus, set} from './state.js';
 import {mountShell} from './ui.js';
 import {makeGrid} from './draw/grid.js';
+import {setBallDpr} from './draw/ball.js';
 import {fx, C, font, textW, roundRect} from './draw/ink.js';
 import {freqParts, timeParts, lenParts, speedParts} from './fmt.js';
 import longitudinal from './modes/longitudinal.js';
@@ -57,6 +58,7 @@ function resize() {
   if (!W || !H) return;
   canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  setBallDpr(dpr);
   grid = makeGrid(W, H, dpr);
   mode.layout(W, H);
   bus.emit('change', {key: 'layout'});
@@ -89,10 +91,10 @@ function draw(annotate) {
   ctx.setTransform(canvas.width / W, 0, 0, canvas.height / H, 0, 0);
   mode.draw(ctx, W, H);
   if (annotate && fx.a > 0) {
-    ctx.globalAlpha = fx.a;
+    ctx.globalAlpha = fx.a; fx.shadow = true;
     if (mode.annotate) mode.annotate(ctx, W, H);
     chip();
-    ctx.globalAlpha = 1;
+    fx.shadow = false; ctx.globalAlpha = 1;
   }
 }
 

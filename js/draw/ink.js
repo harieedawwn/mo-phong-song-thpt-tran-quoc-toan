@@ -1,4 +1,4 @@
-// Shared flat drawing helpers: palette, fonts, pills (labels), arrows, rulers. No gradients, no shadows.
+// Shared drawing helpers: palette, fonts, pills (labels), arrows, rulers. Pill shadows only while fx.shadow (annotation frames, i.e. paused).
 export const C = {
   ink: '#15181d', ink2: '#2b2f36', muted: '#5d6470', line: '#ddd8cc', paper: '#fbfaf6',
   comp: '#e8590c', rare: '#1c7ed6', neutral: '#495057', track: '#d7191f', red: '#d7191f'
@@ -6,7 +6,7 @@ export const C = {
 export const UI = '"Be Vietnam Pro",system-ui,sans-serif', MONO = '"JetBrains Mono",ui-monospace,monospace';
 export const font = (size, weight = 700, mono = false) => weight + ' ' + size + 'px ' + (mono ? MONO : UI);
 // annotation opacity: main.js ramps it 0 → 1 over 0,25 s after Pause and applies it as globalAlpha around annotate()
-export const fx = {a: 1};
+export const fx = {a: 1, shadow: false};
 
 const widths = new Map();
 export function textW(ctx, text) {
@@ -25,7 +25,9 @@ export function pill(ctx, text, x, y, {size = 12, fill = '#fff', stroke = C.ink,
   ctx.font = font(size, weight, mono);
   const w = textW(ctx, text) + pad * 2, h = size + 9;
   ctx.beginPath(); roundRect(ctx, x - w / 2, y - h / 2, w, h, 6);
-  ctx.fillStyle = fill; ctx.fill();
+  ctx.fillStyle = fill;
+  if (fx.shadow && fill !== 'transparent' && stroke) { ctx.shadowColor = 'rgba(30,24,10,.22)'; ctx.shadowBlur = 6; ctx.shadowOffsetY = 2; ctx.fill(); ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0; ctx.shadowOffsetY = 0; }
+  else ctx.fill();
   if (stroke) { ctx.lineWidth = 1.5; ctx.strokeStyle = stroke; ctx.stroke(); }
   ctx.fillStyle = color; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   ctx.fillText(text, x, y + 0.5);

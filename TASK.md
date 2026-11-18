@@ -12,13 +12,13 @@ SPEC §1, §4, §6 (mode interface), §3.2/§3.3 pause lists. Files: `index.html
 - [x] School name one line at all sizes (`nowrap` + `clamp()`), no page scrollbar, help ≤ 5 bullets.
 - [x] Check (`--all --paused`, modes longitudinal + surface): running = no text but axis letters; paused labels don't overlap; chip shows λ = 78,0 cm at 440 Hz air.
 
-## Phase 12 – Hạt cầu 3D + nền + bộ nạp SVG  `[ ]`  · Sonnet (High)
+## Phase 12 – Hạt cầu 3D + nền + bộ nạp SVG  `[x]`  · Sonnet (High)
 SPEC §5, §6 (ball.js, sprite.js, SVG rules). Files: `js/draw/*.js`, `js/main.js`, particle parts of `longitudinal.js`, `surface.js` (grep).
-- [ ] `js/draw/ball.js` sphere sprite cache; spheres for air + surface particles; pills soft shadow (paused only).
-- [ ] Sound particles uniform blue while running; paused → tinted nén/giãn bands from `wave.s`.
-- [ ] Surface: water vertical gradient, glossy surface line, shallow bed gradient. Grid canvas: lighter lines + baked vignette.
-- [ ] Write `js/art/sprite.js` per SPEC §6 (not used yet – verified in Phase 13; only `node --check` now).
-- [ ] Check before/after for both modes.
+- [x] `js/draw/ball.js` sphere sprite cache; spheres for air + surface particles; pills soft shadow (paused only).
+- [x] Sound particles uniform blue while running; paused → tinted nén/giãn bands from `wave.s`.
+- [x] Surface: water vertical gradient, glossy surface line, shallow bed gradient. Grid canvas: lighter lines + baked vignette.
+- [x] Write `js/art/sprite.js` per SPEC §6 (not used yet – verified in Phase 13; only `node --check` now).
+- [x] Check before/after for both modes.
 
 ## Phase 13 – Tab "Sóng ngang – Sóng dọc" + máy rung + trục Ox  `[ ]`  · Sonnet (High)
 SPEC §2, §3.1, §6. Files: `js/modes/transverse.js` (reuse wave/rope logic), `js/main.js`, `js/ui.js` (tabs), `js/art/sprite.js`, `js/draw/ball.js`.
@@ -69,3 +69,4 @@ SPEC §3.3, §6. Files: grep first.
 ## Log
 <!-- one line per session: date · phase · what · numbers checked · hash -->
 2026-11-18 · P11 · bỏ panel phải/badges/chú thích/toggle, main.js annotate() chỉ khi dừng + chip số liệu, longitudinal+surface tách nhãn · --all --paused OK, λ=78,0 cm @440 Hz không khí, tên trường 1 dòng ở 5 cỡ · (hash ghi ở commit)
+2026-11-18 · P12 · ball.js (cầu 3D), nền lưới nhạt + vignette, nước gradient + đường mặt bóng + đáy gradient, pill đổ bóng khi dừng, sprite.js (đã thử tải/xoay layer, chưa dùng) · shot --all longitudinal+surface exit 0, r=4,2px desk / 3,5px phone · (hash ở commit)
