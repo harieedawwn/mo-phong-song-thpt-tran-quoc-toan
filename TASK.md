@@ -66,6 +66,17 @@ SPEC §3.3, §6. Files: grep first.
 - [x] `--all --paused` for 4 modes (open only flagged viewports + desk/phone/paused); dead code/CSS removed (grep `features|badges|hover|#info|metrics`).
 - [x] Update `CLAUDE.md` code map + `README.md` (Vietnamese); `version.json` phase "v3"; full deploy check (5 retries). Report: link + 3 lines + what to test in Zalo.
 
+## Phase 20 – Phóng to tai (kính lúp to, nhìn rõ từng bộ phận)  `[ ]`  · Sonnet (High)
+Owner: the ear cross-section is far too small to tell the parts apart; the listener head matters much less.
+SPEC §3.2 (receiver), §6. Files: ear/receiver layout + draw parts of `js/modes/sound.js` (grep `ear`, `head`, `layout`), `js/art/sprite.js` (only if needed), `art/ear.svg` (only if a part looks bad when large).
+Before: `node tools/shot.mjs before20 mode=sound --paused --all`.
+- [ ] Re-balance the stage in air mode: listener head becomes small (≈ 15–20 % of stage height, just a context cue next to the air column end); the magnifier circle becomes the main receiver: diameter ≈ 70–80 % of the stage height on desktop (cap so source + air column keep ≥ 45 % of the width), handle and ring scale with it. Air column still ends at the head's ear canal.
+- [ ] Rasterise `ear.svg` layers at the new large scale (`scale·dpr`, re-render on resize only) so it stays sharp; moving parts (eardrum, ossicles, nerve pulses) scale with it and stay synced.
+- [ ] Tap/click on the magnifier toggles **"phóng to"**: the ear cut fills the stage (air column and source hidden, wave keeps driving the eardrum), tap again / Esc / switching mode returns. One small round icon button (magnifier +/−) on the circle so touch users find it; no text while running.
+- [ ] Paused labels (≤ 7) re-laid out for the big circle: font ≥ 13 px desktop / 12 px phone, leaders outside the circle, never crossing; in "phóng to" all 7 + "Não".
+- [ ] Phone portrait: magnifier full stage width under the air column; phone landscape: right half of the stage. If a part is unclear at large size (e.g. ossicles, oval window, round window), refine that part in `ear.svg` (≤ 1 round, `--page` shot).
+- [ ] Check (`--all --paused`): at 1366×768 the circle diameter ≥ 450 px, each ossicle clearly distinguishable; 440 Hz air → λ = 78,0 cm; ≥ 50 fps with `--perf` in sound mode.
+
 ## Log
 <!-- one line per session: date · phase · what · numbers checked · hash -->
 2026-11-18 · P11 · bỏ panel phải/badges/chú thích/toggle, main.js annotate() chỉ khi dừng + chip số liệu, longitudinal+surface tách nhãn · --all --paused OK, λ=78,0 cm @440 Hz không khí, tên trường 1 dòng ở 5 cỡ · (hash ghi ở commit)
