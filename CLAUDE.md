@@ -4,7 +4,7 @@
 **Canvas 2D + SVG art files, no libraries, no build step**. Deployed by GitHub Pages on every push to `main`
 (`.github/workflows/pages.yml` uploads the whole folder). Live: https://harieedawwn.github.io/mo-phong-song-thpt-tran-quoc-toan/
 
-Current work = **v3 rebuild** (big clean stage, labels only when paused, 3D-looking spheres and shaded SVG art).
+v3 rebuild = **finished (Phase 19)**; any new work = new phase in `TASK.md`. Was: **v3 rebuild** (big clean stage, labels only when paused, 3D-looking spheres and shaded SVG art).
 `SPEC.md` = what to build, `TASK.md` = phases. Work on exactly **one phase per session**.
 
 ## Session routine (the owner pastes a short prompt; this is the full procedure)
@@ -27,15 +27,15 @@ Current work = **v3 rebuild** (big clean stage, labels only when paused, 3D-look
 - Edit in place; never rewrite or print whole files that only need a few changes. No refactors outside the phase.
 - While drawing SVG art, iterate with `--page=art/<file>.svg` shots (1 image) instead of full-app shots (several images).
 
-## Code map (v3 target – some files appear during the phases)
+## Code map (v3 – finished)
 - `index.html`, `css/style.css` (phone layouts at the end), `fonts/` – shell, header, left panel, stage.
 - `js/main.js` – loop, resize/DPR, mode routing (`#mode=` + aliases), calls `draw` every frame and `annotate` only when paused, `window.__app`.
 - `js/state.js` – store + bus. `js/ui.js` – DOM helpers, controls, tabs, toolbar, help, play button. `js/fmt.js` – Vietnamese numbers.
 - `js/physics.js` – `makeWave()`, speeds, pitch text. `js/audio.js` – WebAudio (muted by default).
 - `js/modes/` – `waves.js` (sóng ngang + sóng dọc), `sound.js` (sóng âm), `surface.js` (sóng mặt), `em.js` (sóng điện từ).
 - `js/draw/` – `grid.js` (paper background), `ink.js` (pills, arrows, rulers, `fx.a`), `ball.js` (3D sphere sprites).
-- `js/art/sprite.js` – loads `art/*.svg`, splits `data-move` layers, rasterises once per resize. `art/` – driver, speaker, transducer, ear, talker SVGs.
-- `tools/` – `serve.mjs`, `shot.mjs` (checker).
+- `js/art/sprite.js` – loads `art/*.svg`, splits `data-move` layers, rasterises once per resize and crops each layer to its painted box (per frame = small drawImage only). `art/` – driver, speaker, speaker-out, transducer, head, talker, ear SVGs.
+- `tools/` – `serve.mjs`, `shot.mjs` (checker; `--perf` = 4× CPU throttle, 390×844, fps of each mode, must be ≥ 50).
 
 ## Hard rules
 - **User-facing text is Vietnamese** (correct diacritics). Reports to the owner: Vietnamese, short. Code/comments: English.
@@ -53,6 +53,7 @@ Current work = **v3 rebuild** (big clean stage, labels only when paused, 3D-look
 ```bash
 node tools/serve.mjs &                          # http://localhost:8765/mo-phong-song-thpt-tran-quoc-toan/
 node tools/shot.mjs <name> [hash] [--all] [--paused]   # shots/<name>-<vp>[-paused].png; exit 1 on errors / 404 / scrollbars / school name wrap
+node tools/shot.mjs p --perf                     # fps per mode on a throttled phone, exit 1 if < 50
 node tools/shot.mjs <name> --page=art/ear.svg   # one SVG (or any repo file) alone, 900×700
 # first time: cd tools && npm i && npx playwright install chromium   (if the download fails, shot.mjs falls back to any installed Chromium; or CHROME=/path)
 find js -name '*.js' -exec node --check {} \;   # syntax check

@@ -7,6 +7,7 @@
 //   --all        also shoot 1280x720, 360x740 and phone landscape 844x390
 //   --paused     after the wave has run, press Pause and shoot again as <name>-<viewport>-paused.png (annotations visible)
 //   --page=<p>   open a repo file instead of the app (e.g. --page=art/ear.svg) and shoot it alone at 900x700 on white
+//   --perf       no shots: 390x844 phone, CPU throttled x4, average fps over 5 s for each of the 4 modes (waves, sound, surface, em); exit 1 if any < 50
 // Requires the server: node tools/serve.mjs  (port 8765).
 // Exit code 1 on console errors / 4xx / page errors / a panel that needs scrolling / any page scrollbar (all viewports).
 import {createRequire} from 'node:module';
@@ -45,6 +46,29 @@ catch (e) {
   const exe = findChrome();
   if (!exe) { console.error('No Chromium found. Run: cd tools && npx playwright install chromium  (or set CHROME=/path/to/chrome)'); process.exit(2); }
   browser = await chromium.launch({executablePath: exe});
+}
+
+if (args.includes('--perf')) {
+  const bad = [];
+  for (const mode of ['waves', 'sound', 'surface', 'em']) {
+    const ctx = await browser.newContext({viewport: {width: 390, height: 844}, isMobile: true, hasTouch: true, deviceScaleFactor: 2});
+    const page = await ctx.newPage();
+    const cdp = await ctx.newCDPSession(page);
+    await cdp.send('Emulation.setCPUThrottlingRate', {rate: 4});
+    await page.goto(BASE + '#mode=' + mode, {waitUntil: 'load'});
+    await page.waitForTimeout(1500);
+    await page.evaluate(() => window.__app?.play?.());
+    const fps = await page.evaluate(() => new Promise(res => {
+      let n = 0; const t0 = performance.now();
+      const tick = t => { n++; if (t - t0 < 5000) requestAnimationFrame(tick); else res(n / ((t - t0) / 1000)); };
+      requestAnimationFrame(tick);
+    }));
+    console.log(`perf ${mode}: ${fps.toFixed(1)} fps (CPU x4, 390x844)`);
+    if (fps < 50) bad.push(mode);
+    await ctx.close();
+  }
+  await browser.close();
+  process.exit(bad.length ? 1 : 0);
 }
 
 const VPS = pageArg ? [['page', 900, 700, false]] : [['desk', 1366, 768, false], ['phone', 390, 844, true]];

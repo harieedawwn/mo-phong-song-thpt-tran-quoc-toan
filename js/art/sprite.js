@@ -34,12 +34,22 @@ export function loadArt(name) {
       if (!this.layers.length) { this.pending = {scale, dpr}; return; }   // called before the SVG is decoded: redo once it is ready
       this.scale = scale; this.dpr = dpr;
       const pw = Math.max(1, Math.ceil(this.w * scale * dpr)), ph = Math.max(1, Math.ceil(this.h * scale * dpr));
+      const tmp = this.tmp || (this.tmp = document.createElement('canvas'));
+      tmp.width = pw; tmp.height = ph;
+      const tg = tmp.getContext('2d', {willReadFrequently: true}), fx = this.w * scale / pw, fy = this.h * scale / ph;
       for (const L of this.layers) {
+        tg.clearRect(0, 0, pw, ph); tg.drawImage(L.img, 0, 0, pw, ph);
+        // crop to the painted area once per resize: per frame only that (often small) rectangle is blitted
+        const d = tg.getImageData(0, 0, pw, ph).data;
+        let x0 = pw, y0 = ph, x1 = -1, y1 = -1;
+        for (let y = 0, i = 3; y < ph; y++) for (let x = 0; x < pw; x++, i += 4) if (d[i]) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+        if (x1 < 0) { x0 = y0 = 0; x1 = y1 = 0; }
+        x0 = Math.max(0, x0 - 1); y0 = Math.max(0, y0 - 1); x1 = Math.min(pw - 1, x1 + 1); y1 = Math.min(ph - 1, y1 + 1);
+        const bw = x1 - x0 + 1, bh = y1 - y0 + 1;
         if (!L.c) L.c = document.createElement('canvas');
-        L.c.width = pw; L.c.height = ph;
-        const g = L.c.getContext('2d');
-        g.clearRect(0, 0, pw, ph);
-        g.drawImage(L.img, 0, 0, pw, ph);
+        L.c.width = bw; L.c.height = bh;
+        L.c.getContext('2d').drawImage(tmp, -x0, -y0);
+        L.cx = x0 * fx; L.cy = y0 * fy; L.cw = bw * fx; L.ch = bh * fy;      // crop rectangle in CSS px relative to the art's top-left
       }
     },
     // x, y = top-left of the art on the stage (CSS px); dx/dy are design units, rot in radians, sx / sy = horizontal / vertical scale about the pivot,
@@ -52,13 +62,13 @@ export function loadArt(name) {
       }
       for (const L of this.layers) {
         const m = L.move && moves && moves[L.id];
-        if (!L.move || !m) { ctx.drawImage(L.c, x, y, w, h); continue; }
+        if (!L.move || !m) { ctx.drawImage(L.c, x + L.cx, y + L.cy, L.cw, L.ch); continue; }
         ctx.save();
         if (m.clipY != null) { ctx.beginPath(); ctx.rect(x - 1e4, y - 1e4, 2e4, 1e4 + m.clipY * s); ctx.clip(); }
         ctx.translate(x + (L.px + (m.dx || 0)) * s, y + (L.py + (m.dy || 0)) * s);
         if (m.rot) ctx.rotate(m.rot);
         if ((m.sx && m.sx !== 1) || (m.sy && m.sy !== 1)) ctx.scale(m.sx || 1, m.sy || 1);
-        ctx.drawImage(L.c, -L.px * s, -L.py * s, w, h);
+        ctx.drawImage(L.c, -L.px * s + L.cx, -L.py * s + L.cy, L.cw, L.ch);
         ctx.restore();
       }
     }

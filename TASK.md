@@ -59,12 +59,12 @@ SPEC §3.2 (receiver, ear labels), §5, §6. Look at `docs/ref/web/ear-anatomy.p
 - [x] `art/ear.svg`: magnifier ring + circular coronal cut (skin, temporal bone, pinna, S-canal, eardrum `data-move`, malleus/incus/stapes `data-move` + pivots, cavity, Eustachian tube, cochlea 2,5 turns, 3 canals, vestibule, nerve with pulse anchors); listener = `head.svg` mirrored/scaled.
 - [x] Motion from the pressure at the canal; nerve pulses; paused ≤ 7 labels, leaders never cross; phone layout. Max 2 drawing rounds (`--page` shots).
 
-## Phase 19 – Sóng mặt + điện thoại/Zalo + hiệu năng + dọn dẹp  `[ ]`  · Sonnet (High)
+## Phase 19 – Sóng mặt + điện thoại/Zalo + hiệu năng + dọn dẹp  `[x]`  · Sonnet (High)
 SPEC §3.3, §6. Files: grep first.
-- [ ] Surface check (clockwise, no drift, radius at depth λ/2 ≈ 4,3 %), paused annotations complete.
-- [ ] `tools/shot.mjs --perf` (CDP `Emulation.setCPUThrottlingRate` 4, avg fps 5 s per mode at 390×844); all modes ≥ 50 fps.
-- [ ] `--all --paused` for 4 modes (open only flagged viewports + desk/phone/paused); dead code/CSS removed (grep `features|badges|hover|#info|metrics`).
-- [ ] Update `CLAUDE.md` code map + `README.md` (Vietnamese); `version.json` phase "v3"; full deploy check (5 retries). Report: link + 3 lines + what to test in Zalo.
+- [x] Surface check (clockwise, no drift, radius at depth λ/2 ≈ 4,3 %), paused annotations complete.
+- [x] `tools/shot.mjs --perf` (CDP `Emulation.setCPUThrottlingRate` 4, avg fps 5 s per mode at 390×844); all modes ≥ 50 fps.
+- [x] `--all --paused` for 4 modes (open only flagged viewports + desk/phone/paused); dead code/CSS removed (grep `features|badges|hover|#info|metrics`).
+- [x] Update `CLAUDE.md` code map + `README.md` (Vietnamese); `version.json` phase "v3"; full deploy check (5 retries). Report: link + 3 lines + what to test in Zalo.
 
 ## Log
 <!-- one line per session: date · phase · what · numbers checked · hash -->
@@ -77,3 +77,4 @@ SPEC §3.3, §6. Files: grep first.
 2026-11-18 · P16 · art/transducer.svg (vỏ kim loại, gốm áp điện, lớp động `face`), bể nước kính + nước gradient / thanh thép kẹp 2 kẹp chữ C trên bàn (nướng sẵn thành canvas, thanh thép cắt theo mặt rung nên không hở), đầu phát trái + máy thu lật gương phải, hạt thép xám + liên kết mạng tinh thể, chip nguồn/“xem bên trong loa” chỉ hiện ở không khí, `#med=water|steel` (main.js), 1 bullet trợ giúp · shot --all --paused exit 0 (nước + thép: desk, desk720, phone, phone360, phoneLand); nước 440 Hz → λ=3,37 m, thép 440 Hz → 13,5 m (4 kHz → 1,49 m = 5960/4000) · (hash ở commit)
 2026-11-18 · P17 · art/head.svg (đầu người nhìn nghiêng: da gradient, tóc, tai, mắt) + art/talker.svg (cửa sổ cắt dọc: khoang mũi + xoăn mũi, vòm cứng/mềm, lưỡi, răng, môi, khoang miệng, họng, nắp thanh quản, thanh quản + sụn, khí quản, đốt sống cổ, tuỷ; lớp động `folds` rung theo u(0,t) – sprite.js thêm `sy`), cột khí trước môi cao 108 đv (7 hàng desk, loa 8), nhãn 5 (phone 3); talker.js xoá (đầu cũ chuyển tạm vào ear.js đến P18) · shot --all --paused exit 0, λ=78,0 cm @440 Hz, loa không đổi · (hash ở commit)
 2026-11-18 · P18 · art/ear.svg (kính lúp: viền kim loại + cán, mặt cắt đứng ngang: da, mô mỡ, cơ thái dương, não + màng cứng, xương thái dương có vân xương + tế bào chũm, vành tai + dái tai có sụn, ống tai chữ S + lông, màng nhĩ/xương búa/đe/bàn đạp `data-move` + trục, hòm nhĩ, vòi nhĩ, ốc tai 2,5 vòng, 3 ống bán khuyên, tiền đình, dây thần kinh + 4 neo xung), người nghe = head.svg lật gương + vòng chú thích; màng nhĩ theo u tại ống tai, búa–đe quay quanh 1 trục, bàn đạp = đòn bẩy 26/37; nhãn chuyển sang sprite.js + gỡ chéo đường dẫn; xoá ear.js, figure.js · shot --all --paused exit 0, 7 nhãn desk / 5 phone, không đường dẫn cắt, ear.svg 36 KB · (hash ở commit)
+2026-11-18 · P19 · sprite.js cắt mỗi lớp SVG theo vùng có nét vẽ (sóng âm trên điện thoại 39→53 fps), shot.mjs --perf, sóng mặt kiểm bằng công thức (thuận chiều kim đồng hồ, không trôi, a(λ/2)=4,32 %), README/CLAUDE.md cập nhật; không còn mã chết (hover CSS chỉ là hiệu ứng, metrics() là giao diện mode) · --all --paused 4 chế độ exit 0, perf (CPU×4, 390×844) waves 58,9 · sound 53,1 · surface 51,9 · em 51,3 fps · (hash ở commit)
