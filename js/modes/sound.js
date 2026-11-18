@@ -90,53 +90,91 @@ const talkLabels = () => TALK_LAB.map(([id, t, a, fx, fy, side, row]) => { const
 // cochlea, semicircular canals, nerve). Composite design box EAR_W × EAR_H; the canal axis (y = EAR_AX) is the air column's centre line.
 const headArt = loadArt('head'), earArt = loadArt('ear');
 for (const a of [headArt, earArt]) a.ready.then(() => { labelKey = ''; bus.emit('change', {key: 'art'}); });
-const EAR_W = 300, EAR_H = 262, EAR_AX = 134;
-const HD = {s: 0.5, x: 0, y: 40, w: 232, ex: 99.2, ey: 123.5};          // head.svg in the composite (mirrored); ex/ey = its ear (a-ear)
-const ES = 0.98, EX = 188 - 148 * ES, EY = EAR_AX - 116 * ES;          // ear.svg disc centre (148,116) → composite (188, EAR_AX)
+// Composite (design units = px at s = 1): small listener head on the left, big magnifier disc (ear.svg scaled by ES) on the right.
+const ES = 2.05, RB = 113.2 * ES;                                       // ES = ear.svg → composite scale; RB = bezel outer radius
+const HD = {s: 0.38, x: 0, y: 0, w: 232, ex: 99.2, ey: 123.5};          // head.svg in the composite (mirrored); ex/ey = its ear (a-ear)
+const HX = (HD.w - HD.ex) * HD.s;                                        // head's ear x (mirrored)
+const CX = HX + 8 + 113 * ES;                                           // disc centre x: its left edge sits just right of the head's ear
+const EAR_AX = RB + 4;                                                  // disc centre y = canal axis = centre line of the air column
+HD.y = EAR_AX - 188 * HD.s;                                             // the air column meets the face at nose / mouth level
+const EAR_W = CX + RB + 3, EAR_H = EAR_AX + 125 * ES + 6;
+const EX = CX - 148 * ES, EY = EAR_AX - 116 * ES;                       // ear.svg origin in the composite (disc centre 148,116)
 const earPt = (id, fx, fy) => { const p = earArt.pt(id) || {x: fx, y: fy}; return {x: EX + p.x * ES, y: EY + p.y * ES}; };
 // lens callout: small ring round the head's ear + the two outer tangents to the bezel (composite units, computed once)
 const CALL = (() => {
-  const ex = HD.x + (HD.w - HD.ex) * HD.s, ey = HD.y + HD.ey * HD.s, cx = 188, cy = EAR_AX, r1 = 7, r2 = 113 * ES;
+  const ex = HX, ey = HD.y + HD.ey * HD.s, cx = CX, cy = EAR_AX, r1 = 5, r2 = 113 * ES;
   const phi = Math.atan2(cy - ey, cx - ex), be = Math.acos((r1 - r2) / Math.hypot(cx - ex, cy - ey));
   return {ex, ey, r1, t: [phi + be, phi - be].map(a => [ex + r1 * Math.cos(a), ey + r1 * Math.sin(a), cx + r2 * Math.cos(a), cy + r2 * Math.sin(a)])};
 })();
 const EAR_MV = {drum: {dx: 0}, malleus: {rot: 0}, incus: {rot: 0}, stapes: {dx: 0}};   // reused every frame (no allocation)
 const NV = new Float32Array([216, 145, 230, 139, 244, 133.4, 254, 129.6]);          // nerve centre line a-n0…a-n3 (ear.svg units)
 earArt.ready.then(() => { for (let i = 0; i < 4; i++) { const p = earArt.pt('a-n' + i); if (p) { NV[i * 2] = p.x; NV[i * 2 + 1] = p.y; } } });
+// "phóng to": the disc alone fills the stage (air column + source hidden; the wave keeps driving the eardrum)
+let zoom = false;
+try { zoom = /zoom=1/.test(location.hash); } catch (e) { /* in-app browsers may refuse */ }   // #zoom=1 opens the big view (checker)
 const ear = {
-  w: EAR_W, h: EAR_H, x: 0, y: 0, s: 1,
-  place(x, y, bw, bh, ax = 0.5, ay = 0.5) { const s = Math.min(bw / EAR_W, bh / EAR_H); this.s = s; this.x = x + (bw - EAR_W * s) * ax; this.y = y + (bh - EAR_H * s) * ay; },
+  w: EAR_W, h: EAR_H, x: 0, y: 0, s: 1, nrm: {x: 0, y: 0, s: 1}, zm: {x: 0, y: 0, s: 1, side: true},
+  place(x, y, bw, bh, ax = 0.5, ay = 0.5) { const s = Math.min(bw / EAR_W, bh / EAR_H); this.nrm = {x: x + (bw - EAR_W * s) * ax, y: y + (bh - EAR_H * s) * ay, s}; this.use(); },
+  use() { const p = zoom ? this.zm : this.nrm; this.x = p.x; this.y = p.y; this.s = p.s; },
   px(dx, dy) { return [this.x + dx * this.s, this.y + dy * this.s]; },
+  disc() { return {x: this.x + CX * this.s, y: this.y + EAR_AX * this.s, r: RB * this.s}; },
   // d = umbo displacement in ear.svg units (+ = into the middle ear, same sign as the air displacement u at the canal);
   // phase = nerve-pulse phase 0…1, −1 while the wave has not reached the ear
   draw(ctx, d, phase) {
     const s = this.s, dpr = ballDpr(), X = this.x, Y = this.y;
-    if (headArt.scale !== s * HD.s || headArt.dpr !== dpr) headArt.render(s * HD.s, dpr);
+    if (!zoom && (headArt.scale !== s * HD.s || headArt.dpr !== dpr)) headArt.render(s * HD.s, dpr);
     if (earArt.scale !== s * ES || earArt.dpr !== dpr) earArt.render(s * ES, dpr);
-    ctx.save(); ctx.translate(X + (HD.x + HD.w * HD.s) * s, Y + HD.y * s); ctx.scale(-1, 1); headArt.draw(ctx, 0, 0); ctx.restore();
-    ctx.strokeStyle = 'rgba(52,58,66,.5)'; ctx.lineWidth = 1; ctx.beginPath();
-    ctx.arc(X + CALL.ex * s, Y + CALL.ey * s, CALL.r1 * s, 0, 6.2832);
-    for (let i = 0; i < 2; i++) { const t = CALL.t[i]; ctx.moveTo(X + t[0] * s, Y + t[1] * s); ctx.lineTo(X + t[2] * s, Y + t[3] * s); }
-    ctx.stroke();
+    if (!zoom) {
+      ctx.save(); ctx.translate(X + (HD.x + HD.w * HD.s) * s, Y + HD.y * s); ctx.scale(-1, 1); headArt.draw(ctx, 0, 0); ctx.restore();
+      ctx.strokeStyle = 'rgba(52,58,66,.5)'; ctx.lineWidth = 1; ctx.beginPath();
+      ctx.arc(X + CALL.ex * s, Y + CALL.ey * s, CALL.r1 * s, 0, 6.2832);
+      for (let i = 0; i < 2; i++) { const t = CALL.t[i]; ctx.moveTo(X + t[0] * s, Y + t[1] * s); ctx.lineTo(X + t[2] * s, Y + t[3] * s); }
+      ctx.stroke();
+    }
     // the malleus handle is fixed to the drum (umbo 37 units below the ossicle axis); malleus + incus rock as one lever about that axis,
     // so the incus tip (26 units below it) pushes the stapes footplate in and out of the oval window
     const th = -d / 37;
     EAR_MV.drum.dx = d; EAR_MV.malleus.rot = th; EAR_MV.incus.rot = th; EAR_MV.stapes.dx = -th * 26;
     earArt.draw(ctx, X + EX * s, Y + EY * s, EAR_MV);
-    if (phase < 0 || !earArt.layers.length) return;
-    // nerve impulses run from the cochlea toward the brain (not text: also while running)
-    ctx.fillStyle = '#fffbe6'; ctx.strokeStyle = '#d9480f'; ctx.lineWidth = 1;
-    for (let k = 0; k < 3; k++) {
-      const q = ((phase + k / 3) % 1) * 3, i = Math.min(2, q | 0), u = q - i, j = i * 2;
-      const px = NV[j] + (NV[j + 2] - NV[j]) * u, py = NV[j + 1] + (NV[j + 3] - NV[j + 1]) * u;
-      ctx.beginPath(); ctx.ellipse(X + (EX + px * ES) * s, Y + (EY + py * ES) * s, 2.7 * s, 1.9 * s, -0.42, 0, 6.2832); ctx.fill(); ctx.stroke();
+    if (phase >= 0 && earArt.layers.length) {
+      // nerve impulses run from the cochlea toward the brain (not text: also while running)
+      ctx.fillStyle = '#fffbe6'; ctx.strokeStyle = '#d9480f'; ctx.lineWidth = 1;
+      for (let k = 0; k < 3; k++) {
+        const q = ((phase + k / 3) % 1) * 3, i = Math.min(2, q | 0), u = q - i, j = i * 2;
+        const px = NV[j] + (NV[j + 2] - NV[j]) * u, py = NV[j + 1] + (NV[j + 3] - NV[j + 1]) * u;
+        ctx.beginPath(); ctx.ellipse(X + (EX + px * ES) * s, Y + (EY + py * ES) * s, 2.6 * ES * s, 1.8 * ES * s, -0.42, 0, 6.2832); ctx.fill(); ctx.stroke();
+      }
     }
-  }
+    // round "phóng to" / "thu nhỏ" button on the bezel (icon only: magnifier + / −)
+    const g = this.disc(), a = -0.78, br = Math.max(15, g.r * 0.075), bx = g.x + Math.cos(a) * g.r * 0.985, by = g.y + Math.sin(a) * g.r * 0.985;
+    this.btn.x = bx; this.btn.y = by; this.btn.r = br;
+    ctx.fillStyle = '#fff'; ctx.strokeStyle = '#15181d'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(bx, by, br, 0, 6.2832); ctx.fill(); ctx.stroke();
+    ctx.lineWidth = 2.2; ctx.lineCap = 'round'; ctx.beginPath();
+    const lr = br * 0.38, lx = bx - br * 0.08, ly = by - br * 0.08;
+    ctx.arc(lx, ly, lr, 0, 6.2832); ctx.moveTo(lx + lr * 0.72, ly + lr * 0.72); ctx.lineTo(bx + br * 0.52, by + br * 0.52);
+    ctx.moveTo(lx - lr * 0.5, ly); ctx.lineTo(lx + lr * 0.5, ly);
+    if (!zoom) { ctx.moveTo(lx, ly - lr * 0.5); ctx.lineTo(lx, ly + lr * 0.5); }
+    ctx.stroke();
+  },
+  btn: {x: -99, y: -99, r: 0}
 };
+function setZoom(v) {
+  v = !!v && state.medium === 'air' && L.layout !== 'bars';
+  if (v === zoom) return;
+  zoom = v; ear.use(); labelKey = ''; bus.emit('change', {key: 'zoom'});
+}
+function pointer(x, y) {
+  if (state.medium !== 'air' || L.layout === 'bars') return;
+  const b = ear.btn, g = ear.disc();
+  if (Math.hypot(x - b.x, y - b.y) <= Math.max(22, b.r + 6) || Math.hypot(x - g.x, y - g.y) <= g.r) setZoom(!zoom);
+}
+addEventListener('keydown', e => { if (e.key === 'Escape' && zoom) setZoom(false); });
 const EAR_LAB = [['pinna', 'Vành tai', 'a-pinna', 57, 76, 'top'], ['canal', 'Ống tai', 'a-canal', 106, 117, 'bottom'], ['drum', 'Màng nhĩ', 'a-drum', 142, 108, 'bottom'],
   ['ossicles', 'Xương búa – đe – bàn đạp', 'a-ossicles', 157, 81, 'top', 1], ['canals', 'Ống bán khuyên', 'a-canals', 238, 94, 'top'],
   ['cochlea', 'Ốc tai', 'a-cochlea', 200, 162, 'bottom'], ['nerve', 'Dây thần kinh thính giác', 'a-nerve', 250, 131, 'bottom', 1]];
-const earLabels = () => EAR_LAB.map(([id, t, a, fx, fy, side, row]) => { const p = earPt(a, fx, fy); return [id, t, p.x, p.y, side, row]; });
+const BRAIN_LAB = ['brain', 'Não', 'a-brain', 176, 33, 'top'];
+const ZOOM_SIDE = {pinna: 'left', canal: 'left', drum: 'left', ossicles: 'left', canals: 'right', cochlea: 'right', nerve: 'right', brain: 'right'};
+const earLabels = () => (zoom ? EAR_LAB.concat([BRAIN_LAB]) : EAR_LAB).map(([id, t, a, fx, fy, side, row]) => { const p = earPt(a, fx, fy); return [id, t, p.x, p.y, side, row]; });
 // Water / steel scenes: the same art/transducer.svg is the source (left) and, mirrored, the receiver (right); its moving layer "face" follows u.
 const trd = loadArt('transducer');
 trd.ready.then(() => { bus.emit('change', {key: 'art'}); });
@@ -163,9 +201,10 @@ function layout(w, hh) {
     L.cols = 26;
     L.airL = 12; L.airR = w - 12; L.airW = L.airR - L.airL; L.dx = L.airW / (L.cols + 1);
     const top0 = 74, avail = hh - top0 - 70;
-    L.rows = avail < 340 ? 4 : 6;                                    // short phone: fewer rows keep room for the ear
-    L.bandA = talker ? clamp(avail * 0.27, 92, 130) : clamp(avail * 0.2, 62, 100); L.bandB = clamp(avail * 0.4, 128, 200) - (talker ? 8 : 0);   // the ear (head + magnifier) needs the most room
-    L.above = 42; L.below = avail < 340 ? 54 : 52;
+    L.rows = avail < 400 ? 4 : 6;                                    // short phone: fewer rows keep room for the ear
+    L.bandA = talker ? clamp(avail * 0.2, 90, 112) : clamp(avail * 0.12, 54, 76);
+    L.above = 42; L.below = avail < 340 ? 54 : 50;
+    L.bandB = clamp(avail - L.bandA - L.above - L.below - L.rows * 8, 120, EAR_H * (w - 12) / EAR_W);   // the magnifier is the main receiver: it takes what is left
     L.dy = clamp((avail - L.bandA - L.bandB - L.above - L.below) / L.rows, 8, 17);
     L.fieldTop = top0 + L.bandA + L.above; L.fieldBot = L.fieldTop + L.rows * L.dy;
     // figures: source top-left, ear bottom-right
@@ -180,16 +219,20 @@ function layout(w, hh) {
     const block = L.above + L.rows * L.dy + L.below;
     L.fieldTop = top + Math.max(0, (hh - top - bottom - block) / 2) + L.above; L.fieldBot = L.fieldTop + L.rows * L.dy;
   } else {
-    const srcW = talker ? clamp(w * 0.27, 140, 235) : clamp(w * 0.255, 130, 245), earW = clamp(w * 0.36, 190, 300);
+    // the magnifier disc is the main receiver: ≈ 75 % of the stage height, but source + air column keep ≥ 45 % of the width (landscape phone: ear = right half)
+    const srcW = talker ? clamp(w * 0.24, 140, 235) : clamp(w * 0.2, 120, 245);
+    const top = L.tiny ? 4 : L.compact ? 8 : 46, bottom = L.compact ? 66 : 76;
+    const eTop = L.compact ? 8 : 60, eBot = L.compact ? 70 : 100;                        // room above / below the disc for the label rows and the play button
+    const se = Math.max(0.3, Math.min(w * (L.compact ? 0.5 : 0.55) / EAR_W, (hh - eTop - eBot) / (2 * RB)));
+    const earW = EAR_W * se, earCy = (eTop + hh - eBot) / 2;
     L.airL = srcW + 12; L.airR = w - earW - 8; L.airW = L.airR - L.airL;
     L.cols = clamp(Math.round(L.airW / 9), 24, 40); L.rows = 12; L.dx = L.airW / (L.cols + 1);
-    const top = L.tiny ? 4 : L.compact ? 8 : 46, bottom = L.compact ? 66 : 76;
     L.above = L.tiny ? 16 : L.compact ? 62 : 88; L.below = L.compact ? 6 : 112;
     const avail = hh - top - bottom - L.above - L.below;
     L.dy = clamp(avail / L.rows, 8, Math.min(26, L.dx * 1.9));
     const block = L.above + L.rows * L.dy + L.below;
     L.fieldTop = top + Math.max(0, (hh - top - bottom - block) / 2) + L.above; L.fieldBot = L.fieldTop + L.rows * L.dy;
-    const cy = (L.fieldTop + L.fieldBot) / 2, rowsH = L.compact ? 0 : 56;        // room for 2 label rows above / below a figure
+    const cy = earCy, rowsH = L.compact ? 0 : 56;        // room for 2 label rows above / below a figure
     const fitS = (sw, up, dn) => Math.max(0.3, Math.min(sw, (cy - 38 - rowsH) / up, (hh - bottom - rowsH - cy) / dn));
     if (talker) {
       // column in front of the lips: TALK_COL design units tall, centred on the mouth; rows re-fitted to it
@@ -206,9 +249,9 @@ function layout(w, hh) {
       L.fieldTop = cy - rimPx / 2; L.fieldBot = cy + rimPx / 2;
       spk.s = s; spk.x = L.airL - spk.rimX() * s; spk.y = cy - rimC * s;
     }
-    const se = fitS(earW / EAR_W, EAR_AX, EAR_H - EAR_AX);
-    ear.s = se; ear.x = L.airR + 4; ear.y = cy - EAR_AX * se;
+    ear.nrm = {x: L.airR + 4, y: cy - EAR_AX * se, s: se};
   }
+  zoomPlace(w, hh);
   L.r = clamp(Math.min(L.dx, L.dy) * 0.3, 3, 4.4);
   L.trackCol = Math.round(L.cols * 0.27);
   restX = new Float32Array(L.cols);
@@ -217,6 +260,15 @@ function layout(w, hh) {
 }
 
 // Water tank / steel bar: transducer (left) → column of particles → receiver (right); the faces are at airL / airR.
+// "phóng to" placement: the disc alone, as big as the stage allows; labels in two side columns (wide stage) or in rows above / below
+function zoomPlace(w, hh) {
+  const top = L.layout === 'stack' ? 66 : L.compact ? 36 : 34, bot = 72, availH = hh - top - bot, col = L.phone ? 190 : 205, ph = (L.phone ? 12 : 13) + 9;
+  const sideD = Math.min(availH, w - 2 * col), rowsD = Math.min(availH - 4 * (ph + 5), w - 14);
+  const side = sideD >= rowsD, D = Math.max(150, side ? sideD : rowsD), s = D / (2 * RB);
+  ear.zm = {x: w / 2 - CX * s, y: top + availH / 2 - EAR_AX * s, s, side};
+  ear.use();
+}
+
 function layoutSolid(w, hh) {
   const stack = L.layout === 'stack', steel = state.medium === 'steel', m = stack ? 12 : 30;
   const srcW = stack ? clamp(w * 0.2, 60, 108) : clamp(w * 0.235, 120, 230);           // face plane − left margin
@@ -247,6 +299,8 @@ function draw(ctx) {
   if (!L.w) return;
   if (L.srcKey !== state.source || L.medKey !== state.medium) layout(L.w, L.h);
   syncWave();
+  if (zoom && state.medium !== 'air') setZoom(false);
+  if (zoomOn()) { buildLabels(ctx); const dr = earDrive(); ear.draw(ctx, dr.d, dr.phase); return; }
   const {airL, airW, dx, dy, fieldTop, fieldBot, cols, rows, r, fs} = L;
   const lam = wave.lamPx, cyc = wave.cycles(), front = wave.front;
   ctx.lineJoin = 'round'; ctx.lineCap = 'round';
@@ -393,7 +447,7 @@ const srcFig = () => state.source === 'talker' ? talk : spk;
 const clampB = x => Math.max(-1, Math.min(1, x));
 
 function buildLabels(ctx) {
-  const key = L.w + 'x' + L.h + state.source + L.layout + L.compact + state.inside;
+  const key = L.w + 'x' + L.h + state.source + L.layout + L.compact + state.inside + zoom;
   if (key === labelKey) return;
   labelKey = key;
   const lab = {src: [], ear: [], tops: {src: 1e9, ear: 1e9}};
@@ -401,20 +455,36 @@ function buildLabels(ctx) {
   const sf = srcFig(), S = SRC[state.source];
   const mk = (tbl, ids, side) => tbl.filter(t => !ids || ids.includes(t[0])).map(t => ({id: t[0], text: t[1], tx: t[2], ty: t[3], side: side || t[4], row: t[5]}));
   for (const f of [sf, ear]) L.artBottom = Math.max(L.artBottom, f.y + f.h * f.s);
-  if (L.layout === 'bars' || L.compact) return;
-  if (L.layout === 'stack') {
-    lab.src = layoutLabels(ctx, sf, mk(S.labels, fitN(PHONE_LABELS[state.source], L.bandA), 'right'), {mode: 'side', size: 10.5, xR: sf.x + sf.w * sf.s + 10, xL: 0, ymin: sf.y + 26, ymax: sf.y + sf.h * sf.s - 12});
-    lab.ear = layoutLabels(ctx, ear, mk(earLabels(), fitN(PHONE_LABELS.ear, L.bandB), 'left'), {mode: 'side', size: 10.5, xR: 0, xL: ear.x - 8, ymin: ear.y + 26, ymax: ear.y + ear.h * ear.s - 10});
+  if (L.layout === 'bars') return;
+  const g = ear.disc();
+  if (zoom) {                                    // all 7 parts + Não around the big disc: two side columns, or rows above / below on a narrow stage
+    const side = ear.zm.side, fz = L.phone ? 12 : 13, rowOf = {pinna: 'top', ossicles: 'top', canals: 'top', brain: 'top', canal: 'bottom', drum: 'bottom', cochlea: 'bottom', nerve: 'bottom'};
+    const zl = earLabels().map(t => ({id: t[0], text: t[1], tx: t[2], ty: t[3], side: side ? ZOOM_SIDE[t[0]] : rowOf[t[0]], row: t[5]}));
+    lab.ear = side ? layoutLabels(ctx, ear, zl, {mode: 'side', size: fz, xR: g.x + g.r + 20, xL: g.x - g.r - 20, ymin: g.y - g.r + 12, ymax: g.y + g.r - 12})
+      : layoutLabels(ctx, ear, zl, {mode: 'rows', size: fz, xmin: 4, xmax: L.w - 4, yTop: g.y - g.r - 5, yBot: g.y + g.r * 1.09 + 4});
     return;
   }
-  const fsz = 11;
-  lab.src = layoutLabels(ctx, sf, mk(S.labels), {mode: 'rows', size: fsz, xmin: 2, xmax: L.airL - 2, yTop: sf.y - 4, yBot: sf.y + sf.h * sf.s + 4});
-  lab.ear = layoutLabels(ctx, ear, mk(earLabels()), {mode: 'rows', size: fsz, xmin: L.airR + 4, xmax: L.w - 2, yTop: ear.y - 4, yBot: ear.y + ear.h * ear.s + 4});
+  if (L.compact) return;
+  if (L.layout === 'stack') {
+    lab.src = layoutLabels(ctx, sf, mk(S.labels, fitN(PHONE_LABELS[state.source], L.bandA), 'right'), {mode: 'side', size: 11, xR: sf.x + sf.w * sf.s + 10, xL: 0, ymin: sf.y + 26, ymax: sf.y + sf.h * sf.s - 12});
+    // phone: the part names are in "phóng to" (the disc takes the room the pills would need)
+    return;
+  }
+  const fsz = 13;
+  lab.src = layoutLabels(ctx, sf, mk(S.labels), {mode: 'rows', size: 12, xmin: 2, xmax: L.airL - 2, yTop: sf.y - 4, yBot: sf.y + sf.h * sf.s + 4});
+  lab.ear = layoutLabels(ctx, ear, mk(earLabels()), {mode: 'rows', size: fsz, xmin: g.x - g.r + 4, xmax: L.w - 2, yTop: g.y - g.r - 5, yBot: g.y + g.r * 1.09 + 4});
   for (const [k, f] of [['src', sf], ['ear', ear]]) {
     for (const l of lab[k]) { lab.tops[k] = Math.min(lab.tops[k], l.y - l.h / 2); L.artBottom = Math.max(L.artBottom, l.y + l.h / 2); }
     if (lab.tops[k] > 1e8) lab.tops[k] = f.y;
   }
 }
+
+// eardrum displacement (ear.svg units) and nerve-pulse phase from the wave arriving at the canal
+function earDrive() {
+  const ear0 = L.airR - L.airL + 6, ue = wave.u(ear0), amp = Math.max(wave.A, 1);
+  return {d: clampB(ue / amp) * 2.4, phase: wave.front >= ear0 ? (((wave.cycles() - ear0 / wave.lamPx) % 1) + 1) % 1 : -1};
+}
+const zoomOn = () => zoom && state.medium === 'air' && L.layout !== 'bars';
 
 function drawArt(ctx) {
   buildLabels(ctx);
@@ -441,8 +511,8 @@ function drawArt(ctx) {
     }
   }
   // ear: the eardrum moves with the air layer at the canal (driven by the arriving pressure); nerve pulses start when the wave front has reached the ear
-  const phase = wave.front >= ear0 ? (((wave.cycles() - ear0 / wave.lamPx) % 1) + 1) % 1 : -1;
-  ear.draw(ctx, clampB(ue / amp) * 2.4, phase);
+  const dr = earDrive();
+  ear.draw(ctx, dr.d, dr.phase);
   if (L.layout === 'stack') {                                           // small markers where the air meets source / ear
     ctx.lineCap = 'round'; ctx.strokeStyle = C.ink; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(L.airL - 6 + u0, fieldTop); ctx.lineTo(L.airL - 6 + u0, fieldBot); ctx.stroke();
     ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(L.airR + 6 + ue * 0.8, fieldTop); ctx.lineTo(L.airR + 6 + ue * 0.8, fieldBot); ctx.stroke();
@@ -458,6 +528,7 @@ function readout() {
 // everything with words / rulers / guides: drawn only while paused (main.js calls it after draw(), fx.a fades it in)
 function annotate(ctx) {
   if (!L.w) return;
+  if (zoomOn()) { if (L.lab) drawLabels(ctx, L.lab.ear, null, L.phone ? 12 : 13, null); return; }
   const {airL, airW, dx, dy, fieldTop, fieldBot, cols, rows, r, fs} = L;
   const lam = wave.lamPx, cyc = wave.cycles(), front = wave.front, by = fieldTop - 12;
   ctx.lineJoin = 'round'; ctx.lineCap = 'round';
@@ -535,16 +606,20 @@ function annotate(ctx) {
   // --- part labels + headings
   if (L.layout === 'bars' || L.compact) return;
   const lab = L.lab; if (!lab) return;
-  const sf = srcFig(), lfs = L.layout === 'stack' ? 10.5 : 11;
-  drawLabels(ctx, lab.src, null, lfs, null);
-  drawLabels(ctx, lab.ear, null, lfs, null);
+  const sf = srcFig(), g = ear.disc();
+  drawLabels(ctx, lab.src, null, L.layout === 'stack' ? 11 : 12, null);
+  drawLabels(ctx, lab.ear, null, L.layout === 'stack' ? 11 : 13, null);
   const hs = L.fs + 1;
   if (L.layout === 'side') {
     text(ctx, SRC[state.source].title, (sf.x + L.airL) / 2 + (state.source === 'talker' ? -20 : 0), Math.min(lab.tops.src, sf.y) - 14, {size: hs, weight: 800});
-    text(ctx, 'Tai người nghe', (L.airR + L.w) / 2, Math.min(lab.tops.ear, ear.y) - 14, {size: hs, weight: 800});
+    const hx = ear.x + HD.w * HD.s * 0.42 * ear.s, hy = ear.y + HD.y * ear.s - 8;      // two short lines above the head (clear of the disc and the air column)
+    text(ctx, 'Tai người', hx, hy - 16, {size: hs, weight: 800}); text(ctx, 'nghe', hx, hy, {size: hs, weight: 800});
   } else {
     text(ctx, SRC[state.source].title, sf.x + sf.w * sf.s + 10, sf.y + 8, {size: hs - 1, weight: 800, align: 'left'});
-    if (L.h >= 520) text(ctx, 'Tai người nghe', ear.x - 8, ear.y + 22, {size: hs - 1, weight: 800, align: 'right'});
+    // phone: the names live in "phóng to" – one hint beside the head
+    const hx = 8, hy = ear.y + HD.y * ear.s - 22;
+    text(ctx, 'Chạm kính lúp', hx, hy - 14, {size: 11.5, weight: 700, align: 'left', color: C.ink2});
+    text(ctx, 'để xem tên', hx, hy, {size: 11.5, weight: 700, align: 'left', color: C.ink2});
   }
 }
 
@@ -590,6 +665,6 @@ export default {
   defaults: {get slow() { return niceSlow(state.f); }},
   metrics: () => ({f: state.f, v: SPEED[state.medium] || SPEED.air}),
   readout: () => readout(),
-  controls, layout, draw, annotate,
-  update() {}, reset() { rulerN = -1; }
+  controls, layout, draw, annotate, pointer,
+  update() {}, reset() { rulerN = -1; }, leave() { setZoom(false); }
 };

@@ -41,6 +41,7 @@ const ui = mountShell({
 
 function setMode(id) {
   const m = byId(id) || MODES[0];
+  if (mode && mode !== m && mode.leave) mode.leave();
   mode = m; state.t = 0; if (m.reset) m.reset();
   set('mode', m.id);
   set('slow', m.defaults.slow);
