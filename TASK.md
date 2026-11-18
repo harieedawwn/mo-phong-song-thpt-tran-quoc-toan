@@ -1,102 +1,95 @@
-# TASK – build plan (one phase per Claude Code session)
+# TASK – v3 rebuild plan (one phase per Claude Code session)
 
-Status marks: `[ ]` todo · `[~]` in progress (resume it) · `[x]` done · `[!]` blocked (needs the owner – read the note).
-Rules for every phase: read `CLAUDE.md` + the SPEC sections listed; take "before" screenshots if the phase changes existing visuals;
-finish with screenshots (desktop + phone), zero console errors, commit(s) in Vietnamese, push, deploy check, then tick the boxes
-and append one line to the **Log** at the bottom.
+Status: `[ ]` todo · `[~]` in progress (resume it) · `[x]` done · `[!]` blocked (needs the owner – read the note).
+Phases 0–10 (flat v2) are done; history is in `docs/history.md` (do not read it).
+**Model:** each phase header names the model. If you are not that model, do no work: reply only
+"Phase N cần <model> – gõ /model rồi dán lại prompt." (Sonnet = effort High.)
 
-## Phase 0 – Khung ứng dụng + deploy  `[x]`
-SPEC: §4, §5, §6.
-- [x] Install checker once: `cd tools && npm i && npx playwright install chromium` (skip if already works).
-- [x] `index.html` (lang="vi", viewport, theme-color #d7191f, preload Be Vietnam Pro 700), `css/style.css` ported from `legacy/css/style.css` (keep @font-face, tokens, header, `.brk`, `.seg`, `.chip`, `.tg`, sliders, metric cards; drop 3D/lesson/tour/coach CSS).
-- [x] Header exactly as SPEC §4 (title "THÍ NGHIỆM MÔ PHỎNG SÓNG", school card right, icon toolbar left), mode tabs bar, empty left/right panels (`data-noscroll`), centre canvas with graph-paper grid, Play/Restart buttons.
-- [x] `js/main.js` loop + resize + DPR cap + pause on hidden; `js/state.js` (port from legacy, trimmed); `window.__app` {play,pause,setMode}; `#mode=` routing; 4 stub modes that draw their title text.
-- [x] Phone layout skeleton (bottom sheet, 4 icon tabs, 1-row metrics).
-- [x] `version.json`, push, confirm Pages deploy works (enable Pages → GitHub Actions if needed; if you cannot, mark `[!]` with the click path for the owner).
+**Every phase:**
+1. Read `CLAUDE.md`, this file, and only the SPEC sections + files listed under the phase (use `grep -n` to jump inside big files).
+2. If the phase changes visuals: `node tools/shot.mjs before<N> <hash> --paused` first.
+3. Finish: `find js -name '*.js' -exec node --check {} \;`, then `node tools/shot.mjs after<N> <hash> --paused` for every mode the
+   phase touched (`--all` in phases 11, 13, 19) – exit code 0 and **open the PNGs** (desk, phone, desk-paused at least).
+4. Compare before/after; anything not clearly better is fixed or reverted.
+5. Tick boxes, append one Log line (date · phase · what · numbers checked · hash), set `version.json`, commit (Vietnamese), push, deploy check.
 
-## Phase 1 – Sóng dọc: vật lí + phần tử không khí  `[x]`
-SPEC: §2 (Bài 8, Bài 9), §3.1 (air, ruler, controls), §6.
-- [x] `js/physics.js`: u(x,t) with propagating front, −∂u/∂x, SPEED, visLambda clamp, describe pitch (port from legacy).
-- [x] Air dot grid displaced along x, 3 flat shade classes from −∂u/∂x, tracked red particle with VTCB tick + ↔ arrow, outlined layer column.
-- [x] λ ruler between compression centres (real λ label), labels "Vùng nén"/"Vùng giãn", badges (làm chậm, biên độ phóng đại, rút gọn).
-- [x] Left-panel controls (f log slider + chips, độ to, môi trường, làm chậm); right-panel metrics + Đặc điểm card.
-- [x] `js/audio.js` ported (tone + voice timbres, starts on tap, mute button works); placeholder rectangles for source and ear.
-- [x] Check: dots visibly crowd exactly where "Vùng nén" is labelled; at 440 Hz in air λ shows 78,0 cm (343/440 = 0,7795 m).
+## Phase 11 – Gọn giao diện + cơ chế "dừng hình mới hiện nhãn"  `[ ]`  · Sonnet (High)
+SPEC §1, §3 (pause lists), §4, §6 (mode interface). Files: `index.html`, `css/style.css`, `js/ui.js`, `js/main.js`, `js/draw/ink.js`,
+`js/state.js`, all 4 `js/modes/*.js` (only the label/badge/feature/hover parts).
+- [ ] Delete the right panel (`#info`, metrics, formula, Đặc điểm card) from HTML/CSS/JS; desktop grid becomes `ctrl | stage`; phone metrics row gone; dock keeps ≤ 2 groups.
+- [ ] Delete `#badges`, legend lines and explanatory sentences drawn under the stage, tap-to-caption and hover highlight (keep EM band tap).
+- [ ] Delete toggles "Nhãn", "Thước λ", "Dừng hình" (keep "Phần tử đỏ" and mode-specific ones like E/B/Mũi tên/Quỹ đạo); remove the u–x and u–t graphs from `transverse.js` and give the rope the freed height.
+- [ ] Split every mode into `draw()` (objects only, axes letters allowed) and `annotate()` (all labels, rulers, arrows with words, VTCB ticks); `main.js` calls `annotate` only when paused with `fx.a` 0 → 1 over 0,25 s; play hides at once; slider changes while paused redraw.
+- [ ] Readout chip (paused only, top-left of the stage, drawn on canvas so screenshots include it): line 1 real f · T · λ · v from `metrics()`, line 2 muted `readout()` extras (làm chậm ×N, biên độ phóng đại, pitch text).
+- [ ] Header: school name one line at every checker size (`nowrap` + `clamp()` font); no page scrollbar anywhere (checker now enforces). Help modal ≤ 5 bullets (SPEC §4).
+- [ ] Check: running frames have no text except axis letters; paused frames show all labels without overlaps; `--all` passes; 440 Hz air → λ = 78,0 cm on the chip.
 
-## Phase 2 – Sóng dọc: hình vẽ loa, người nói, tai (giải phẫu)  `[x]`
-SPEC: §3.1 (source + ear), §5 (anatomy palette, accuracy). Reference: `docs/ref/ear-voice-reference.png`.
-This is the hardest drawing phase. Work section by section and screenshot after each: loa → người nói → tai ngoài → tai giữa → tai trong.
-- [x] `js/art/speaker.js`: flat side-view loudspeaker, cone moving with u(0,t).
-- [x] `js/art/talker.js`: sagittal head cross-section (lips, teeth, tongue, oral cavity, nasal cavity outline, pharynx, larynx + vibrating dây thanh âm, vertebrae); source toggle Loa | Người nói.
-- [x] `js/art/ear.js`: ear cross-section in correct anatomical order; màng nhĩ + 3 xương con move with the arriving pressure; nerve pulses to "não".
-- [x] Click a part → highlight + 1-line caption; click empty / Esc → clear. Max 7 labels visible; labels never overlap each other (simple vertical de-collision).
-- [x] Portrait phone composition works (source top, ear bottom or scaled), nothing clipped.
-- [x] Self-review against the reference: list 3 differences in the commit message body and fix the worst one before finishing.
+## Phase 12 – Bộ đồ hoạ chiều sâu (hạt cầu 3D, ống dây, nền, nạp SVG)  `[ ]`  · Sonnet (High)
+SPEC §5, §6 (ball.js, sprite.js, SVG rules). Files: `js/draw/*.js`, `js/main.js`, the particle-drawing parts of `js/modes/*.js`.
+- [ ] `js/draw/ball.js` sphere sprite cache (offset radial gradient, specular dot, rim, baked contact shadow); cleared on resize.
+- [ ] Use spheres for every particle in all modes (air, rope beads, surface grid, phao stays a float); rope as shaded tube; pills with soft shadow (paused only).
+- [ ] Sound mode particles: uniform blue spheres while running; paused → soft orange/blue tinted bands behind nén/giãn zones (from `wave.s`).
+- [ ] Surface: water vertical gradient + glossy surface line; shallow bed gradient. Grid canvas: lighter lines + soft vignette (baked).
+- [ ] `js/art/sprite.js` loader exactly as SPEC §6 + a tiny `art/_probe.svg` (2 layers, one `data-move`) to prove it: draw it in a corner, screenshot, then delete the probe usage (keep the loader).
+- [ ] Perf: no allocation in hot loops; 390×844 still smooth (log fps for 5 s with `performance.now()`, remove the log after).
 
-## Phase 3 – Sóng ngang (dây)  `[x]`
-SPEC: §2, §3.2.
-- [x] Rope of beads + vibrator, propagating front, đỉnh/hõm labels, ↕ vs → arrows, λ between crests, in-phase pair.
-- [x] u–x graph and scrolling u–t graph (Canvas 2D, axes labelled in Vietnamese, mono numbers), "Dừng hình".
-- [x] Controls (f, A, v, làm chậm), metrics, Đặc điểm card.
+## Phase 13 – Tab gộp "Sóng ngang – Sóng dọc" + máy rung + trục Ox  `[ ]`  · Sonnet (High)
+SPEC §2, §3.1, §5, §6. Files: `js/modes/transverse.js` (source to reuse), `js/modes/longitudinal.js` (only `layout`/particles part),
+`js/main.js`, `js/ui.js` (tabs), `js/art/sprite.js`, `js/physics.js`.
+- [ ] `art/driver.svg`: lab wave driver (body static with gradient, shaft = `<g id="shaft" data-move>`, clamp anchor `a-clamp`). Check it alone with `--page`.
+- [ ] `js/modes/waves.js`: two lanes (rope on top, bead–spring chain below), same wave object, same x scale; driver upright (shaft ↕) and lying (shaft ↔); shaft and first bead follow u(0,t) exactly; k·A ≤ 0,8 in the bottom lane.
+- [ ] Axes O, x, u per lane (SPEC §3.1); lane seg "Cả hai | Sóng ngang | Sóng dọc"; shared red bead index.
+- [ ] `annotate()`: đỉnh/hõm, nén/giãn + tinted bands, aligned λ rulers with the real value, vertical guide through the red beads, direction arrows, chip.
+- [ ] Rename `longitudinal.js` → `sound.js` (id `sound`), delete `transverse.js`; tab order waves, sound, surface, em; aliases `transverse`→`waves`, `longitudinal`→`sound`; default mode `waves`.
+- [ ] Check: f = 1 Hz, v = 2 m/s → λ = 2 m on both rulers; crowded beads exactly under "Vùng nén"; `--all` passes.
 
-## Phase 4 – Sóng mặt (surface wave)  `[x]`
-SPEC: §2 (Sóng mặt), §3.3. Refs: `docs/ref/surface-wave-*.png`.
-- [x] Particle-grid cross-section with Airy motion (deep: circles, shallow: ellipses), surface line through top-row particles, stepped flat blues by depth.
-- [x] Tracked particles at 2–3 depths with orbit outlines + rotation arrows (clockwise for a wave moving right), VTCB ticks, phao on the surface (no drift).
-- [x] Labels (đỉnh/hõm, phương truyền, λ), toggles (quỹ đạo, nước sâu/nông), controls, metrics, Đặc điểm card.
-- [x] Check: top particle moves forward at the crest and backward in the trough; orbit radius at depth λ/2 ≈ 4 % of surface (e^(−π)).
+## Phase 14 – Sóng điện từ: thang phổ chuẩn, gọn  `[ ]`  · Sonnet (High)
+SPEC §2 (table), §3.4. Files: `js/modes/em.js`, `js/state.js`.
+- [ ] Re-order BANDS gamma → vô tuyến (left → right), default band = Sóng vô tuyến; rounded 7-segment bar with gradients, rainbow segment, short names, "bước sóng tăng →" / "← tần số tăng"; tap selects.
+- [ ] Delete the info card under the bar and the band chips in the left panel; selected band data goes to the paused chip.
+- [ ] Arrow depth + faint E/B planes; all words (E, B, legend, "Cùng pha", λ) only in `annotate()`.
+- [ ] Check: FM 100 MHz → λ = 3 m, 2,45 GHz → 12,2 cm, 5·10¹⁴ Hz → 600 nm, 3·10²⁰ Hz → 1 pm; E and B maxima at the same x.
 
-## Phase 5 – Sóng điện từ  `[x]`
-SPEC: §2 (Bài 11 table – verbatim), §3.4.
-- [x] Oblique axes, E (orange) and B (blue) arrow trains in phase, tip curves, legend "E ⟂ B ⟂ v → sóng ngang", "v = c = 3·10⁸ m/s".
-- [x] Spectrum scale of 7 flat blocks (visible light = 7 solid stripes), tap to select, shows λ range, f range, example, λ = c/f readout.
-- [x] Toggles E / B / mũi tên, làm chậm; metrics (f, T, λ, v = c) and Đặc điểm card.
+## Phase 15 – Sóng âm: cột không khí đúng, môi trường Nước/Thép đúng bản chất  `[ ]`  · Sonnet (High)
+SPEC §2, §3.2 (except final art). Files: `js/modes/sound.js`, `js/art/speaker.js` (geometry only), `js/physics.js`, `js/main.js` (hash `med=`).
+- [ ] Air column only in front of the cone mouth (rows = rim height, from the cone face to the receiver); first layer rest = cone face rest, both use u(0,t); nothing behind/around the speaker; k·A ≤ 0,8.
+- [ ] Same column rule for the talker (in front of the lips).
+- [ ] Nước scene: glass tank + water gradient, transducer placeholder (rounded rect + face plate) touching water on the left, mirrored receiver on the right, ear hidden. Thép scene: clamped steel bar (metal gradient), grey lattice atoms, transducer on the left end face, sensor on the right. Source chips only in air.
+- [ ] Help bullet about water/steel (SPEC §3.2); `#mode=sound&med=steel` works.
+- [ ] Check: air 440 Hz → 78,0 cm; water 440 Hz → 3,37 m; steel 4 kHz → 1,49 m; first layer never touches/crosses the cone at max A (pause at max push and look).
 
-## Phase 6 – Hoàn thiện giao diện + điện thoại + Zalo  `[x]`
-SPEC: §4, §6.
-- [x] Help modal (≤ 6 bullets), screenshot button, mute, fullscreen hidden when unsupported, keyboard: Space play/pause, 1–4 modes, Esc.
-- [x] Run `node tools/shot.mjs final-<mode> mode=<mode> --all` for all 4 modes; fix every clipping/overlap/scroll problem; landscape phone usable.
-- [x] Performance: no per-frame allocations in hot loops, offscreen cache for static art, check fps with `performance.now()` logging (remove logs after).
-- [x] Before/after comparison of each mode; revert anything not clearly better.
+## Phase 16 – Vẽ lại Loa + đầu phát/máy thu (SVG có khối)  `[ ]`  · Sonnet (High)
+SPEC §3.2 (Loudspeaker), §5, §6 (SVG rules). Files: `js/art/sprite.js`, `js/modes/sound.js` (art draw calls), old `js/art/speaker.js` (to delete).
+Before: `node tools/shot.mjs before16 mode=sound --paused`.
+- [ ] `art/speaker.svg`: cabinet front + driver cut-away; static: cabinet, basket, magnet, top plate, pole; `data-move` layers: cone+dust cap, voice coil; anchors for labels, cone rim (top/bottom) and cone face. Realistic shading, light from upper-left. Check alone with `--page`.
+- [ ] Surround + spider drawn as canvas curves from static anchors to the moving cone rim (stretch, no gaps); the frame never moves.
+- [ ] `art/transducer.svg` (piezo disc in a metal housing with a face plate; `data-move` face) used as source and mirrored as receiver in water/steel.
+- [ ] Delete `js/art/speaker.js` if unused; labels on pause from SVG anchors (≤ 4).
+- [ ] Side-by-side with before16: clearly more realistic, else iterate (max 2 rounds). If still weak after 2 rounds, mark `[!]` "cần Opus" and stop.
 
-## Phase 7 – Dọn dẹp + bàn giao  `[x]`
-- [x] Delete `legacy/` (and old refs not used), update `CLAUDE.md` code map to the final files, write a short Vietnamese `README.md` (cách dùng, link).
-- [x] Final `--all` screenshots of 4 modes, zero errors, deploy check, set `version.json` phase "final".
-- [x] Report: link + 3 lines + anything the owner should test on a real phone / in Zalo.
+## Phase 17 – Vẽ lại Tai người nghe + kính lúp (giải phẫu chân thực)  `[ ]`  · **Opus**
+SPEC §3.2 (receiver, ear labels), §5, §6. Files: `js/art/ear.js` (for anatomy order + motion logic only), `js/modes/sound.js` (ear calls),
+`js/art/sprite.js`. Look at `docs/ref/web/ear-anatomy.png` and `docs/ref/ear-voice-reference.png` first.
+Before: `node tools/shot.mjs before17 mode=sound --paused`.
+- [ ] `art/ear.svg`: small listener head (side profile, realistic shading, facing the source) + magnifier ring + big circular coronal cut: skin, temporal bone, pinna, S-shaped canal, eardrum (`data-move`), malleus / incus / stapes (`data-move` each, pivot anchors), middle-ear cavity, Eustachian tube, cochlea 2,5 turns, 3 semicircular canals, vestibule, auditory nerve to "Não"; nerve-path anchors for pulses.
+- [ ] Motion synced to the pressure arriving at the canal: eardrum in/out, ossicles rock, nerve pulses.
+- [ ] Paused: ≤ 7 labels from anchors, leaders never cross; phone layout (magnifier may sit below the head).
+- [ ] Delete old `js/art/ear.js` (and `figure.js` if nothing else uses it). A non-expert must see "a real ear" in 1 s; iterate ≤ 3 rounds.
 
-## Phase 8 – Vẽ lại Người nói (Art v2)  `[x]`
-SPEC: §7 (Người nói), §5 palette. Recommended model: **Opus** (drawing). Before screenshot first: `node tools/shot.mjs before8` with source = Người nói.
-- [x] Download the §7 references into `docs/ref/web/` and look at them; write 3 bullet "what makes it recognisable" notes in the Log.
-- [x] Rebuild `js/art/talker.js`: proportioned side profile + sagittal vocal tract, vibrating vocal folds, air-flow arrow, ≤ 5 de-collided labels.
-- [x] Works at desktop and phone sizes (Path2D cached per size, no per-frame allocation).
-- [x] Side-by-side check vs `docs/ref/v1-talker.png` and the references: must be clearly better, else iterate (max 3 rounds).
+## Phase 18 – Vẽ lại Người nói (mặt cắt dọc chân thực)  `[ ]`  · **Opus**
+SPEC §3.2 (talker labels), §5, §6. Files: `js/art/talker.js` (anatomy order + motion only), `js/modes/sound.js`, `js/art/sprite.js`.
+Look at `docs/ref/web/gray994.png` and `docs/ref/web/places-of-articulation.png` first. Before: `node tools/shot.mjs before18 "mode=sound&src=talker" --paused`.
+- [ ] `art/talker.svg`: calm adult side profile with realistic skin shading + sagittal cut (nasal cavity, hard/soft palate, tongue, teeth, lips, oral cavity, pharynx, epiglottis, larynx, trachea, cervical vertebrae); vocal folds `data-move`; mouth anchor for the air column.
+- [ ] Vocal folds vibrate with u(0,t); air-flow arrow lungs → mouth (paused only, it has words).
+- [ ] Paused ≤ 5 labels; delete old `js/art/talker.js` and `figure.js` if unused. Iterate ≤ 3 rounds vs before18.
 
-## Phase 9 – Vẽ lại Tai người nghe với kính lúp (Art v2)  `[x]`
-SPEC: §7 (Tai). Recommended model: **Opus** (drawing).
-- [x] Small listener head (same style as Phase 8) + magnifier callout + large coronal ear cross-section in correct anatomical order.
-- [x] Motion: eardrum, ossicles, nerve pulses synced to the arriving wave; click part → highlight + caption; empty click/Esc clears.
-- [x] ≤ 7 labels, no overlaps, phone layout works.
-- [x] Side-by-side check vs `docs/ref/v1-ear.png`: a non-expert must instantly see "an ear"; iterate (max 3 rounds).
-
-## Phase 10 – Đánh bóng: rõ, đẹp, cuốn hút (không nặng máy)  `[x]`
-SPEC: §4, §5. Model: Sonnet (High).
-- [x] Physics spot-checks: Sóng điện từ – E and B maxima at the same x (in phase); Sóng mặt – clockwise orbits, no gap at stage edges; Sóng ngang – u–x/u–t graphs consistent with the rope.
-- [x] Toggle buttons (`.tg`) labels never wrap to 2 lines (shorter Vietnamese words or wider grid); school name stays on one line at every width.
-- [x] Cheap "wow" polish, each must pass before/after: (a) on mode switch the wave visibly starts from the source (t = 0) with a 0.4 s fade-in of labels;
-  (b) hover/tap highlight on labelled parts; (c) consistent label pills and leader lines across modes; (d) phone layout re-check for all 4 modes.
-- [x] Sound stays **muted by default** (owner request); the mute button shows clearly that sound is off.
-- [x] Final `--all` screenshots for 4 modes, zero errors, deploy check.
+## Phase 19 – Sóng mặt hoàn thiện + kiểm điện thoại/Zalo + dọn dẹp  `[ ]`  · Sonnet (High)
+SPEC all. Files: as needed (grep first).
+- [ ] Surface mode final check vs SPEC §3.3 (clockwise, no drift, radius at depth λ/2 ≈ 4,3 %); paused annotations complete.
+- [ ] Add `--perf` to `tools/shot.mjs` (CPU throttle ×4 via CDP `Emulation.setCPUThrottlingRate`, report average fps over 5 s per mode at 390×844); all 4 modes ≥ 50 fps.
+- [ ] `--all --paused` for 4 modes, zero errors, no scrollbars, nothing clipped in phone portrait/landscape.
+- [ ] Remove dead code/CSS (grep for `features`, `badges`, `hover`, `#info`, `metrics`), unused refs; update `CLAUDE.md` code map, `README.md` (Vietnamese, cách dùng mới).
+- [ ] `version.json` phase "v3"; report to the owner: link + 3 lines + what to test in Zalo on a real phone.
 
 ## Log
-<!-- one line per session: date · phase · what was done · commit hash -->
-2026-11-14 · Phase 0 · khung ứng dụng (header, 4 tab, panel, canvas giấy kẻ ô, vòng lặp, bố cục điện thoại), 4 chế độ giữ chỗ; f=440 Hz/khí → T=2,27 ms, λ=78,0 cm; FM 100 MHz → λ=3 m · 8c74cf5
-2026-11-14 · Phase 1 · sóng dọc: u=A·sin(ωt−kx) (pha đầu −π/2 để mặt sóng liên tục), lưới chấm không khí 3 màu từ −∂u/∂x, nhãn nén/giãn, thước λ, phần tử đỏ + VTCB, điều khiển f/độ to/môi trường/làm chậm, âm thanh WebAudio; kiểm: khí 440 Hz → λ=78,0 cm, nước 440 Hz → 3,37 m, thép 4 kHz → 1,49 m; điện thoại ngang còn chật (để Phase 6) · d207202
-2026-11-14 · Phase 2 · hình vẽ phẳng loa (màng loa dao động theo u(0,t)), người nói (cắt dọc: dây thanh âm rung, họng, miệng, lưỡi, mũi, cột sống), tai (vành tai→ống tai→màng nhĩ→búa–đe–bàn đạp→cửa sổ bầu dục→ốc tai→dây thần kinh, xung thần kinh chạy lên não); chạm bộ phận → viền đỏ + chú thích, Esc/chạm trống để bỏ; điện thoại dọc xếp loa/người nói trên, tai dưới; kiểm: khí 440 Hz → λ=78,0 cm · 1fd991b
-2026-11-14 · Phase 3 · sóng ngang: dây 24–48 hạt + cần rung, u=A·sin(ωt−kx) có mặt sóng, nhãn đỉnh/hõm, thước λ giữa 2 đỉnh, 2 phần tử cách λ cùng pha (đường đứt cùng độ cao), đồ thị u–x và u–t cuộn (trục cm/s), Dừng hình; kiểm: f=1 Hz, v=2 m/s → T=1 s, λ=2 m; điện thoại ngang chỉ hiện dây · a8a9f06
-2026-11-14 · Phase 4 · sóng mặt: lưới 30×10 chấm chuyển động ξ=−a·sinφ, η=b·cosφ (thuận chiều kim đồng hồ), mặt nước vẽ qua hàng chấm trên (đỉnh nhọn, hõm phẳng), 3 dải xanh, phần tử đỏ 3 độ sâu + quỹ đạo, phao không trôi, nước sâu (tròn) | nông (elip, đáy); kiểm: bán kính ở độ sâu λ/2 = 4,32 % = e^(−π); đỉnh tiến, hõm lùi; v=1,56 m/s, f=1 Hz → λ=1,56 m · d42b4bd
-2026-11-14 · Phase 5 · sóng điện từ: E (cam, dọc) và B (lam, theo z chiếu xiên 30°) cùng pha u=cos(ωt−kx) có mặt sóng, đường nối đầu mũi tên, thước λ thật, thang 7 khối Bảng 11.1 (ánh sáng nhìn thấy = 7 sọc đặc), chạm khối để chọn, thẻ λ=c/f; kiểm: FM 100 MHz → λ=3 m, 5·10¹⁴ Hz → 600 nm, 2,45 GHz → 12,2 cm, 3·10²⁰ Hz → 1 pm; điện thoại ngang chỉ hiện sóng (Phase 6) · ec7530c
-2026-11-14 · Phase 6 · hoàn thiện: điện thoại nằm ngang có cột trái (tab 2×2, số liệu 2×2, nút nhóm mở khay bên cạnh) nên sân khấu cao gần hết màn hình; phím Space (phát/dừng) và 1–4 (chọn sóng); hướng dẫn 6 ý; kiểm 4 chế độ × 5 khung hình không lỗi/không cuộn; hiệu năng giả lập CPU chậm 4× trên 390×844 vẫn 60 fps cả 4 chế độ; kiểm: khí 440 Hz → λ=78,0 cm, FM 100 MHz → λ=3 m · d7d3451
-2026-11-14 · Phase 7 · dọn dẹp: xóa legacy/stub/ảnh 3D cũ, README tiếng Việt, bản đồ mã trong CLAUDE.md, kiểm 4 chế độ × 5 khung không lỗi; kiểm: khí 440 Hz → λ=78,0 cm, FM 100 MHz → λ=3 m · ad821d3
-2026-11-14 · Phase 8 · vẽ lại Người nói: mặt nghiêng tỉ lệ chuẩn (mắt ở giữa đầu, tai từ lông mày tới đáy mũi, miệng ở 1/3 mũi–cằm), mặt cắt đường thở liền khối (khoang mũi, vòm cứng + vòm mềm/lưỡi gà, khoang miệng, lưỡi, nắp thanh quản, họng, thanh quản, khí quản, 7 đốt sống cổ), dây thanh âm rung theo u(0,t), mũi tên luồng khí phổi → miệng, 5 nhãn không cắt nhau, vùng chọn tô đỏ; nhận diện (ảnh docs/ref/web): (1) đường viền trán–mũi–môi–cằm–cổ + mắt + tai là thấy ngay "người"; (2) đường thở là một kênh trống liền từ khí quản tới môi, viền hồng, như "Places of articulation"; (3) mốc: vòm miệng ngăn mũi/miệng, lưỡi vòm lớn, lưỡi gà, nắp thanh quản, cột sống sau họng (Gray 994); thêm #src=talker; kiểm: khí 440 Hz → λ=78,0 cm · bac94ec
-2026-11-14 · Phase 9 · vẽ lại Tai người nghe: đầu nghiêng nhỏ (nét vẽ dùng chung với người nói, quay mặt về nguồn) + vòng kính lúp + hình tròn mặt cắt tai (vành tai, ống tai, màng nhĩ cong theo áp suất, búa–đe–bàn đạp xoay, cửa sổ bầu dục, ốc tai, 3 ống bán khuyên, dây thần kinh + xung, vòi nhĩ); 7 nhãn không chồng nhau, chạm chọn bộ phận; điện thoại dành nhiều chỗ cho tai hơn (màn thấp: 4 hàng chấm); so với docs/ref/v1-ear.png: nhận ra ngay là tai; kiểm: khí 440 Hz → λ=78,0 cm · 3d680c6
-2026-11-14 · Phase 10 · đánh bóng: sóng điện từ có dấu "cùng pha" (mũi tên E và B cực đại vẽ đậm từ cùng một điểm trên trục, giải thích đường đầu mũi tên B lệch chỉ do vẽ xiên), bố cục điện thoại ngang gọn; nhãn hiện dần 0,4 s khi đổi chế độ/bắt đầu lại, sóng xuất phát từ nguồn; rê chuột tô viền đỏ bộ phận + nhãn (loa/người nói/tai) và dải sóng; nút âm thanh mặc định tắt, ghi rõ "Âm: tắt" nền đỏ nhạt; nhãn nút ngắn 1 dòng ("Phần tử đỏ", "Quỹ đạo"); tên trường 1 dòng ở mọi khổ (điện thoại ngang: dòng riêng); nước sâu phủ kín tới đáy, nước nông có nhãn đáy, thẻ Đặc điểm tự đổi khi chọn sâu/nông; sóng ngang & sóng dọc hết chồng nhãn trên màn thấp/hẹp; kiểm: quỹ đạo thuận chiều kim đồng hồ, đồ thị u–x/u–t cùng công thức sin(ωt−kx) với dây, khí 440 Hz → λ=78,0 cm, FM 100 MHz → λ=3 m · 24065ce
+<!-- one line per session: date · phase · what was done · numbers checked · commit hash -->

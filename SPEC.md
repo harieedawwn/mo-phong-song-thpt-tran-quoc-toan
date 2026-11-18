@@ -1,189 +1,176 @@
-# SPEC – Thí nghiệm mô phỏng sóng (2D)
+# SPEC v3 – Thí nghiệm mô phỏng sóng (2D, có chiều sâu)
 
-Audience: Vietnamese high-school students and teachers (THPT Trần Quốc Toản, Đồng Tháp). Used on a classroom projector
-(1366×768 / 1280×720), on phones, and inside the **Zalo in-app browser**. Goal: the *best demonstration tool* for waves —
-simple to operate, rich in what it shows, never childish. **No lessons, no quizzes, no long texts** (teacher feedback:
-"bỏ phần bài học, đơn giản hoá nhưng tối ưu chức năng biểu diễn"). Short captions and labels only.
+Audience: Vietnamese grade-11 students and teachers (THPT Trần Quốc Toản, Đồng Tháp). Used on a classroom projector
+(1366×768 / 1280×720), on phones and inside the **Zalo in-app browser**. The teacher explains the theory; the app only
+**shows** the phenomenon. v3 goal (owner feedback on v2: "giao diện rối, nhiều chữ thừa, hình quá phẳng, vài chỗ sai bản chất"):
+**big clean stage, no text while the wave runs, everything explained only when paused, objects with real depth.**
 
-## 1. Modes (one app, four tabs)
-| id (`#mode=`) | Tab label (VI) | What it shows |
+## 1. Principles (apply to every mode)
+1. **Stage first.** Only two columns: controls (left) + stage (centre/right). No right panel, no metric cards, no "Đặc điểm" card,
+   no formula chip, no badge row, no legend or explanatory sentences under the stage, no tap-to-caption texts.
+2. **Running = no text on the stage.** While playing, the stage shows only physical objects: source, medium particles, the red tracked
+   particle, axes (thin lines + the letters O, x, u only). No labels, no λ ruler, no arrows with words.
+3. **Paused = analysis view.** Pressing **Tạm dừng** freezes the frame and fades in (0,25 s) all annotations of the mode (§3):
+   labels (Đỉnh sóng, Hõm sóng, Vùng nén, Vùng giãn, part names…), λ ruler with the **real** value, VTCB ticks, "Phương truyền sóng" /
+   "Phương dao động" arrows, and one **readout chip** (top-left of the stage): `f = 440 Hz · T = 2,27 ms · λ = 78,0 cm · v = 343 m/s`
+   plus one muted second line `Hình đã làm chậm ×200 · biên độ phóng đại` (only the parts that apply). Pressing **Phát** hides them at once.
+   Changing a slider while paused redraws the frozen frame with updated annotations.
+4. **Depth, not flatness.** Gradients are allowed again (v2's "no gradient" rule is cancelled). Particles are glossy 3D-looking spheres,
+   devices and anatomy are layered SVG with light/shade (§5). Still light enough for a cheap Android phone and Zalo.
+5. **Physics is never faked** (§2). If an option cannot be shown correctly, redesign it or remove it.
+
+## 2. Physics (Vật lí 11 KNTT, Chương II "Sóng")
+Vocabulary: *phần tử môi trường, vị trí cân bằng (VTCB), li độ u, biên độ A, chu kì T, tần số f, bước sóng λ, tốc độ truyền sóng v,
+phương dao động, phương truyền sóng, vùng nén, vùng giãn, đỉnh sóng, hõm sóng*. Relations: **λ = v·T = v/f, f = 1/T**.
+- Progressive wave from the source at x = 0, started at t = 0: u(x,t) = A·sin(ωt − kx) for x ≤ v·t, u = 0 beyond the front
+  (`makeWave()` in `js/physics.js` – keep it). Particles only oscillate around their VTCB; energy travels, matter does not.
+- **Sóng ngang:** u ⟂ Ox (rope beads move only vertically). **Sóng dọc:** u along Ox (each layer/bead at rest position x is drawn at
+  x + u(x,t)). Compression ∝ −∂u/∂x: **vùng nén** where cos(ωt − kx) > 0 (`wave.s(x) > 0`), **vùng giãn** where < 0 – annotations must use
+  this same formula so they sit exactly where the particles are crowded.
+- **No crossing:** keep k·A_px ≤ 0,8 in every longitudinal drawing (strain < 1), so layers never pass each other and the first layer
+  never enters the source.
+- Sound speeds (m/s): không khí 343, nước 1482, thép 5960. Hearing 20 Hz – 20 kHz (hạ âm < 20 Hz, siêu âm > 20 kHz).
+- **Sóng mặt** (keep v2 physics): Airy theory, ξ = −a(d)·sin(kx₀ − ωt), ζ = b(d)·cos(kx₀ − ωt); deep: a = b = A·e^(−kd) (circles);
+  shallow: a = A·cosh(k(h−d))/sinh(kh), b = A·sinh(k(h−d))/sinh(kh) (ellipses → line at the bottom). Clockwise for a wave moving right;
+  no drift; surface line drawn through the top-row particles.
+- **Sóng điện từ:** E and B in phase, E ⟂ B ⟂ phương truyền → sóng ngang, c = 3·10⁸ m/s, λ = c/f. Spectrum = Bảng 11.1 SGK KNTT,
+  shown **short λ → long λ, left to right** (the usual chart order):
+
+  | # | Loại bức xạ | Bước sóng (chân không) | Tần số (Hz) | Example (pause chip) |
+  |---|---|---|---|---|
+  | 0 | Tia gamma | 10⁻⁵ nm – 0,1 nm | 3·10¹⁸ – 3·10²² | Phóng xạ (3·10²⁰ Hz → 1 pm) |
+  | 1 | Tia X | 30 pm – 3 nm | 10¹⁷ – 10¹⁹ | Chụp X-quang |
+  | 2 | Tia tử ngoại | 10 nm – 400 nm | 7,5·10¹⁴ – 3·10¹⁶ | Mặt Trời, đèn diệt khuẩn |
+  | 3 | Ánh sáng nhìn thấy | 0,38 µm – 0,76 µm | 3,9·10¹⁴ – 7,9·10¹⁴ | 5·10¹⁴ Hz → 600 nm |
+  | 4 | Tia hồng ngoại | 0,76 µm – 1 mm | 3·10¹¹ – 3,9·10¹⁴ | Điều khiển TV, thân nhiệt |
+  | 5 | Sóng vi ba | 1 mm – 1 m | 3·10⁸ – 3·10¹¹ | Lò vi sóng 2,45 GHz → 12,2 cm |
+  | 6 | Sóng vô tuyến | 1 m – 100 km | 3·10³ – 3·10⁸ | Đài FM 100 MHz → 3 m (default band) |
+- Honesty: animations are slowed and amplitudes enlarged → said once, on the pause chip line 2. Readouts always show **real** values.
+
+## 3. Modes (4 tabs)
+| id (`#mode=`) | Tab (desktop / phone) | Old ids kept as aliases |
 |---|---|---|
-| `longitudinal` (default) | Sóng dọc – Sóng âm | Loudspeaker (or speaking person) → air layers → listener's ear, compressions/rarefactions |
-| `transverse` | Sóng ngang | Wave on a rope/string of beads driven at one end |
-| `surface` | Sóng mặt | Surface wave: cross-section of a particle grid; particles move on circles (both longitudinal and transverse) |
-| `em` | Sóng điện từ | E and B fields perpendicular to each other and to the propagation direction + KNTT spectrum scale |
+| `waves` (default) | Sóng ngang – Sóng dọc / Ngang – Dọc | `transverse` |
+| `sound` | Sóng âm / Sóng âm | `longitudinal` |
+| `surface` | Sóng mặt / Sóng mặt | – |
+| `em` | Sóng điện từ / Điện từ | – |
+Keys 1–4 select tabs. `#mode=sound&src=talker` and `&med=water|steel` select source/medium (checker + teacher links).
 
-All modes share: Play/Pause, **slow-motion** factor, frequency f, amplitude A, "show λ ruler", "track one particle",
-"labels on/off", and the live readouts f, T, λ, v. The wave starts at the source and **propagates** (front at x = v·t,
-medium ahead of the front is still) — then keeps running. A "Bắt đầu lại" (restart) button resets t = 0.
+### 3.1 `waves` – Sóng ngang và sóng dọc song song
+Two lanes stacked, **same f, A, v, t and the same x scale**, so λ and the propagation are visibly identical and only the
+direction of oscillation differs. Seg control "Cả hai | Sóng ngang | Sóng dọc" (default Cả hai; one lane alone uses the whole height).
+- **Top lane – sóng ngang trên dây:** ~36–44 bead spheres on a rope (rope = shaded tube through the beads). Left end clamped to the
+  top of the **máy rung** drive shaft (like a lab wave driver: dark box with a vertical shaft; the body stays still, only the shaft moves
+  up/down by u(0,t) and drags the rope end). Axes: Ox along the rest line (arrow + "x" at the right, "O" at the clamp), vertical u axis at O
+  (short double arrow + "u") so up/down displacement is obvious. Rope ends at the stage edge (no reflection).
+- **Bottom lane – sóng dọc trên lò xo:** the same number of bead spheres at the same rest x, joined by thin **coil springs** (zigzag, drawn
+  cheaply), driven by the **same máy rung lying on its side** (shaft moves left/right by u(0,t), pushing the first bead). Axis Ox along the
+  chain, "u" shown as a horizontal double arrow at O.
+- The same bead index is the red tracked particle in both lanes.
+- **Paused:** top – Đỉnh sóng / Hõm sóng pills, VTCB dashed line, ↕ "Phương dao động"; bottom – Vùng nén / Vùng giãn pills + soft
+  orange/blue tinted bands behind those zones, ↔ "Phương dao động"; one shared "Phương truyền sóng →" arrow; λ rulers on both lanes
+  aligned (same length) with the real value; a thin vertical dashed guide through the two red beads; readout chip.
+- **No graphs** (the old u–x and u–t graphs are deleted).
+- Controls: f (0,2 – 5 Hz, log slider + chips 0,5/1/2/4), A, v (0,5 – 4 m/s), làm chậm, lane seg, toggle "Phần tử đỏ".
 
-## 2. Physics (must match Vật lí 11 KNTT, Chương II "Sóng")
-Use textbook vocabulary: *phần tử môi trường*, *vị trí cân bằng (VTCB)*, *li độ u*, *biên độ A*, *chu kì T*, *tần số f*,
-*bước sóng λ*, *tốc độ truyền sóng v*, *phương dao động*, *phương truyền sóng*, *vùng nén*, *vùng giãn*, *đỉnh sóng*, *hõm sóng*.
-Core relations shown on screen: **λ = v·T = v/f**, **f = 1/T**.
-- **Bài 8 (Mô tả sóng):** progressive wave u(x,t) = A·cos(ωt − kx), ω = 2πf, k = 2π/λ, for x ≤ v·t (u = 0 beyond the front).
-  Two particles one λ apart oscillate in phase. Offer an **đồ thị li độ – quãng đường (u–x)** snapshot and a **u–t** trace of the tracked particle.
-- **Bài 9 (Sóng ngang, sóng dọc, truyền năng lượng):**
-  - *Sóng ngang*: phương dao động ⟂ phương truyền sóng (rope).
-  - *Sóng dọc*: phương dao động trùng phương truyền sóng; sound in air is a longitudinal wave. Particles oscillate **only around
-    their VTCB**; energy travels, matter does not.
-  - Longitudinal model: each air layer at rest position x moves to x + u(x,t) along the propagation axis.
-    Pressure/density excess ∝ −∂u/∂x → **vùng nén** where −∂u/∂x > 0, **vùng giãn** where < 0. Colour/labels must come from this
-    same formula so they always sit where the dots are actually crowded.
-  - Speeds (m/s): không khí 343, nước 1482, thép 5960 (port `SPEED` from `legacy/js/physics.js`). Hearing range 20 Hz – 20 kHz:
-    warn outside it ("hạ âm" < 20 Hz, "siêu âm" > 20 kHz).
-- **Sóng mặt (surface wave – teacher request; refs `docs/ref/surface-wave-*.png`):** a wave travelling along the boundary
-  of a medium (e.g. the water surface). It has **both** a longitudinal and a transverse component, so each particle moves on a
-  **closed loop** around its VTCB: parallel AND perpendicular to the direction of propagation. Use linear (Airy) wave theory,
-  wave travelling to +x, η = A·cos(kx − ωt), depth d ≥ 0 below the still surface, water depth h:
-  - horizontal displacement ξ = −a(d)·sin(kx₀ − ωt), vertical ζ = b(d)·cos(kx₀ − ωt) (y up).
-  - **Nước sâu** (default, h ≥ λ/2): a = b = A·e^(−k·d) → **circles** shrinking with depth.
-  - **Nước nông** (toggle): a = A·cosh(k(h−d))/sinh(kh), b = A·sinh(k(h−d))/sinh(kh) → **ellipses** that flatten to a back-and-forth
-    line at the bottom (matches ref B in `surface-wave-orbits-deep-shallow.png`).
-  - Sense of rotation for a wave moving right: **clockwise** on screen (forward at the crest, backward in the trough, down on the
-    front side). The particles carry no net drift: energy moves, water does not.
-  - Crests come out sharper and troughs flatter automatically from the particle motion – do not fake the surface curve, draw it through the top-row particles.
-  Captions (short): "Sóng mặt: phần tử dao động theo cả phương dọc và phương ngang → quỹ đạo tròn", "Càng xuống sâu, dao động càng yếu".
-  If a caption must relate to the textbook: KNTT only classifies sóng ngang / sóng dọc; present sóng mặt as their combination, never contradict them.
-- **Bài 11 (Sóng điện từ):** EM wave = coupled oscillating **E** and **B**, in phase, **E ⟂ B ⟂ phương truyền** → it is a
-  *sóng ngang*; travels in vacuum at **c = 3·10⁸ m/s**; λ = c/f. Spectrum scale = **Bảng 11.1 SGK KNTT** (use these values verbatim):
+### 3.2 `sound` – Sóng âm
+Layout left → right: source · medium · receiver. Medium seg **Không khí | Nước | Thép** (physically honest scenes):
+- **Không khí:** source chips **Loa | Người nói**; receiver = listener head + magnifier with the ear cross-section (v2 composition).
+- **Nước:** the scene becomes a **bể nước** (glass tank, water with depth gradient). Source = **đầu phát âm dưới nước** (piezo
+  transducer, `art/transducer.svg`) immersed and touching the water; receiver = **máy thu âm dưới nước** (the same SVG mirrored).
+  Particles = water (blue spheres). No loudspeaker, no ear in this scene.
+- **Thép:** a clamped **thanh thép** (brushed-metal gradient). Source = the same transducer **pressed against the left end face**;
+  receiver = the same sensor on the right end face. Particles = lattice atoms (grey spheres in a regular grid inside the bar).
+- Reason (keep it in the help text, 1 bullet): a loudspeaker in air cannot push sound into a steel block the way it pushes air, so
+  water/steel use a source in contact with the medium.
+- **Air column (fixes v2):** particles exist only in the column directly in front of the cone mouth: rows span the cone rim height,
+  columns from the cone face to the receiver. No particles behind or around the speaker. The first layer's rest position is the cone
+  face's rest position, and the cone uses the same u(0,t), so they move together and never overlap. Same rule for the talker (column
+  in front of the lips, a bit narrower) and the transducer face.
+- **Loudspeaker (realistic, fixes v2):** cabinet front panel + driver in side cut-away. **Static:** cabinet, frame/basket (khung loa),
+  magnet, top plate, pole piece. **Moving (translate x by u(0,t)):** cone (màng loa) + dust cap + voice coil (cuộn dây). The surround (gờ
+  treo) and spider are short canvas curves connecting the static frame to the moving cone rim, so they stretch instead of sliding.
+- Particles: uniform blue spheres while running (crowding alone shows the wave); paused → tinted nén/giãn bands + labels.
+- Receiver motion: eardrum bulges with the arriving pressure, ossicles rock, nerve pulses run toward "Não" (pulses also while running –
+  they are not text). Sensor: a small cone/needle moves with the arriving u.
+- **Paused:** Vùng nén / Vùng giãn, λ ruler, red particle VTCB tick + ↔, part names (≤ 4 speaker: Màng loa, Cuộn dây, Nam châm, Khung loa;
+  ≤ 5 talker: Dây thanh âm, Họng, Khoang miệng, Khoang mũi, Lưỡi; ≤ 7 ear: Vành tai, Ống tai, Màng nhĩ, Xương búa – đe – bàn đạp, Ốc tai,
+  Ống bán khuyên, Dây thần kinh thính giác; water/steel: Đầu phát, Máy thu), de-collided leaders, readout chip
+  (adds "Âm trung · tai nghe được" / "Siêu âm · tai không nghe được").
+- Controls: môi trường, nguồn (only in air), loại âm (Âm đơn / Giọng nói), f (log 10 Hz – 40 kHz + chips 100/262/440/1k/4k), độ to (dB),
+  làm chậm, toggle "Phần tử đỏ". Sound is **muted by default**; AudioContext starts on the first tap.
 
-  | Loại bức xạ | Bước sóng (chân không) | Tần số (Hz) | Example to show |
-  |---|---|---|---|
-  | Sóng vô tuyến | 1 m – 100 km | 3·10³ – 3·10⁸ | Đài FM 100 MHz |
-  | Sóng vi ba | 1 mm – 1 m | 3·10⁸ – 3·10¹¹ | Lò vi sóng 2,45 GHz |
-  | Tia hồng ngoại | 0,76 µm – 1 mm | 3·10¹¹ – 3,9·10¹⁴ | Điều khiển TV, thân nhiệt |
-  | Ánh sáng nhìn thấy | 0,38 µm – 0,76 µm | 3,9·10¹⁴ – 7,9·10¹⁴ | Ánh sáng (đỏ → tím) |
-  | Tia tử ngoại | 10 nm – 400 nm | 7,5·10¹⁴ – 3·10¹⁶ | Mặt Trời, đèn diệt khuẩn |
-  | Tia X | 30 pm – 3 nm | 10¹⁷ – 10¹⁹ | Chụp X-quang |
-  | Tia gamma | 10⁻⁵ nm – 0,1 nm | 3·10¹⁸ – 3·10²² | Phóng xạ |
+### 3.3 `surface` – Sóng mặt
+v2 behaviour kept (grid of ~30×10 particles, phao, 2–3 red tracked particles with orbit outlines, Nước sâu | Nước nông).
+v3: spheres, water filled with a vertical gradient (light at the surface → deep blue), glossy surface line, sand bed with gradient
+in shallow mode. Orbit outlines may stay while running (they are geometry, not text). **Paused:** Đỉnh/Hõm sóng, λ ruler,
+"Phương truyền sóng →", "Quỹ đạo tròn = dao động dọc + dao động ngang" (one pill), "Càng sâu dao động càng yếu", Phao, readout chip.
 
-  The scale is a row of 7 flat blocks ordered by wavelength (long → short, label "bước sóng giảm, tần số tăng"). Tapping a block
-  selects it; the animation then uses a *relative* on-screen wavelength and shows the real λ range, f range and example. The
-  visible-light block is drawn as 7 **solid** stripes (đỏ, cam, vàng, lục, lam, chàm, tím) — never a gradient.
-- **Honesty about scale:** animations are slowed down and amplitudes enlarged. Show small badges when relevant:
-  "Đã làm chậm ×N", "Biên độ được phóng đại", "λ thực quá nhỏ/lớn – hình vẽ rút gọn" (old app's `visLambda` clamp idea).
-  Readouts always show the **real** values (f, T, λ = v/f, v).
+### 3.4 `em` – Sóng điện từ
+- Oblique view as v2 (E vertical, orange; B along z at 30°, blue; in phase), arrows with depth (darker outline, slightly thicker),
+  optional very faint tinted E-plane and B-plane quads for 3D reading.
+- **Spectrum bar** at the bottom: one rounded bar of 7 segments ordered as §2 (gamma left → vô tuyến right), arrow under it
+  "bước sóng tăng →" and "← tần số tăng". Each segment has a soft vertical gradient; visible light is a real rainbow gradient (tím → đỏ,
+  left → right, matching λ increasing). Short names under the segments (Gamma, Tia X, Tử ngoại, Nhìn thấy, Hồng ngoại, Vi ba, Vô tuyến).
+  Tapping a segment selects it (raised + red outline). **No info card under the bar** and no band chips in the left panel.
+- Paused: "E", "B", "Phương truyền sóng (v = c)", "E ⟂ B ⟂ v → sóng ngang", "Cùng pha" marker, λ ruler, readout chip with the selected
+  band's real λ range, f range and example.
+- Controls: làm chậm, toggles Điện trường E / Từ trường B / Mũi tên.
 
-## 3. Mode details
-### 3.1 Sóng dọc – Sóng âm (default)
-Layout of the canvas, left → right: **source** · air region · **listener's ear**. Match `docs/ref/ear-voice-reference.png`
-(composition: speaking person in cross-section on the left, waves through air, ear cross-section on the right) but redrawn flat.
-- Source toggle (chips): **Loa** (default, owner's decision) | **Người nói**.
-  - Loa: flat loudspeaker drawn side-on, cone face toward the air; the cone moves with u(0,t).
-  - Người nói: head-and-neck **sagittal cross-section** like the reference: oral cavity, tongue, teeth/lips, nasal cavity outline,
-    pharynx (họng), larynx with **dây thanh âm** vibrating, vertebrae column. Lips open toward the air. Labels: "Dây thanh âm (nguồn dao động)",
-    "Khoang miệng", "Họng".
-- Air: ~40×12 grid of dots (desktop) / ~28×9 (phone), each displaced by u(x,t) along x. Shade by the sign/size of −∂u/∂x using
-  **3 discrete flat colours** (nén = orange, bình thường = slate, giãn = blue). One **tracked particle** in red with its VTCB tick and a
-  "↔" arrow; one column of dots outlined to show a "lớp không khí". Optional thin bars above showing vùng nén / vùng giãn labels.
-- λ ruler: bracket between two consecutive compression centres, label "λ = 78,0 cm" (real value).
-- Ear (right, cross-section, matches reference): vành tai (pinna), ống tai, **màng nhĩ** (vibrates with the arriving wave),
-  **xương búa – xương đe – xương bàn đạp** (rock slightly), cửa sổ bầu dục, **ốc tai** (snail spiral, purple), ống bán khuyên (purple loops),
-  **dây thần kinh thính giác** (yellow, with small pulses travelling to "não" when the wave arrives), vòi nhĩ. Show at most 7 labels at a time;
-  clicking a part highlights it with a thick outline + 1-line caption; clicking empty space (or Esc) clears the selection.
-- Controls: nguồn (Loa/Người nói), loại âm (Âm đơn / Giọng nói – reuse `legacy/js/audio.js` WebAudio, sound starts only after a tap),
-  f (log slider 20 Hz – 20 kHz + chips 100/262/440/1000/4000), độ to (dB, maps to A), môi trường (Không khí/Nước/Thép), làm chậm.
-- Right panel extras: mini **oscilloscope** of pressure at the ear (port `legacy/js/scope.js`, Canvas 2D already).
+## 4. Layout & UI
+- **Header (identity, unchanged look):** centre white pill with red uppercase **"THÍ NGHIỆM MÔ PHỎNG SÓNG"**; right **"TRƯỜNG THPT TRẦN
+  QUỐC TOẢN (ĐỒNG THÁP)"** red uppercase in a white card with a red left bar – **always one line** (`white-space:nowrap`, font size
+  `clamp()` by viewport; on phones it sits on its own line under the title); left: icon toolbar (help, mute, fullscreen if supported,
+  screenshot, restart).
+- **Desktop grid:** `top` row, then `ctrl | tabs` and `ctrl | stage`. Columns `var(--ctrl-w) minmax(0,1fr)` – the old `#info` column is
+  removed and the stage takes all the width. Bottom-centre of the stage: restart icon button, big red **Phát / Tạm dừng** pill, speed chip.
+- **Phones (< 1000 px or height ≤ 520 px):** title, school line, 4 icon tabs, stage, bottom dock (2 groups max: "Sóng", "Hiển thị").
+  No metrics row.
+- **No scrollbar anywhere** (page, panels) on all checker viewports: `html,body{overflow:hidden}`, `#app` 100dvh (100vh fallback),
+  safe-area padding. The checker fails on any page scroll or wrapped/overflowing school name.
+- Help modal ≤ 5 short bullets (how to play/pause, pause shows labels, sliders, keys, the water/steel note).
+- Controls style kept: `.brk` corners, `.seg` (active black), `.chip` (active red), `.tg`, red-filled sliders. Toggle labels one line.
 
-### 3.2 Sóng ngang – dây
-- A horizontal rope of ~40 beads (thin ink line through them) driven by a vibrator/hand at the left; far end free-looking (fade out by
-  ending the rope at the panel edge, no reflection). Beads move only vertically.
-- Labels: "Đỉnh sóng", "Hõm sóng", arrows "phương dao động ↕" vs "phương truyền sóng →", λ between two crests, two in-phase beads marked.
-- Bottom strip: **u–x graph** (live snapshot with axis labels "x (cm)", "u (cm)") and **u–t graph** of the tracked bead (scrolling).
-- Controls: f (0,2 – 5 Hz visual), A, v (tốc độ truyền, e.g. 0,5 – 4 m/s), làm chậm, "Dừng hình" (freeze to read the graph).
-
-### 3.3 Sóng mặt
-Match the look of `docs/ref/surface-wave-particle-grid.png` (cross-section of a dot grid) and the orbits of `surface-wave-orbits-deep-shallow.png`, redrawn flat.
-- Main view: cross-section of the medium as a grid of ~30×10 dots (phone ~20×8), surface row on top drawn as a solid ink line through
-  the top-row particles, water below filled with **2–3 stepped flat blues by depth band** (no gradient), air above = graph paper.
-- 2–3 **tracked particles** at different depths in one column, red, each with its thin orbit outline (circle/ellipse) and a small
-  arrow showing the sense of rotation; their VTCB marked with a "+" tick. Toggle "Quỹ đạo phần tử".
-- A floating **phao** (small flat float) on the surface that moves on its circle and returns – no drift.
-- Labels: "Đỉnh sóng", "Hõm sóng", "Phương truyền sóng →", λ ruler between two crests, legend "dao động dọc + dao động ngang".
-- Controls: f, A, v (tốc độ truyền), Nước sâu | Nước nông, làm chậm. Đặc điểm card: Phương dao động = "cả dọc và ngang (quỹ đạo tròn/elip)".
-
-### 3.4 Sóng điện từ
-- Oblique 2D projection (x → right, y ↑, z drawn at −30° "into the page"). Draw E as vertical arrows (sampled every λ/12) in one colour
-  and B as arrows along z in another colour, both u = cos(ωt − kx), same phase; outline curves joining arrow tips; axis labels
-  "E", "B", "phương truyền sóng (v = c)". Small legend: "E ⟂ B ⟂ v → sóng ngang", "truyền được trong chân không".
-- Bottom: the spectrum scale (§2 table). Selected block shows λ range, f range, example; λ = c/f readout uses the block's
-  representative value (e.g. FM 100 MHz → λ = 3 m).
-- Controls: chọn dải (the scale itself), làm chậm, toggles E / B / mũi tên.
-
-## 4. Layout & UI (keep the school's house style – see `docs/ref/school-style-*.png`)
-- **Header** (unchanged identity from the old app):
-  - Centre: white pill, red uppercase bold title **"THÍ NGHIỆM MÔ PHỎNG SÓNG"**.
-  - Right: **"TRƯỜNG THPT TRẦN QUỐC TOẢN (ĐỒNG THÁP)"**, red uppercase, white card with a red left bar.
-  - Left: icon toolbar in a bracket-corner panel: help (short modal: how to use, 6 bullets max), mute, fullscreen (hide if unsupported),
-    screenshot (canvas → PNG download), restart.
-- **Mode tabs**: a segmented pill centred under the title (like the "Làm nổi bật | Tất cả | 1 Sơ cấp…" bar in
-  `school-style-nuclear.png`): 4 options with small icons, active = black fill, white text.
-- **Left panel** (≈ 280 px, bracket corners, cream): controls of the current mode, grouped with small uppercase headings,
-  icon + label rows, sliders with red fill, chips (active = red fill), segmented (active = black). Never scrolls on desktop.
-- **Right panel** (≈ 260 px): "SỐ LIỆU" 2×2 metric cards (f, T, λ, v; JetBrains Mono values, unit small), formula chip
-  "λ = v·T = v/f", a 4-row **Đặc điểm** card (Phương dao động, Phương truyền, Môi trường, Ví dụ) for the current mode, and the mode's graph/scope.
-- **Centre**: the canvas stage. Bottom-centre: big red **Phát / Tạm dừng** pill button + "Bắt đầu lại" icon button + speed chip.
-- **Phones (< 820 px)**: header shrinks (title pill full width, school name small under it), mode tabs become a horizontal row of 4 icon tabs,
-  metrics become one row of 4 mini cards, controls move to a bottom sheet with 2–3 icon tabs (collapsed by default), canvas fills the rest.
-  Canvas content must re-layout for portrait (e.g. source top-left, ear bottom-right, or stack top/side views vertically).
-- Port tokens/components from `legacy/css/style.css` (`.brk` corners, `.seg`, `.chip`, `.tg`, sliders, metric cards, header) and the
-  icon set (`PATHS`) + `h()` helper from `legacy/js/ui.js`. Remove all old 3D/lesson/tour CSS.
-
-## 5. Visual system
-- **Flat**: solid fills, 1.5–2 px ink outlines (`#2b2f36`), round line joins. **No gradients** (including CSS `linear-gradient` backgrounds,
-  canvas `createLinearGradient/RadialGradient`), **no shadows on canvas drawings, no glow/blur/filters, no neon colours**.
-  (A subtle UI panel box-shadow is allowed.) Exception: the `.brk` corner marks use `linear-gradient` only as a technique to draw solid lines — keep that.
-- Stage background: warm paper `#fbfaf6` with a faint **graph-paper grid** (1 px `#ece7dc`, major every 5 cells `#e2dccd`) — the lab-notebook
-  look is the app's signature. Ink `#15181d`, muted `#5d6470`, line `#ddd8cc`, UI red `#d7191f` (UI accents only).
-- Data colours (consistent across modes): nén / E-field `#e8590c`, giãn / B-field `#1c7ed6`, neutral particle `#495057`,
-  tracked particle `#d7191f`, water `#a5d8ff` / `#74c0fc` / `#4dabf7` (stepped) with outline `#1864ab`.
-- Anatomy palette (flat, from the reference, de-saturated a little): skin `#f3c9b1` outline `#9c5b43`; inner mouth/pharynx `#e98f93`;
-  tongue `#d9727a`; teeth/bone `#f4ecd8` outline `#a08a62`; vertebrae `#efe3c6`; vocal folds `#c2255c`; ear canal `#eaa58e`;
-  eardrum `#f4b183`; ossicles `#f1e3c4` outline `#8a6d3b`; cochlea + semicircular canals `#b197fc` outline `#5f3dc4`;
-  auditory nerve `#fcc419` outline `#b08900`; temporal-bone area light stipple `#efe6d2` (dots pattern, not gradient).
-- Typography: **Be Vietnam Pro** (400/600/700/800) for UI, **JetBrains Mono** (500/700) for numbers – both already in `fonts/`.
-  Canvas text uses the same families (wait for `document.fonts.ready` before first draw).
-- Anatomy accuracy: use the reference image for composition and `https://commons.wikimedia.org/wiki/File:Anatomy_of_the_Human_Ear.svg`
-  (CC BY 2.5, Chittka & Brockmann) for correct relative positions (pinna → canal → eardrum → malleus/incus/stapes → oval window → cochlea,
-  semicircular canals above the cochlea, nerve leaving medially, Eustachian tube going down-forward). Draw it yourself as vector paths; do not embed the file.
+## 5. Visual system v3
+- **Stage background:** warm paper `#fbfaf6`, faint graph grid (minor `#efebe2`, major every 5 cells `#e4ddcf`) plus a very soft radial
+  vignette – all baked once into the cached grid canvas.
+- **Spheres (`js/draw/ball.js`):** one offscreen sprite per (colour, radius, dpr), built with a radial gradient whose centre is offset
+  to the upper-left (≈ −0,35r, −0,4r): lighter tint → base colour → darker rim, a small white specular dot (α ≈ 0,85), a thin darker rim
+  stroke for projector contrast and a baked soft contact shadow below-right. Per frame: `drawImage` only.
+  Colours: medium particle blue `#1c7ed6` (bright, high contrast), steel atoms `#868e96`, tracked particle red `#e03131`, rope beads
+  `#1971c2`. Radius ≥ 4 px desktop, ≥ 3,5 px phone.
+- **Rope / springs:** tube = 3 strokes (dark core, mid tone, thin highlight offset −1 px). Springs: zigzag 1,5 px graphite.
+- **Annotations:** white pills with 1 px border and a soft shadow (shadowBlur is fine – annotations are drawn only on paused frames),
+  data colours nén / E `#e8590c`, giãn / B `#1c7ed6`, ink `#15181d`, muted `#5d6470`, UI red `#d7191f`.
+- **Devices & anatomy = layered SVG files in `art/`** (see §6), drawn with linear/radial gradients for form (metal, plastic, skin, bone,
+  mucosa), soft inner shading, thin darker outlines, consistent light from the upper-left. Style target: clean textbook / medical
+  illustration, calm and realistic, not cartoon. Palette anchors: skin `#f1c4a8`→`#d99a7c`, mucosa `#e98f93`, bone `#f4ecd8`,
+  cochlea/canals `#9775fa`, nerve `#fcc419`, metal `#adb5bd`→`#495057`, speaker cone `#3b3f45`, magnet `#212529`.
+  References in `docs/ref/web/` (ear-anatomy.png, gray994.png, places-of-articulation.png) and `docs/ref/ear-voice-reference.png`:
+  look at them for proportions; draw your own paths.
+- Still forbidden: neon colours, glow/bloom halos, CSS `filter`/`backdrop-filter`, `shadowBlur` inside per-frame loops, WebGL, libraries,
+  network fonts. Fonts: Be Vietnam Pro (UI), JetBrains Mono (numbers), already in `fonts/`.
 
 ## 6. Engineering
-- Files: `index.html`, `css/style.css`, `js/main.js` (boot, loop, resize, `window.__app`), `js/state.js`, `js/ui.js`, `js/physics.js`,
-  `js/audio.js`, `js/draw/*.js` (shared helpers: grid, arrows, labels, ruler), `js/modes/{longitudinal,transverse,surface,em}.js`
-  each exporting `{id, title, controls(), metrics(), features(), layout(w,h), update(dt), draw(ctx)}`, `js/art/{speaker,talker,ear}.js`
-  (anatomy as `Path2D` built once per size).
-- One `requestAnimationFrame` loop; pause when `document.hidden`; DPR capped at 2 (1.5 on phones); redraw static art into an offscreen
-  canvas on resize only; batch particles by colour (one `beginPath()` per colour). Budget: ≥ 50 fps on a mid-range Android phone.
-- Zalo/in-app browser safety: no reliance on Fullscreen API, `localStorage` wrapped in try/catch, AudioContext created on first tap,
-  `100dvh` with `100vh` fallback, `env(safe-area-inset-*)` padding, touch targets ≥ 40 px, no hover-only features, `touch-action` set on the canvas.
-- Accessibility: buttons have Vietnamese `aria-label`s, focus rings visible, `prefers-reduced-motion` starts paused.
-- Page weight without fonts < 200 KB. No external requests at runtime.
-
-## 7. Art v2 (owner feedback after the first build) – overrides §3.1 drawings where they conflict
-Owner verdict: the speaking person's face is ugly and the ear is unrecognisable ("không nhìn ra là cái tai").
-Goal: drawings a student recognises in 1 second, textbook-illustration quality, still flat (solid fills + ink outlines, no gradients).
-### References (download into `docs/ref/web/` and LOOK at them before drawing; draw your own vector paths, never trace-embed the files)
-- Ear cross-section (layout, proportions): https://commons.wikimedia.org/wiki/File:Anatomy_of_the_Human_Ear.svg (CC BY 2.5, Chittka & Brockmann)
-- Ear, colour-coded style: https://commons.wikimedia.org/wiki/File:Blausen_0330_EarAnatomy.png (CC BY 3.0, Blausen Medical)
-- Vocal tract, clean line art: https://commons.wikimedia.org/wiki/File:Places_of_articulation.svg
-- Head/neck sagittal anatomy: https://commons.wikimedia.org/wiki/File:Gray994.png (public domain)
-- Composition: `docs/ref/ear-voice-reference.png` (owner's image). Current weak result: `docs/ref/v1-talker.png`, `docs/ref/v1-ear.png`.
-If a URL fails, search Wikimedia Commons for the same subject; download the "Original file" link (upload.wikimedia.org).
-### Người nói (talker) – recognisable person first, anatomy second
-- A calm adult **side profile** (forehead, nose, lips, chin, jaw, neck, ear, short hair) with good proportions (eye on the mid-line of the head,
-  nose bottom ≈ ear bottom, lips at 1/3 between nose and chin). Simple, friendly, not cartoonish, not creepy. Skin flat `#f3c9b1`, hair flat dark.
-- Inside, a clean **sagittal cut** of the vocal tract (as in "Places of articulation"): nasal cavity, hard/soft palate, tongue, teeth, lips,
-  oral cavity, pharynx (họng), epiglottis, larynx with the **dây thanh âm** (2 small folds that visibly vibrate when playing), trachea, a few vertebrae.
-- Air-flow arrow from lungs/trachea → vocal folds → mouth; mouth slightly open; sound leaves the lips into the air grid.
-- Labels (≤ 5): Dây thanh âm (nguồn dao động), Họng, Khoang miệng, Khoang mũi, Lưỡi – short leaders that never cross.
-### Tai người nghe – context + magnified cut (fixes "can't tell it's an ear")
-- Draw the **listener's head in side profile** (same style as the talker, facing the source) at small scale, and a **circular magnifier**
-  ("kính lúp" callout: ring around the ear on the head + two thin lines to a big circle) that shows the **ear cross-section** large.
-- Ear cross-section in the circle (coronal cut, like the Wikimedia diagram): skin + skull band, pinna sticking out, S-shaped ear canal,
-  eardrum (màng nhĩ) as a thin tilted membrane, malleus–incus–stapes chained correctly (malleus touching the eardrum, stapes footplate in the
-  oval window), middle-ear cavity, Eustachian tube going down-forward, cochlea (2.5-turn snail, purple), three semicircular canals at right angles
-  (purple), vestibule, auditory nerve (yellow) leaving toward "Não".
-- Motion: eardrum bulges in/out with the arriving pressure, ossicles rock, small pulses run along the nerve while sound arrives.
-- Labels (≤ 7, de-collided): Vành tai, Ống tai, Màng nhĩ, Xương búa – đe – bàn đạp, Ốc tai, Ống bán khuyên, Dây thần kinh thính giác.
-- The same approach on phones (magnifier may sit below the head).
+- Static site, ES modules, no build, no libraries, relative URLs. One `requestAnimationFrame` loop; pause when `document.hidden`;
+  DPR cap 2 (1,5 on phones).
+- **Mode interface:** `{id, title, short, icon, defaults, controls(), metrics() → {f, v}, readout() → [line1, line2], layout(w,h),
+  update(dt), draw(ctx), annotate(ctx), reset?(), pointer?(x,y)}`. `main.js` calls `draw` every frame and `annotate` only when
+  paused, with `fx.a` ramping 0 → 1 over 0,25 s. Delete `features()`, `badges()`, `hover()`, `escape()` and the label/ruler/track
+  state toggles except `track` ("Phần tử đỏ").
+- **`js/draw/ball.js`:** `ball(color, r)` → cached sprite `{c, s}` (canvas + half size, device pixels); `drawBall(ctx, sp, x, y)`;
+  cache cleared on resize. Batch: one sprite lookup per colour, then a loop of `drawImage`.
+- **`js/art/sprite.js` – SVG layer loader (the art pipeline):** `loadArt(name)` fetches `art/<name>.svg` once (text). Every top-level
+  `<g id="…" data-move>` becomes its own layer; everything else is the static layer. `<circle class="anchor" id="a-…" r="0">` marks
+  label anchors and pivots (read once, then removed). For each layer a copy of the SVG with only that layer kept is turned into a
+  data-URL `Image`, decoded, and rasterised into an offscreen canvas at `scale·dpr` on resize only. API:
+  `art.ready` (Promise), `art.w/h` (viewBox), `art.render(scale, dpr)`, `art.draw(ctx, x, y, {layerId: {dx, dy, rot, sx}})`,
+  `art.pt(id)` → design-unit anchor. Draw a placeholder rectangle until `ready`.
+- **SVG file rules:** `viewBox` in design units + `width`/`height`; no `<text>`, no `<image>`, no external refs, no CSS files;
+  gradient ids prefixed with the file name; `feGaussianBlur` allowed (rasterised once); ≤ 40 KB per file; moving parts are separate
+  top-level `<g data-move>` with an `a-<id>-pivot` anchor when they rotate. Open the file alone with `node tools/shot.mjs <n> --page=art/<f>.svg`.
+- Files after v3: `js/modes/{waves,sound,surface,em}.js`; `js/art/sprite.js`; `art/{driver,speaker,transducer,talker,ear}.svg`;
+  `js/draw/{grid,ink,ball}.js`. Old Path2D art (`js/art/figure.js, speaker.js, talker.js, ear.js`) is deleted once its SVG replacement works.
+- Zalo/in-app safety: no reliance on Fullscreen API, `localStorage` in try/catch, AudioContext on first tap, `touch-action` on the canvas,
+  touch targets ≥ 40 px, no hover-only features. `prefers-reduced-motion` starts paused (annotations visible).
+- Budget: ≥ 50 fps on a mid-range Android phone (checker: CPU throttle ×4 at 390×844); page weight without fonts < 300 KB.
