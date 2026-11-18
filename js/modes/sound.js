@@ -5,9 +5,7 @@ import {lenParts, freqParts, slowText} from '../fmt.js';
 import {SPEED, MEDIUM, HEARING, clamp, describePitch, niceSlow, makeWave} from '../physics.js';
 import {C, font, pill, text, arrow, ruler, roundRect, textW} from '../draw/ink.js';
 import {ball, drawBall, BALL, ballDpr} from '../draw/ball.js';
-import {layoutLabels, drawLabels} from '../art/figure.js';
-import {loadArt} from '../art/sprite.js';
-import {makeEar, EAR_W, EAR_H, EAR_NAMES, EAR_CAPS, EAR_LABELS} from '../art/ear.js';
+import {loadArt, layoutLabels, drawLabels} from '../art/sprite.js';
 
 const F_MIN = 10, F_MAX = 40000;           // slider reaches a little outside 20 Hz–20 kHz to show hạ âm / siêu âm
 const DB_MIN = 40, DB_MAX = 100;
@@ -88,7 +86,57 @@ const talk = {
 const TALK_LAB = [['nasal', 'Khoang mũi', 'a-nasal', 170, 143, 'top'], ['mouth', 'Khoang miệng', 'a-oral', 180, 154, 'top', 1], ['tongue', 'Lưỡi', 'a-tongue', 170, 178, 'bottom'],
   ['throat', 'Họng', 'a-throat', 127, 196, 'bottom'], ['cords', 'Dây thanh âm', 'a-cords', 139, 255, 'bottom']];
 const talkLabels = () => TALK_LAB.map(([id, t, a, fx, fy, side, row]) => { const p = tkPt(a, fx, fy); return [id, t, p.x, p.y, side, row]; });
-const ear = makeEar();
+// Listener = art/head.svg mirrored (faces the source) + magnifier art/ear.svg (coronal cut: pinna, S-canal, eardrum, ossicles,
+// cochlea, semicircular canals, nerve). Composite design box EAR_W × EAR_H; the canal axis (y = EAR_AX) is the air column's centre line.
+const headArt = loadArt('head'), earArt = loadArt('ear');
+for (const a of [headArt, earArt]) a.ready.then(() => { labelKey = ''; bus.emit('change', {key: 'art'}); });
+const EAR_W = 300, EAR_H = 262, EAR_AX = 134;
+const HD = {s: 0.5, x: 0, y: 40, w: 232, ex: 99.2, ey: 123.5};          // head.svg in the composite (mirrored); ex/ey = its ear (a-ear)
+const ES = 0.98, EX = 188 - 148 * ES, EY = EAR_AX - 116 * ES;          // ear.svg disc centre (148,116) → composite (188, EAR_AX)
+const earPt = (id, fx, fy) => { const p = earArt.pt(id) || {x: fx, y: fy}; return {x: EX + p.x * ES, y: EY + p.y * ES}; };
+// lens callout: small ring round the head's ear + the two outer tangents to the bezel (composite units, computed once)
+const CALL = (() => {
+  const ex = HD.x + (HD.w - HD.ex) * HD.s, ey = HD.y + HD.ey * HD.s, cx = 188, cy = EAR_AX, r1 = 7, r2 = 113 * ES;
+  const phi = Math.atan2(cy - ey, cx - ex), be = Math.acos((r1 - r2) / Math.hypot(cx - ex, cy - ey));
+  return {ex, ey, r1, t: [phi + be, phi - be].map(a => [ex + r1 * Math.cos(a), ey + r1 * Math.sin(a), cx + r2 * Math.cos(a), cy + r2 * Math.sin(a)])};
+})();
+const EAR_MV = {drum: {dx: 0}, malleus: {rot: 0}, incus: {rot: 0}, stapes: {dx: 0}};   // reused every frame (no allocation)
+const NV = new Float32Array([216, 145, 230, 139, 244, 133.4, 254, 129.6]);          // nerve centre line a-n0…a-n3 (ear.svg units)
+earArt.ready.then(() => { for (let i = 0; i < 4; i++) { const p = earArt.pt('a-n' + i); if (p) { NV[i * 2] = p.x; NV[i * 2 + 1] = p.y; } } });
+const ear = {
+  w: EAR_W, h: EAR_H, x: 0, y: 0, s: 1,
+  place(x, y, bw, bh, ax = 0.5, ay = 0.5) { const s = Math.min(bw / EAR_W, bh / EAR_H); this.s = s; this.x = x + (bw - EAR_W * s) * ax; this.y = y + (bh - EAR_H * s) * ay; },
+  px(dx, dy) { return [this.x + dx * this.s, this.y + dy * this.s]; },
+  // d = umbo displacement in ear.svg units (+ = into the middle ear, same sign as the air displacement u at the canal);
+  // phase = nerve-pulse phase 0…1, −1 while the wave has not reached the ear
+  draw(ctx, d, phase) {
+    const s = this.s, dpr = ballDpr(), X = this.x, Y = this.y;
+    if (headArt.scale !== s * HD.s || headArt.dpr !== dpr) headArt.render(s * HD.s, dpr);
+    if (earArt.scale !== s * ES || earArt.dpr !== dpr) earArt.render(s * ES, dpr);
+    ctx.save(); ctx.translate(X + (HD.x + HD.w * HD.s) * s, Y + HD.y * s); ctx.scale(-1, 1); headArt.draw(ctx, 0, 0); ctx.restore();
+    ctx.strokeStyle = 'rgba(52,58,66,.5)'; ctx.lineWidth = 1; ctx.beginPath();
+    ctx.arc(X + CALL.ex * s, Y + CALL.ey * s, CALL.r1 * s, 0, 6.2832);
+    for (let i = 0; i < 2; i++) { const t = CALL.t[i]; ctx.moveTo(X + t[0] * s, Y + t[1] * s); ctx.lineTo(X + t[2] * s, Y + t[3] * s); }
+    ctx.stroke();
+    // the malleus handle is fixed to the drum (umbo 37 units below the ossicle axis); malleus + incus rock as one lever about that axis,
+    // so the incus tip (26 units below it) pushes the stapes footplate in and out of the oval window
+    const th = -d / 37;
+    EAR_MV.drum.dx = d; EAR_MV.malleus.rot = th; EAR_MV.incus.rot = th; EAR_MV.stapes.dx = -th * 26;
+    earArt.draw(ctx, X + EX * s, Y + EY * s, EAR_MV);
+    if (phase < 0 || !earArt.layers.length) return;
+    // nerve impulses run from the cochlea toward the brain (not text: also while running)
+    ctx.fillStyle = '#fffbe6'; ctx.strokeStyle = '#d9480f'; ctx.lineWidth = 1;
+    for (let k = 0; k < 3; k++) {
+      const q = ((phase + k / 3) % 1) * 3, i = Math.min(2, q | 0), u = q - i, j = i * 2;
+      const px = NV[j] + (NV[j + 2] - NV[j]) * u, py = NV[j + 1] + (NV[j + 3] - NV[j + 1]) * u;
+      ctx.beginPath(); ctx.ellipse(X + (EX + px * ES) * s, Y + (EY + py * ES) * s, 2.7 * s, 1.9 * s, -0.42, 0, 6.2832); ctx.fill(); ctx.stroke();
+    }
+  }
+};
+const EAR_LAB = [['pinna', 'Vành tai', 'a-pinna', 57, 76, 'top'], ['canal', 'Ống tai', 'a-canal', 106, 117, 'bottom'], ['drum', 'Màng nhĩ', 'a-drum', 142, 108, 'bottom'],
+  ['ossicles', 'Xương búa – đe – bàn đạp', 'a-ossicles', 157, 81, 'top', 1], ['canals', 'Ống bán khuyên', 'a-canals', 238, 94, 'top'],
+  ['cochlea', 'Ốc tai', 'a-cochlea', 200, 162, 'bottom'], ['nerve', 'Dây thần kinh thính giác', 'a-nerve', 250, 131, 'bottom', 1]];
+const earLabels = () => EAR_LAB.map(([id, t, a, fx, fy, side, row]) => { const p = earPt(a, fx, fy); return [id, t, p.x, p.y, side, row]; });
 // Water / steel scenes: the same art/transducer.svg is the source (left) and, mirrored, the receiver (right); its moving layer "face" follows u.
 const trd = loadArt('transducer');
 trd.ready.then(() => { bus.emit('change', {key: 'art'}); });
@@ -158,8 +206,8 @@ function layout(w, hh) {
       L.fieldTop = cy - rimPx / 2; L.fieldBot = cy + rimPx / 2;
       spk.s = s; spk.x = L.airL - spk.rimX() * s; spk.y = cy - rimC * s;
     }
-    const se = fitS(earW / EAR_W, 134, 116);
-    ear.s = se; ear.x = L.airR + 4; ear.y = cy - 134 * se;
+    const se = fitS(earW / EAR_W, EAR_AX, EAR_H - EAR_AX);
+    ear.s = se; ear.x = L.airR + 4; ear.y = cy - EAR_AX * se;
   }
   L.r = clamp(Math.min(L.dx, L.dy) * 0.3, 3, 4.4);
   L.trackCol = Math.round(L.cols * 0.27);
@@ -356,12 +404,12 @@ function buildLabels(ctx) {
   if (L.layout === 'bars' || L.compact) return;
   if (L.layout === 'stack') {
     lab.src = layoutLabels(ctx, sf, mk(S.labels, fitN(PHONE_LABELS[state.source], L.bandA), 'right'), {mode: 'side', size: 10.5, xR: sf.x + sf.w * sf.s + 10, xL: 0, ymin: sf.y + 26, ymax: sf.y + sf.h * sf.s - 12});
-    lab.ear = layoutLabels(ctx, ear, mk(EAR_LABELS, fitN(PHONE_LABELS.ear, L.bandB), 'left'), {mode: 'side', size: 10.5, xR: 0, xL: ear.x - 8, ymin: ear.y + 26, ymax: ear.y + ear.h * ear.s - 10});
+    lab.ear = layoutLabels(ctx, ear, mk(earLabels(), fitN(PHONE_LABELS.ear, L.bandB), 'left'), {mode: 'side', size: 10.5, xR: 0, xL: ear.x - 8, ymin: ear.y + 26, ymax: ear.y + ear.h * ear.s - 10});
     return;
   }
   const fsz = 11;
   lab.src = layoutLabels(ctx, sf, mk(S.labels), {mode: 'rows', size: fsz, xmin: 2, xmax: L.airL - 2, yTop: sf.y - 4, yBot: sf.y + sf.h * sf.s + 4});
-  lab.ear = layoutLabels(ctx, ear, mk(EAR_LABELS), {mode: 'rows', size: fsz, xmin: L.airR + 4, xmax: L.w - 2, yTop: ear.y - 4, yBot: ear.y + ear.h * ear.s + 4});
+  lab.ear = layoutLabels(ctx, ear, mk(earLabels()), {mode: 'rows', size: fsz, xmin: L.airR + 4, xmax: L.w - 2, yTop: ear.y - 4, yBot: ear.y + ear.h * ear.s + 4});
   for (const [k, f] of [['src', sf], ['ear', ear]]) {
     for (const l of lab[k]) { lab.tops[k] = Math.min(lab.tops[k], l.y - l.h / 2); L.artBottom = Math.max(L.artBottom, l.y + l.h / 2); }
     if (lab.tops[k] > 1e8) lab.tops[k] = f.y;
@@ -392,10 +440,9 @@ function drawArt(ctx) {
       ctx.beginPath(); ctx.moveTo(fx, fieldTop); ctx.lineTo(fx, fieldBot); ctx.stroke();
     }
   }
-  // ear: eardrum follows the arriving air displacement; nerve pulses start when the wave front has reached the ear
-  ear.drawStatic(ctx, dpr);
+  // ear: the eardrum moves with the air layer at the canal (driven by the arriving pressure); nerve pulses start when the wave front has reached the ear
   const phase = wave.front >= ear0 ? (((wave.cycles() - ear0 / wave.lamPx) % 1) + 1) % 1 : -1;
-  ear.drawDyn(ctx, clampB(ue / amp) * 4.2, phase, false);
+  ear.draw(ctx, clampB(ue / amp) * 2.4, phase);
   if (L.layout === 'stack') {                                           // small markers where the air meets source / ear
     ctx.lineCap = 'round'; ctx.strokeStyle = C.ink; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(L.airL - 6 + u0, fieldTop); ctx.lineTo(L.airL - 6 + u0, fieldBot); ctx.stroke();
     ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(L.airR + 6 + ue * 0.8, fieldTop); ctx.lineTo(L.airR + 6 + ue * 0.8, fieldBot); ctx.stroke();

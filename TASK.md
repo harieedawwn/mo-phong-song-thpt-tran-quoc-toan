@@ -53,11 +53,11 @@ SPEC §3.2 (talker), §5, §6. Look at `docs/ref/web/gray994.png`, `docs/ref/web
 - [x] `art/talker.svg` = head + sagittal cut (nasal cavity, palate, tongue, teeth, lips, oral cavity, pharynx, epiglottis, larynx, trachea, vertebrae); vocal folds `data-move`; mouth anchor for the air column. Folds vibrate with u(0,t).
 - [x] Paused ≤ 5 labels. Max 2 drawing rounds (look at `--page` shots, not full-app shots, while iterating).
 
-## Phase 18 – Tai người nghe + kính lúp  `[ ]`  · **Opus**
+## Phase 18 – Tai người nghe + kính lúp  `[x]`  · **Opus**
 SPEC §3.2 (receiver, ear labels), §5, §6. Look at `docs/ref/web/ear-anatomy.png` (once). Files: ear parts of `js/modes/sound.js` (grep `ear`),
 `js/art/sprite.js`, `art/head.svg`. Do NOT read old `js/art/ear.js`; delete it and `js/art/figure.js` at the end.
-- [ ] `art/ear.svg`: magnifier ring + circular coronal cut (skin, temporal bone, pinna, S-canal, eardrum `data-move`, malleus/incus/stapes `data-move` + pivots, cavity, Eustachian tube, cochlea 2,5 turns, 3 canals, vestibule, nerve with pulse anchors); listener = `head.svg` mirrored/scaled.
-- [ ] Motion from the pressure at the canal; nerve pulses; paused ≤ 7 labels, leaders never cross; phone layout. Max 2 drawing rounds (`--page` shots).
+- [x] `art/ear.svg`: magnifier ring + circular coronal cut (skin, temporal bone, pinna, S-canal, eardrum `data-move`, malleus/incus/stapes `data-move` + pivots, cavity, Eustachian tube, cochlea 2,5 turns, 3 canals, vestibule, nerve with pulse anchors); listener = `head.svg` mirrored/scaled.
+- [x] Motion from the pressure at the canal; nerve pulses; paused ≤ 7 labels, leaders never cross; phone layout. Max 2 drawing rounds (`--page` shots).
 
 ## Phase 19 – Sóng mặt + điện thoại/Zalo + hiệu năng + dọn dẹp  `[ ]`  · Sonnet (High)
 SPEC §3.3, §6. Files: grep first.
@@ -76,3 +76,4 @@ SPEC §3.3, §6. Files: grep first.
 2026-11-18 · P15b · loa mặc định nhìn bên ngoài (art/speaker-out.svg, màng nhô ra dao động theo u(0,t)), nút "Xem bên trong loa" bật mặt cắt (state.inside, #inside=1) · shot desk paused 2 chế độ OK · (hash ở commit)
 2026-11-18 · P16 · art/transducer.svg (vỏ kim loại, gốm áp điện, lớp động `face`), bể nước kính + nước gradient / thanh thép kẹp 2 kẹp chữ C trên bàn (nướng sẵn thành canvas, thanh thép cắt theo mặt rung nên không hở), đầu phát trái + máy thu lật gương phải, hạt thép xám + liên kết mạng tinh thể, chip nguồn/“xem bên trong loa” chỉ hiện ở không khí, `#med=water|steel` (main.js), 1 bullet trợ giúp · shot --all --paused exit 0 (nước + thép: desk, desk720, phone, phone360, phoneLand); nước 440 Hz → λ=3,37 m, thép 440 Hz → 13,5 m (4 kHz → 1,49 m = 5960/4000) · (hash ở commit)
 2026-11-18 · P17 · art/head.svg (đầu người nhìn nghiêng: da gradient, tóc, tai, mắt) + art/talker.svg (cửa sổ cắt dọc: khoang mũi + xoăn mũi, vòm cứng/mềm, lưỡi, răng, môi, khoang miệng, họng, nắp thanh quản, thanh quản + sụn, khí quản, đốt sống cổ, tuỷ; lớp động `folds` rung theo u(0,t) – sprite.js thêm `sy`), cột khí trước môi cao 108 đv (7 hàng desk, loa 8), nhãn 5 (phone 3); talker.js xoá (đầu cũ chuyển tạm vào ear.js đến P18) · shot --all --paused exit 0, λ=78,0 cm @440 Hz, loa không đổi · (hash ở commit)
+2026-11-18 · P18 · art/ear.svg (kính lúp: viền kim loại + cán, mặt cắt đứng ngang: da, mô mỡ, cơ thái dương, não + màng cứng, xương thái dương có vân xương + tế bào chũm, vành tai + dái tai có sụn, ống tai chữ S + lông, màng nhĩ/xương búa/đe/bàn đạp `data-move` + trục, hòm nhĩ, vòi nhĩ, ốc tai 2,5 vòng, 3 ống bán khuyên, tiền đình, dây thần kinh + 4 neo xung), người nghe = head.svg lật gương + vòng chú thích; màng nhĩ theo u tại ống tai, búa–đe quay quanh 1 trục, bàn đạp = đòn bẩy 26/37; nhãn chuyển sang sprite.js + gỡ chéo đường dẫn; xoá ear.js, figure.js · shot --all --paused exit 0, 7 nhãn desk / 5 phone, không đường dẫn cắt, ear.svg 36 KB · (hash ở commit)

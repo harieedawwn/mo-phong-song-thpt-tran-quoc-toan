@@ -4,6 +4,8 @@
 //     (anchors are read in root coordinates – do not put them inside transformed groups)
 // Each layer is a copy of the SVG with only that layer kept → data-URL Image → rasterised into an offscreen canvas on render() (resize only).
 // Per frame: art.draw(ctx, x, y, {layerId: {dx, dy, rot, sx}}) = drawImage calls only. A moving layer rotates about the anchor "a-<id>-pivot".
+import {C, font, textW, roundRect} from '../draw/ink.js';
+
 const SVGNS = 'http://www.w3.org/2000/svg';
 const cache = new Map();
 const url = name => new URL('../../art/' + name + '.svg', import.meta.url).href;
@@ -89,4 +91,91 @@ export function loadArt(name) {
   }).catch(e => { art.failed = true; console.error('art/' + name + '.svg: ' + e.message); return art; });
   cache.set(name, art);
   return art;
+}
+
+// ---- part labels (leaders + pills) for the art figures ------------------------------------------------------------------------------------------------
+// items: [{text, tx, ty (design target), id}]. Rows mode: pills stacked in rows above/below the figure so that none overlap.
+// Side mode (phones): pills in a column left/right of the figure, de-collided vertically.
+const orient = (ax, ay, bx, by, cx, cy) => Math.sign((bx - ax) * (cy - ay) - (by - ay) * (cx - ax));
+// proper intersection of segments AB and CD
+function cross(ax, ay, bx, by, cx, cy, dx, dy) {
+  return orient(ax, ay, bx, by, cx, cy) * orient(ax, ay, bx, by, dx, dy) < 0 && orient(cx, cy, dx, dy, ax, ay) * orient(cx, cy, dx, dy, bx, by) < 0;
+}
+export function layoutLabels(ctx, fig, items, o) {
+  const out = [], fs = o.size || 11, pad = 6, ph = fs + 9;
+  ctx.font = font(fs, 700);
+  const placed = [];
+  const fit = (x, w) => Math.min(o.xmax - w / 2, Math.max(o.xmin + w / 2, x));
+  if (o.mode === 'side') {
+    const col = {left: [], right: []};
+    for (const it of items) { const [tx, ty] = fig.px(it.tx, it.ty); col[it.side || o.side || 'right'].push({it, tx, ty, w: textW(ctx, it.text) + pad * 2}); }
+    for (const side of ['left', 'right']) {
+      const arr = col[side].sort((a, b) => a.ty - b.ty);
+      let last = o.ymin - ph;
+      for (const a of arr) {
+        let y = Math.max(a.ty, last + ph + 3); a.y = y; last = y;
+      }
+      // pull back up if the column overflows the bottom
+      let over = (arr.length ? arr[arr.length - 1].y : 0) - o.ymax;
+      for (let k = arr.length - 1; k >= 0 && over > 0; k--) { const lim = k ? arr[k - 1].y + ph + 3 : o.ymin; const dy = Math.min(over, arr[k].y - lim); arr[k].y -= Math.max(0, dy); over -= Math.max(0, dy); }
+      // uncross leaders: swapping the slots of two crossing labels removes that crossing (total leader length drops, so this ends)
+      const lx = side === 'right' ? o.xR : o.xL;
+      for (let pass = 0, sw = true; pass < 12 && sw; pass++) {
+        sw = false;
+        for (let i = 0; i < arr.length; i++) for (let j = i + 1; j < arr.length; j++) {
+          const p = arr[i], q = arr[j];
+          if (cross(lx, p.y, p.tx, p.ty, lx, q.y, q.tx, q.ty)) { const t = p.y; p.y = q.y; q.y = t; sw = true; }
+        }
+      }
+      for (const a of arr) {
+        const x = side === 'right' ? o.xR + a.w / 2 : o.xL - a.w / 2;
+        out.push({id: a.it.id, text: a.it.text, x, y: a.y, w: a.w, h: ph, tx: a.tx, ty: a.ty, ex: side === 'right' ? x - a.w / 2 : x + a.w / 2, ey: a.y});
+      }
+    }
+    return out;
+  }
+  // rows mode: greedy placement; a label may shift sideways / use a farther row so that no pill and no leader crosses another pill
+  const placedRows = {top: [], bottom: []};
+  const arr = items.map(it => { const [tx, ty] = fig.px(it.tx, it.ty); return {it, tx, ty, w: textW(ctx, it.text) + pad * 2, side: it.side || 'bottom'}; })
+    .sort((a, b) => a.tx - b.tx);
+  for (const a of arr) {
+    const list = placedRows[a.side], offs = [0, -0.3, 0.3, -0.6, 0.6, -0.9, 0.9];
+    let best = null;
+    for (let pass = 0; pass < 2 && !best; pass++) search: for (let k = a.it.row || 0; k < 6; k++) for (const f of offs) {
+      const x = fit(a.tx + f * a.w, a.w);
+      let ok = true;
+      for (const r of list) {
+        if (r.k === k && Math.abs(r.x - x) < (r.w + a.w) / 2 + 5) { ok = false; break; }                   // overlap in the same row
+        if (pass) continue;                                                                                     // pass 2: only avoid overlapping pills
+        if (r.k < k && Math.abs(a.tx - r.x) < r.w / 2 + 4) { ok = false; break; }                              // my leader would cross a nearer pill
+        if (r.k > k && Math.abs(r.tx - x) < a.w / 2 + 4) { ok = false; break; }                                // a farther leader would cross my pill
+      }
+      if (ok) { best = {k, x}; break search; }
+    }
+    if (!best) best = {k: 0, x: fit(a.tx, a.w)};
+    list.push({k: best.k, x: best.x, w: a.w, tx: a.tx});
+    const y = a.side === 'top' ? o.yTop - best.k * (ph + 5) - ph / 2 : o.yBot + best.k * (ph + 5) + ph / 2;
+    const ex = Math.min(best.x + a.w / 2 - 8, Math.max(best.x - a.w / 2 + 8, a.tx));
+    out.push({id: a.it.id, text: a.it.text, x: best.x, y, w: a.w, h: ph, tx: a.tx, ty: a.ty, ex, ey: a.side === 'top' ? y + ph / 2 : y - ph / 2});
+  }
+  return out;
+}
+
+export function drawLabels(ctx, labels, sel, fs = 11) {
+  const ga = ctx.globalAlpha;
+  ctx.lineCap = 'round';
+  for (const l of labels) {                                                      // leaders first, then pills on top
+    ctx.strokeStyle = C.ink2; ctx.lineWidth = 1.1;
+    ctx.beginPath(); ctx.moveTo(l.ex, l.ey); ctx.lineTo(l.tx, l.ty); ctx.stroke();
+    ctx.fillStyle = C.ink2; ctx.beginPath(); ctx.arc(l.tx, l.ty, 2.3, 0, 6.2832); ctx.fill();
+  }
+  ctx.font = font(fs, 700); ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  for (const l of labels) {
+    const on = sel === l.id;
+    ctx.beginPath(); roundRect(ctx, l.x - l.w / 2, l.y - l.h / 2, l.w, l.h, 6);
+    ctx.fillStyle = on ? C.red : '#fff'; ctx.fill();
+    ctx.lineWidth = 1.4; ctx.strokeStyle = on ? C.red : C.ink; ctx.stroke();
+    ctx.fillStyle = on ? '#fff' : C.ink; ctx.fillText(l.text, l.x, l.y + 0.5);
+  }
+  ctx.globalAlpha = ga;
 }
