@@ -4,7 +4,6 @@
 // cửa sổ bầu dục → ốc tai → dây thần kinh thính giác → não. Above the cochlea: three ống bán khuyên. Vòi nhĩ goes down-forward.
 // Design units 300 × 250. The cross-section is authored in local units (0..224, circle centre (112,112), R 112) and placed at (OX, OY).
 import {Figure, stipple} from './figure.js';
-import {HEAD} from './talker.js';
 import {C} from '../draw/ink.js';
 
 const SKIN = '#f3c9b1', SKIN_L = '#9c5b43', SKIN_D = '#e9b598', BONE_L = '#a08a62', OSS = '#f1e3c4', OSS_L = '#8a6d3b';
@@ -12,6 +11,29 @@ const PUR = '#b197fc', PUR_L = '#5f3dc4', NERVE = '#fcc419', NERVE_L = '#b08900'
 export const EAR_W = 300, EAR_H = 250;
 export const OX = 76, OY = 22, CR = 112;                       // circle: centre (OX+112, OY+112), radius CR
 export const EAR_CX = OX + 112, EAR_CY = OY + 112;
+
+// old talker head outline (only for the small listener head until Phase 18 replaces it with art/head.svg)
+const HAIR = '#4a3a2e', HAIR_L = '#2e241c';
+const GAP = 'L 213 156.5 ';
+const SILHOUETTE = 'M 118 4 C 160 2 192 22 200 52 C 203 64 202 76 206 85 C 207 90 203 93 203 97 ' +
+  'C 210 108 222 119 230 127 C 234 131 231 137 225 137 C 220 137 216 136 213 138 C 213 141 216 144 217 147.5 ' +
+  'C 217.5 150 216 151.5 213 151.5 ' + GAP + 'C 217 157 218 161 215 166 C 212 169 207 170 207 173 C 208 177 213 183 213 189 ' +
+  'C 213 196 207 200 198 201 C 182 203 160 204 146 206 C 141 207 139 210 140 214 C 142 219 141 224 138 229 ' +
+  'C 136 250 137 280 139 304 L 46 304 C 48 260 52 214 58 186 C 46 170 30 148 24 110 C 18 70 40 8 118 4 Z';
+
+// One open airway: nasal cavity + nasopharynx + oral cavity + pharynx + larynx + trachea (palate and tongue are painted over it).
+const HEAD = {
+  skin: {id: 'skin', d: SILHOUETTE, fill: SKIN, pick: false},
+  ear: {id: 'ear', d: 'M 97 92 C 92 86 80 86 75 94 C 70 102 71 116 76 126 C 79 133 84 138 90 138 C 94 138 96 133 96 128 C 96 123 100 120 100 114 C 100 106 98 100 97 92 Z', fill: SKIN_D, stroke: SKIN_L, lw: 1.4, pick: false},
+  earIn: {id: 'earIn', d: 'M 93 97 C 86 94 79 99 79 108 C 79 117 83 125 88 128 M 93 108 C 88 106 85 111 88 116 C 90 118 93 118 94 115', fill: null, stroke: SKIN_L, lw: 1.2, pick: false},
+  outline: {id: 'outline', d: SILHOUETTE.replace(GAP, 'M 213 156.5 ').replace(/ Z$/, ''), fill: null, stroke: SKIN_L, lw: 2, pick: false},
+  hair: {id: 'hair', d: 'M 197 40 C 186 12 150 1 116 1.5 C 50 4 12 50 19 108 C 21 120 25 128 30 134 C 36 118 50 96 70 85 C 86 77 100 78 108 84 C 110 90 110 96 113 98 C 117 92 117 82 121 76 C 146 68 178 58 197 40 Z', fill: HAIR, stroke: HAIR_L, lw: 1.5, pick: false},
+  nostril: {id: 'nostril', d: 'M 214 131 C 217 127 223 127 225 131', fill: null, stroke: SKIN_L, lw: 1.3, pick: false},
+  eye: {id: 'eye', d: 'M 183 99 C 187 95 193 94.5 197 96.5 L 197.5 101 C 193 102.5 187 102 183 99 Z', fill: '#fff', stroke: C.ink2, lw: 1.1, pick: false},
+  iris: {id: 'iris', d: 'M 191 98.6 a 2.8 2.8 0 1 0 5.6 0 a 2.8 2.8 0 1 0 -5.6 0 Z', fill: HAIR, pick: false},
+  lid: {id: 'lid', d: 'M 182.5 99 C 187 94.5 193 93.5 197.5 96', fill: null, stroke: C.ink2, lw: 1.8, pick: false},
+  brow: {id: 'brow', d: 'M 181 89 C 187 85.5 195 85 202 87.5', fill: null, stroke: HAIR, lw: 2.6, pick: false}
+};
 
 const T0 = new DOMMatrix([1, 0, 0, 1, OX, OY]);
 const loc = d => { const p = new Path2D(); p.addPath(typeof d === 'string' ? new Path2D(d) : d, T0); return p; };

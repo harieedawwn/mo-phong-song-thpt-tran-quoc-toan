@@ -46,12 +46,12 @@ SPEC §3.2 (Nước, Thép). Files: `js/modes/sound.js` (medium/layout parts), `
 - [x] Nước: glass tank + water gradient, transducer immersed left, receiver right, no speaker/ear. Thép: clamped steel bar (metal gradient), grey lattice spheres, transducer + sensor on the end faces. Source chips only in air.
 - [x] Check: water 440 Hz → 3,37 m; steel 4 kHz → 1,49 m; `#mode=sound&med=steel` works.
 
-## Phase 17 – Đầu người chân thực + Người nói (mặt cắt dọc)  `[ ]`  · **Opus**
+## Phase 17 – Đầu người chân thực + Người nói (mặt cắt dọc)  `[x]`  · **Opus**
 SPEC §3.2 (talker), §5, §6. Look at `docs/ref/web/gray994.png`, `docs/ref/web/places-of-articulation.png` (once). Files: talker parts of
 `js/modes/sound.js` (grep `talk`), `js/art/sprite.js`. Do NOT read old `js/art/talker.js` (SPEC has the anatomy list); delete it at the end.
-- [ ] `art/head.svg`: realistic adult side profile (skin shading, hair, ear) – reused by the listener in Phase 18.
-- [ ] `art/talker.svg` = head + sagittal cut (nasal cavity, palate, tongue, teeth, lips, oral cavity, pharynx, epiglottis, larynx, trachea, vertebrae); vocal folds `data-move`; mouth anchor for the air column. Folds vibrate with u(0,t).
-- [ ] Paused ≤ 5 labels. Max 2 drawing rounds (look at `--page` shots, not full-app shots, while iterating).
+- [x] `art/head.svg`: realistic adult side profile (skin shading, hair, ear) – reused by the listener in Phase 18.
+- [x] `art/talker.svg` = head + sagittal cut (nasal cavity, palate, tongue, teeth, lips, oral cavity, pharynx, epiglottis, larynx, trachea, vertebrae); vocal folds `data-move`; mouth anchor for the air column. Folds vibrate with u(0,t).
+- [x] Paused ≤ 5 labels. Max 2 drawing rounds (look at `--page` shots, not full-app shots, while iterating).
 
 ## Phase 18 – Tai người nghe + kính lúp  `[ ]`  · **Opus**
 SPEC §3.2 (receiver, ear labels), §5, §6. Look at `docs/ref/web/ear-anatomy.png` (once). Files: ear parts of `js/modes/sound.js` (grep `ear`),
@@ -75,3 +75,4 @@ SPEC §3.3, §6. Files: grep first.
 2026-11-18 · P15 · art/speaker.svg (hộp cắt dọc: thùng, khung, nam châm; lớp động: màng+nắp+cuộn dây), gờ treo + spider vẽ canvas co giãn, js/art/speaker.js xoá; cột khí = đúng chiều cao mép màng (rows refit), lớp đầu cách mặt màng 1 dx, cùng u(0,t), k·A≤0,6 · shot --all --paused exit 0 (desk, desk720, phone, phone360, phoneLand), 440 Hz → λ=78,0 cm, nhãn loa 4 · (hash ở commit)
 2026-11-18 · P15b · loa mặc định nhìn bên ngoài (art/speaker-out.svg, màng nhô ra dao động theo u(0,t)), nút "Xem bên trong loa" bật mặt cắt (state.inside, #inside=1) · shot desk paused 2 chế độ OK · (hash ở commit)
 2026-11-18 · P16 · art/transducer.svg (vỏ kim loại, gốm áp điện, lớp động `face`), bể nước kính + nước gradient / thanh thép kẹp 2 kẹp chữ C trên bàn (nướng sẵn thành canvas, thanh thép cắt theo mặt rung nên không hở), đầu phát trái + máy thu lật gương phải, hạt thép xám + liên kết mạng tinh thể, chip nguồn/“xem bên trong loa” chỉ hiện ở không khí, `#med=water|steel` (main.js), 1 bullet trợ giúp · shot --all --paused exit 0 (nước + thép: desk, desk720, phone, phone360, phoneLand); nước 440 Hz → λ=3,37 m, thép 440 Hz → 13,5 m (4 kHz → 1,49 m = 5960/4000) · (hash ở commit)
+2026-11-18 · P17 · art/head.svg (đầu người nhìn nghiêng: da gradient, tóc, tai, mắt) + art/talker.svg (cửa sổ cắt dọc: khoang mũi + xoăn mũi, vòm cứng/mềm, lưỡi, răng, môi, khoang miệng, họng, nắp thanh quản, thanh quản + sụn, khí quản, đốt sống cổ, tuỷ; lớp động `folds` rung theo u(0,t) – sprite.js thêm `sy`), cột khí trước môi cao 108 đv (7 hàng desk, loa 8), nhãn 5 (phone 3); talker.js xoá (đầu cũ chuyển tạm vào ear.js đến P18) · shot --all --paused exit 0, λ=78,0 cm @440 Hz, loa không đổi · (hash ở commit)

@@ -7,7 +7,6 @@ import {C, font, pill, text, arrow, ruler, roundRect, textW} from '../draw/ink.j
 import {ball, drawBall, BALL, ballDpr} from '../draw/ball.js';
 import {layoutLabels, drawLabels} from '../art/figure.js';
 import {loadArt} from '../art/sprite.js';
-import {makeTalker, TALK_W, TALK_H, MOUTH, TALK_NAMES, TALK_CAPS, TALK_LABELS} from '../art/talker.js';
 import {makeEar, EAR_W, EAR_H, EAR_NAMES, EAR_CAPS, EAR_LABELS} from '../art/ear.js';
 
 const F_MIN = 10, F_MAX = 40000;           // slider reaches a little outside 20 Hz–20 kHz to show hạ âm / siêu âm
@@ -63,19 +62,40 @@ const spk = {
     }
   }
 };
-const SPK_NAMES = {cone: 'Màng loa', coil: 'Cuộn dây', magnet: 'Nam châm', basket: 'Khung loa', box: 'Thùng loa'};
 const SPK_LAB_IN = [['cone', 'Màng loa', 'a-cone', 122, 65, 'top'], ['basket', 'Khung loa', 'a-basket', 108, 54, 'top', 1], ['coil', 'Cuộn dây', 'a-coil', 84, 85, 'bottom'], ['magnet', 'Nam châm', 'a-magnet', 42, 75, 'bottom']];
 const SPK_LAB_OUT = [['cone', 'Màng loa', 'a-cone', 142, 70, 'top'], ['box', 'Thùng loa', 'a-box', 70, 150, 'bottom']];
 const spkLabels = () => (state.inside ? SPK_LAB_IN : SPK_LAB_OUT)
   .map(([id, t, a, fx, fy, side, row]) => { const p = spkPt(a, fx, fy); return [id, t, p.x, p.y, side, row]; });
-const talk = makeTalker(), ear = makeEar();
+// Talker = art/talker.svg (head + sagittal cut of the vocal tract); moving layer "folds" (vocal folds) vibrates with u(0,t).
+// The air column starts at the lips (anchor a-mouth) and is a bit narrower than the loudspeaker's (TALK_COL design units).
+const tkArt = loadArt('talker');
+tkArt.ready.then(() => { labelKey = ''; bus.emit('change', {key: 'art'}); });
+const TALK_W = 232, TALK_H = 300, TALK_COL = 108;
+const tkPt = (id, fx, fy) => tkArt.pt(id) || {x: fx, y: fy};
+const talk = {
+  w: TALK_W, h: TALK_H, x: 0, y: 0, s: 1,
+  place(x, y, bw, bh, ax = 0.5, ay = 0.5) { const s = Math.min(bw / TALK_W, bh / TALK_H); this.s = s; this.x = x + (bw - TALK_W * s) * ax; this.y = y + (bh - TALK_H * s) * ay; },
+  px(dx, dy) { return [this.x + dx * this.s, this.y + dy * this.s]; },
+  mouth() { return tkPt('a-mouth', 211, 165.8); },
+  drawStatic() {},
+  // v = u(0,t) / A in −1…1: the folds move up/down and thicken/thin with the same oscillation that pushes the first air layer
+  drawDyn(ctx, v) {
+    const s = this.s, dpr = ballDpr();
+    if (tkArt.scale !== s || tkArt.dpr !== dpr) tkArt.render(s, dpr);
+    tkArt.draw(ctx, this.x, this.y, {folds: {dy: -1.3 * v, sy: 1 + 0.32 * v}});
+  }
+};
+const TALK_LAB = [['nasal', 'Khoang mũi', 'a-nasal', 170, 143, 'top'], ['mouth', 'Khoang miệng', 'a-oral', 180, 154, 'top', 1], ['tongue', 'Lưỡi', 'a-tongue', 170, 178, 'bottom'],
+  ['throat', 'Họng', 'a-throat', 127, 196, 'bottom'], ['cords', 'Dây thanh âm', 'a-cords', 139, 255, 'bottom']];
+const talkLabels = () => TALK_LAB.map(([id, t, a, fx, fy, side, row]) => { const p = tkPt(a, fx, fy); return [id, t, p.x, p.y, side, row]; });
+const ear = makeEar();
 // Water / steel scenes: the same art/transducer.svg is the source (left) and, mirrored, the receiver (right); its moving layer "face" follows u.
 const trd = loadArt('transducer');
 trd.ready.then(() => { bus.emit('change', {key: 'art'}); });
 const TR = {W: 150, FACE_X: 136, FACE_Y: 50, FACE_H: 60};      // design units of art/transducer.svg: face plane x, centre y, height
 const solid = () => state.medium !== 'air' && L.layout !== 'bars';
 // phone: labels in priority order – as many as fit beside the figure
-const PHONE_LABELS = {ear: ['drum', 'cochlea', 'pinna', 'canal', 'canals'], talker: ['cords', 'mouth', 'throat', 'tongue'], speaker: ['cone', 'coil', 'magnet']};
+const PHONE_LABELS = {ear: ['drum', 'cochlea', 'pinna', 'canal', 'canals'], talker: ['cords', 'mouth', 'tongue'], speaker: ['cone', 'coil', 'magnet']};
 const fitN = (ids, band) => ids.slice(0, Math.max(1, Math.min(ids.length, Math.floor((band - 30) / 23))));
 let labelKey = '';
 
@@ -124,8 +144,13 @@ function layout(w, hh) {
     const cy = (L.fieldTop + L.fieldBot) / 2, rowsH = L.compact ? 0 : 56;        // room for 2 label rows above / below a figure
     const fitS = (sw, up, dn) => Math.max(0.3, Math.min(sw, (cy - 38 - rowsH) / up, (hh - bottom - rowsH - cy) / dn));
     if (talker) {
-      const s = fitS((srcW - 2) / TALK_W, MOUTH[1], TALK_H - MOUTH[1]);
-      talk.s = s; talk.x = L.airL - 4 - TALK_W * s; talk.y = cy - MOUTH[1] * s;
+      // column in front of the lips: TALK_COL design units tall, centred on the mouth; rows re-fitted to it
+      const m = talk.mouth();
+      // the head is tall above the mouth: keep 2 label rows + the heading below the readout chip (≈ 70 px above the hair)
+      const s = Math.min(fitS((L.airL - 4) / (m.x + 2), m.y, TALK_H - m.y), L.compact ? 9 : (cy - 136) / m.y), colPx = TALK_COL * s;
+      L.rows = clamp(Math.round(colPx / Math.min(L.dy, L.dx * 1.35)), 5, 10); L.dy = colPx / L.rows;
+      L.fieldTop = cy - colPx / 2; L.fieldBot = cy + colPx / 2;
+      talk.s = s; talk.x = L.airL - (m.x + 2) * s; talk.y = cy - m.y * s;
     } else {
       // the air column is exactly as tall as the cone rim: s from the rim height, rows re-fitted to it
       const rimC = spk.rimCy(), s = fitS((srcW - 4) / SPK_W, rimC, SPK_H - rimC), rimPx = spk.rimH() * s;
@@ -315,7 +340,7 @@ function drawSolidFront(ctx) {
   ctx.restore();
 }
 
-const SRC = {speaker: {names: SPK_NAMES, get labels() { return spkLabels(); }, title: 'Loa'}, talker: {names: TALK_NAMES, caps: TALK_CAPS, labels: TALK_LABELS, title: 'Người nói'}};
+const SRC = {speaker: {get labels() { return spkLabels(); }, title: 'Loa'}, talker: {get labels() { return talkLabels(); }, title: 'Người nói'}};
 const srcFig = () => state.source === 'talker' ? talk : spk;
 const clampB = x => Math.max(-1, Math.min(1, x));
 

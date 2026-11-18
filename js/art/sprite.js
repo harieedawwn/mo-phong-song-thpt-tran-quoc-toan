@@ -40,7 +40,7 @@ export function loadArt(name) {
         g.drawImage(L.img, 0, 0, pw, ph);
       }
     },
-    // x, y = top-left of the art on the stage (CSS px); dx/dy are design units, rot in radians, sx = horizontal scale about the pivot,
+    // x, y = top-left of the art on the stage (CSS px); dx/dy are design units, rot in radians, sx / sy = horizontal / vertical scale about the pivot,
     // clipY = design y (unmoved frame): the layer is only drawn above it (a rod sliding into a body)
     draw(ctx, x, y, moves) {
       const s = this.scale, w = this.w * s, h = this.h * s;
@@ -55,7 +55,7 @@ export function loadArt(name) {
         if (m.clipY != null) { ctx.beginPath(); ctx.rect(x - 1e4, y - 1e4, 2e4, 1e4 + m.clipY * s); ctx.clip(); }
         ctx.translate(x + (L.px + (m.dx || 0)) * s, y + (L.py + (m.dy || 0)) * s);
         if (m.rot) ctx.rotate(m.rot);
-        if (m.sx && m.sx !== 1) ctx.scale(m.sx, 1);
+        if ((m.sx && m.sx !== 1) || (m.sy && m.sy !== 1)) ctx.scale(m.sx || 1, m.sy || 1);
         ctx.drawImage(L.c, -L.px * s, -L.py * s, w, h);
         ctx.restore();
       }
