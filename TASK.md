@@ -85,13 +85,13 @@ SPEC §3.2, §3.3 (dashed orbits), §4 (tabs, speed chip). Files: `css/style.css
 - [x] Surface: orbit outlines dashed (`setLineDash`, reset after).
 - [x] Check: 440 Hz air → 78,0 cm, water → 3,37 m and visibly longer λ; `--all --paused` for sound + surface.
 
-## Phase 22 – Loa bên ngoài đẹp + âm thanh đi vào ống tai  `[ ]`  · Sonnet (High)
+## Phase 22 – Loa bên ngoài đẹp + âm thanh đi vào ống tai  `[x]`  · Sonnet (High)
 SPEC §3.2 (Loudspeaker v4, Sound enters the ear). Files: `art/speaker.svg`, `art/ear.svg` (canal anchors only), `js/modes/sound.js` (grep `spk|ear|canal|drum`).
 Before: `node tools/shot.mjs before22 mode=sound --paused`.
-- [ ] Redraw the cabinet in section in `speaker.svg` (wall thickness, rounded edges, realistic finish, front baffle holding the driver); the moving part is the cone + dust cap + coil only – nothing else moves. Iterate with `--page` (≤ 2 rounds).
-- [ ] Ear canal air column inside the magnifier: anchors `a-canal-in`, `a-canal-drum` (+ canal half-height) in `ear.svg`; 2–4 rows of small spheres between them, displaced by the same u(x,t) continued from the head's canal entrance (magnified scale), eardrum bulge = −∂u/∂x at the drum; spheres never enter the eardrum (k·A ≤ 0,8 at that scale).
-- [ ] Paused: label "Sóng âm vào ống tai" + nén/giãn tint inside the canal too.
-- [ ] Check: a compression reaches the drum exactly when it bulges inward (pause and look); ≥ 50 fps `--perf`.
+- [x] Redraw the cabinet in section in `speaker.svg` (wall thickness, rounded edges, realistic finish, front baffle holding the driver); the moving part is the cone + dust cap + coil only – nothing else moves. Iterate with `--page` (≤ 2 rounds).
+- [x] Ear canal air column inside the magnifier: anchors `a-canal-in`, `a-canal-drum` (+ canal half-height) in `ear.svg`; 2–4 rows of small spheres between them, displaced by the same u(x,t) continued from the head's canal entrance (magnified scale), eardrum bulge = −∂u/∂x at the drum; spheres never enter the eardrum (k·A ≤ 0,8 at that scale).
+- [x] Paused: label "Sóng âm vào ống tai" + nén/giãn tint inside the canal too.
+- [x] Check: a compression reaches the drum exactly when it bulges inward (pause and look); ≥ 50 fps `--perf`.
 
 ## Phase 23 – Vịt cao su + zoom bằng lăn chuột + mini-scope bên trái  `[ ]`  · Sonnet (Medium)
 SPEC §3.3 (duck), §4 (Left panel v4, Zoom v4). Files: `js/main.js`, `js/ui.js`, `css/style.css` (left column), `js/modes/surface.js` (grep `phao|buoy|float`), each mode's red-particle getter (grep `track`).
@@ -114,3 +114,4 @@ SPEC §3.3 (duck), §4 (Left panel v4, Zoom v4). Files: `js/main.js`, `js/ui.js`
 2026-11-18 · P19 · sprite.js cắt mỗi lớp SVG theo vùng có nét vẽ (sóng âm trên điện thoại 39→53 fps), shot.mjs --perf, sóng mặt kiểm bằng công thức (thuận chiều kim đồng hồ, không trôi, a(λ/2)=4,32 %), README/CLAUDE.md cập nhật; không còn mã chết (hover CSS chỉ là hiệu ứng, metrics() là giao diện mode) · --all --paused 4 chế độ exit 0, perf (CPU×4, 390×844) waves 58,9 · sound 53,1 · surface 51,9 · em 51,3 fps · (hash ở commit)
 2026-11-18 · P20 · kính lúp tai to (đĩa Ø≈485 px ở 1366×768 = 75 % chiều cao sân khấu; đầu người nhỏ ≈ 18 %), ear.svg rasterise ở scale lớn, chạm đĩa / nút tròn kính lúp± / Esc / đổi chế độ = phóng to ↔ thu nhỏ (#zoom=1), nhãn 7 + Não (cột bên hoặc hàng trên/dưới), điện thoại dọc: đĩa dưới cột khí + gợi ý chạm, ngang: nửa phải · shot --all --paused exit 0, 440 Hz → λ=78,0 cm, --perf sound 56 fps · (hash ở commit)
 2026-11-18 · P21 · tab căn giữa trang, bỏ chip Làm chậm; sóng âm: bỏ Thép/Giọng nói/loa ngoài (speaker-out.svg); nước cùng px/m với không khí (λ 3,37 m vs 78,0 cm), màng đầu phát/máy thu phẳng với vỏ và phồng ở giữa; quỹ đạo sóng mặt nét đứt.
+2026-11-18 · P22 · thùng loa vẽ mặt cắt dày (vách gỗ vân, bo góc, tấm chắn trước, vít, chân cao su; chỉ màng+chụp bụi+cuộn dây chuyển động); ống tai trong kính lúp có 4 hàng bi × 6 cột chuyển động theo cùng u(x,t) (λ ống tai 64 đv, A=6, k·A=0,59 ≤ 0,8, cách màng nhĩ ≥ A+r+2,5), màng nhĩ phồng ∝ −∂u/∂x (nén tới màng ⇒ phồng vào), tô nén/giãn + nhãn "Sóng âm vào ống tai"; --perf sound 59,8 fps.

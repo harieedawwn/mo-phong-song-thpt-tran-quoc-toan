@@ -106,9 +106,58 @@ const CALL = (() => {
 const EAR_MV = {drum: {dx: 0}, malleus: {rot: 0}, incus: {rot: 0}, stapes: {dx: 0}};   // reused every frame (no allocation)
 const NV = new Float32Array([216, 145, 230, 139, 244, 133.4, 254, 129.6]);          // nerve centre line a-n0…a-n3 (ear.svg units)
 earArt.ready.then(() => { for (let i = 0; i < 4; i++) { const p = earArt.pt('a-n' + i); if (p) { NV[i * 2] = p.x; NV[i * 2 + 1] = p.y; } } });
+
+// Ear-canal air column (ear.svg units): rows of small spheres from the canal entrance to the eardrum, moved by the SAME u(x,t) continued from the
+// outside column (magnified: one canal wavelength LAMC). They stop CL short of the drum so k·A_c ≤ 0,8 keeps them from ever touching it.
+const CAN = {x0: 89, x1: 141, cy: 116.5, hIn: 13, hDr: 19, yTopIn: 103.5, yBotIn: 129.5, yTopDr: 99, yBotDr: 136, xDrT: 136.5, xDrB: 145.5};
+const LAMC = 64, AC = 6, RC = 1.9, CCOLS = 6, CGAP = RC + AC + 2.5;     // ear-units: canal wavelength, amplitude, sphere radius, columns, clearance to drum
+const syncCanal = () => {
+  const P = id => earArt.pt(id); let p;
+  if ((p = P('a-canal-in'))) { CAN.x0 = p.x; CAN.cy = p.y; }
+  if ((p = P('a-canal-drum'))) CAN.x1 = p.x;
+  if ((p = P('a-canal-in-top'))) CAN.yTopIn = p.y;
+  if ((p = P('a-canal-in-bot'))) CAN.yBotIn = p.y;
+  if ((p = P('a-canal-dr-top'))) { CAN.yTopDr = p.y; CAN.xDrT = p.x; }
+  if ((p = P('a-canal-dr-bot'))) { CAN.yBotDr = p.y; CAN.xDrB = p.x; }
+};
+earArt.ready.then(syncCanal);
+const CROWS = [-0.66, -0.22, 0.22, 0.66];
 // "phóng to": the disc alone fills the stage (air column + source hidden; the wave keeps driving the eardrum)
 let zoom = false;
 try { zoom = /zoom=1/.test(location.hash); } catch (e) { /* in-app browsers may refuse */ }   // #zoom=1 opens the big view (checker)
+let cSpr = null, cSprR = 0;
+// canal spheres in composite px: ox/oy = ear.svg origin, k = px per ear unit. Same sprites / colour rule as the outside column.
+function drawCanal(ctx, ox, oy, k) {
+  const amp = Math.max(wave.A, 1), ear0 = L.airR - L.airL + 6, mag = wave.lamPx / LAMC, still = !state.playing;
+  const rp = Math.max(1.5, Math.round(RC * k * 4) / 4);
+  if (!cSpr || cSprR !== rp) { cSprR = rp; cSpr = [ball(BALL.blue, rp), ball(BALL.orange, rp), ball(BALL.pale, rp)]; }
+  const n = L.phone && !zoom ? 3 : 4, r0 = n === 4 ? 0 : 1;
+  const hm = (CAN.hIn + CAN.hDr) * 0.5 - 0.5, dsl = (CAN.xDrB - CAN.xDrT) / (CAN.yBotDr - CAN.yTopDr);
+  const xs = CAN.x0 + 6;
+  if (still) {                                                          // faint nén / giãn column bands inside the canal
+    const yA = oy + (CAN.cy - hm * 0.9) * k, hh = hm * 1.8 * k;
+    for (const [band, sign] of [['rgba(232,89,12,.16)', 1], ['rgba(28,126,214,.14)', -1]]) {
+      ctx.fillStyle = band; ctx.beginPath();
+      for (let i = 0; i < CCOLS; i++) {
+        const xe = CAN.xDrT + (CAN.cy - CAN.yTopDr) * dsl - CGAP, xr = xs + i * (xe - xs) / (CCOLS - 1);
+        if (wave.s(ear0 + (xr - CAN.x0) * mag) * sign > TH) ctx.rect(ox + (xr - (xe - xs) / (CCOLS - 1) / 2) * k, yA, (xe - xs) / (CCOLS - 1) * k, hh);
+      }
+      ctx.fill();
+    }
+  }
+  for (let pass = 0; pass < (still ? 3 : 1); pass++) {
+    const sp = cSpr[pass];
+    for (let jj = 0; jj < n; jj++) {
+      const f = n === 4 ? CROWS[jj] : (jj - 1) * 0.6, y = CAN.cy + f * hm;
+      const xe = CAN.xDrT + (y - CAN.yTopDr) * dsl - CGAP, dxr = (xe - xs) / (CCOLS - 1);
+      for (let i = 0; i < CCOLS; i++) {
+        const xr = xs + i * dxr, xw = ear0 + (xr - CAN.x0) * mag;
+        if (still) { const sv = wave.s(xw), cls = sv > TH ? 1 : sv < -TH ? 2 : 0; if (cls !== pass) continue; }
+        drawBall(ctx, sp, ox + (xr + AC * wave.u(xw) / amp) * k, oy + y * k);
+      }
+    }
+  }
+}
 const ear = {
   w: EAR_W, h: EAR_H, x: 0, y: 0, s: 1, nrm: {x: 0, y: 0, s: 1}, zm: {x: 0, y: 0, s: 1, side: true},
   place(x, y, bw, bh, ax = 0.5, ay = 0.5) { const s = Math.min(bw / EAR_W, bh / EAR_H); this.nrm = {x: x + (bw - EAR_W * s) * ax, y: y + (bh - EAR_H * s) * ay, s}; this.use(); },
@@ -133,6 +182,7 @@ const ear = {
     const th = -d / 37;
     EAR_MV.drum.dx = d; EAR_MV.malleus.rot = th; EAR_MV.incus.rot = th; EAR_MV.stapes.dx = -th * 26;
     earArt.draw(ctx, X + EX * s, Y + EY * s, EAR_MV);
+    if (earArt.layers.length) drawCanal(ctx, X + EX * s, Y + EY * s, ES * s);
     if (phase >= 0 && earArt.layers.length) {
       // nerve impulses run from the cochlea toward the brain (not text: also while running)
       ctx.fillStyle = '#fffbe6'; ctx.strokeStyle = '#d9480f'; ctx.lineWidth = 1;
@@ -168,9 +218,9 @@ function pointer(x, y) {
 addEventListener('keydown', e => { if (e.key === 'Escape' && zoom) setZoom(false); });
 const EAR_LAB = [['pinna', 'Vành tai', 'a-pinna', 57, 76, 'top'], ['canal', 'Ống tai', 'a-canal', 106, 117, 'bottom'], ['drum', 'Màng nhĩ', 'a-drum', 142, 108, 'bottom'],
   ['ossicles', 'Xương búa – đe – bàn đạp', 'a-ossicles', 157, 81, 'top', 1], ['canals', 'Ống bán khuyên', 'a-canals', 238, 94, 'top'],
-  ['cochlea', 'Ốc tai', 'a-cochlea', 200, 162, 'bottom'], ['nerve', 'Dây thần kinh thính giác', 'a-nerve', 250, 131, 'bottom', 1]];
+  ['cwave', 'Sóng âm vào ống tai', 'a-canal-in-top', 100, 103, 'top', 1], ['cochlea', 'Ốc tai', 'a-cochlea', 200, 162, 'bottom'], ['nerve', 'Dây thần kinh thính giác', 'a-nerve', 250, 131, 'bottom', 1]];
 const BRAIN_LAB = ['brain', 'Não', 'a-brain', 176, 33, 'top'];
-const ZOOM_SIDE = {pinna: 'left', canal: 'left', drum: 'left', ossicles: 'left', canals: 'right', cochlea: 'right', nerve: 'right', brain: 'right'};
+const ZOOM_SIDE = {cwave: 'left', pinna: 'left', canal: 'left', drum: 'left', ossicles: 'left', canals: 'right', cochlea: 'right', nerve: 'right', brain: 'right'};
 const earLabels = () => (zoom ? EAR_LAB.concat([BRAIN_LAB]) : EAR_LAB).map(([id, t, a, fx, fy, side, row]) => { const p = earPt(a, fx, fy); return [id, t, p.x, p.y, side, row]; });
 // Water scene: the same art/transducer.svg is the source (left) and, mirrored, the receiver (right); its moving layer "face" follows u.
 const trd = loadArt('transducer');
@@ -428,7 +478,7 @@ function buildLabels(ctx) {
   if (L.layout === 'bars') return;
   const g = ear.disc();
   if (zoom) {                                    // all 7 parts + Não around the big disc: two side columns, or rows above / below on a narrow stage
-    const side = ear.zm.side, fz = L.phone ? 12 : 13, rowOf = {pinna: 'top', ossicles: 'top', canals: 'top', brain: 'top', canal: 'bottom', drum: 'bottom', cochlea: 'bottom', nerve: 'bottom'};
+    const side = ear.zm.side, fz = L.phone ? 12 : 13, rowOf = {cwave: 'top', pinna: 'top', ossicles: 'top', canals: 'top', brain: 'top', canal: 'bottom', drum: 'bottom', cochlea: 'bottom', nerve: 'bottom'};
     const zl = earLabels().map(t => ({id: t[0], text: t[1], tx: t[2], ty: t[3], side: side ? ZOOM_SIDE[t[0]] : rowOf[t[0]], row: t[5]}));
     lab.ear = side ? layoutLabels(ctx, ear, zl, {mode: 'side', size: fz, xR: g.x + g.r + 20, xL: g.x - g.r - 20, ymin: g.y - g.r + 12, ymax: g.y + g.r - 12})
       : layoutLabels(ctx, ear, zl, {mode: 'rows', size: fz, xmin: 4, xmax: L.w - 4, yTop: g.y - g.r - 5, yBot: g.y + g.r * 1.09 + 4});
@@ -451,8 +501,9 @@ function buildLabels(ctx) {
 
 // eardrum displacement (ear.svg units) and nerve-pulse phase from the wave arriving at the canal
 function earDrive() {
-  const ear0 = L.airR - L.airL + 6, ue = wave.u(ear0), amp = Math.max(wave.A, 1);
-  return {d: clampB(ue / amp) * 2.4, phase: wave.front >= ear0 ? (((wave.cycles() - ear0 / wave.lamPx) % 1) + 1) % 1 : -1};
+  const ear0 = L.airR - L.airL + 6, drumX = ear0 + (CAN.x1 - CAN.x0) * wave.lamPx / LAMC;
+  // eardrum bulge ∝ −∂u/∂x at the drum = pressure: it goes in exactly when a compression reaches it
+  return {d: wave.s(drumX) * 2.4, phase: wave.front >= ear0 ? (((wave.cycles() - ear0 / wave.lamPx) % 1) + 1) % 1 : -1};
 }
 const zoomOn = () => zoom && state.medium === 'air' && L.layout !== 'bars';
 

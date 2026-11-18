@@ -151,6 +151,12 @@
 <circle class="anchor" id="a-cochlea" cx="200" cy="162" r="0"/>
 <circle class="anchor" id="a-brain" cx="176" cy="33" r="0"/>
 <circle class="anchor" id="a-nerve" cx="250" cy="131" r="0"/>
+<circle class="anchor" id="a-canal-in" cx="89" cy="116.5" r="0"/>
+<circle class="anchor" id="a-canal-drum" cx="141" cy="117" r="0"/>
+<circle class="anchor" id="a-canal-in-top" cx="89" cy="103.5" r="0"/>
+<circle class="anchor" id="a-canal-in-bot" cx="89" cy="129.5" r="0"/>
+<circle class="anchor" id="a-canal-dr-top" cx="136.5" cy="99" r="0"/>
+<circle class="anchor" id="a-canal-dr-bot" cx="145.5" cy="136" r="0"/>
 <circle class="anchor" id="a-drum-pivot" cx="141" cy="117" r="0"/>
 <circle class="anchor" id="a-malleus-pivot" cx="152" cy="81" r="0"/>
 <circle class="anchor" id="a-incus-pivot" cx="152" cy="81" r="0"/>
