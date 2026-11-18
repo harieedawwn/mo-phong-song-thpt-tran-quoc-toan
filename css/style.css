@@ -21,7 +21,7 @@
  --ink:#15181d;--muted:#5d6470;--line:#ddd8cc;--paper:#f6f3ec;--card:#fbfaf6;--bg:#eeeae0;
  --comp:#e8590c;--rare:#1c7ed6;--ok:#2f9e44;--warn:#f08c00;
  --r:12px;--shadow:0 1px 4px rgba(20,24,30,.10);
- --pad:10px;--ctrl-w:300px;--info-w:272px;
+ --pad:10px;--ctrl-w:300px;
 }
 html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);overscroll-behavior:none;-webkit-tap-highlight-color:transparent}
 body{font:14px/1.4 var(--font);color:var(--ink);-webkit-text-size-adjust:100%}
@@ -34,10 +34,10 @@ button{-webkit-tap-highlight-color:transparent}
 #app{position:fixed;inset:0;height:100vh;height:100dvh;display:grid;gap:8px 12px;
  padding:var(--pad) calc(var(--pad) + 8px) calc(var(--pad) + 8px);
  padding-left:max(calc(var(--pad) + 8px),env(safe-area-inset-left));padding-right:max(calc(var(--pad) + 8px),env(safe-area-inset-right));
- grid-template-columns:var(--ctrl-w) minmax(0,1fr) var(--info-w);
+ grid-template-columns:var(--ctrl-w) minmax(0,1fr);
  grid-template-rows:auto auto minmax(0,1fr);
- grid-template-areas:"top top top" "ctrl tabs info" "ctrl stage info"}
-#top{grid-area:top;display:grid;grid-template-columns:var(--ctrl-w) minmax(0,1fr) var(--info-w);gap:12px;align-items:start}
+ grid-template-areas:"top top" "ctrl tabs" "ctrl stage"}
+#top{grid-area:top;display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:12px;align-items:center}
 
 /* panel có góc khung (giống ảnh mẫu của trường) */
 .panel{background:var(--card);border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow)}
@@ -62,7 +62,7 @@ button{-webkit-tap-highlight-color:transparent}
 #btn-mute[data-muted=false]{background:#e8f4ea;color:#237a35;border-color:#b7dcbf}
 #title{justify-self:center;align-self:center;padding:9px 26px;background:#fff;border:1px solid #f1c9cb;border-radius:12px;box-shadow:var(--shadow);white-space:nowrap}
 #title h1{margin:0;font:800 22px/1.25 var(--font);letter-spacing:.04em;color:var(--red);text-transform:uppercase}
-#school{justify-self:end;max-width:none;white-space:nowrap;padding:7px 14px 7px 16px;background:#fff;border-radius:10px;border-left:5px solid var(--red);box-shadow:var(--shadow);font:800 13.5px/1.3 var(--font);color:var(--red);text-transform:uppercase;letter-spacing:.02em}
+#school{justify-self:end;max-width:none;white-space:nowrap;padding:7px 14px 7px 16px;background:#fff;border-radius:10px;border-left:5px solid var(--red);box-shadow:var(--shadow);font:800 clamp(10px,1.02vw,13.5px)/1.3 var(--font);color:var(--red);text-transform:uppercase;letter-spacing:.02em}
 
 /* ===== Thanh chọn chế độ ===== */
 #tabs{grid-area:tabs;justify-self:center;align-self:start;max-width:100%}
@@ -116,28 +116,9 @@ button{-webkit-tap-highlight-color:transparent}
 .note.warn{color:var(--red)}
 .todo{margin:0;padding:8px 10px;border:1px dashed #cfc8b8;border-radius:8px;color:var(--muted);font-size:12px}
 
-/* ===== Bảng số liệu phải ===== */
-#info{grid-area:info;padding:10px 12px;display:flex;flex-direction:column;min-height:0;max-height:100%;align-self:start;position:relative}
-#info-in{display:flex;flex-direction:column;gap:8px;min-height:0;overflow:hidden}
-#metrics{display:grid;grid-template-columns:1fr 1fr;gap:6px}
-.metric{background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:6px 9px;display:flex;flex-direction:column;gap:2px;min-width:0}
-.m-lab{font-size:11.5px;font-weight:600;color:var(--muted);white-space:nowrap}
-.m-val{font:700 18px/1.15 var(--mono);color:var(--ink);white-space:nowrap}
-.m-val small{font:500 12px var(--mono);color:var(--muted);margin-left:3px}
-.formula{font:700 12.5px var(--mono);color:var(--ink);text-align:center;background:#fff;border:1px dashed #cfc8b8;border-radius:8px;padding:5px}
-.formula b{color:var(--red)}
-.feat{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:8px;background:#fff;overflow:hidden}
-.feat .grp-h{padding:7px 10px 6px;background:var(--paper);border-bottom:1px solid var(--line)}
-.feat-row{display:flex;flex-direction:column;gap:1px;padding:6px 10px;border-bottom:1px solid #eee9de}
-.feat-row:last-child{border-bottom:0}
-.feat-row .k{font-size:10.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
-.feat-row .vv{font-size:12.5px;font-weight:600;line-height:1.3}
-
 /* ===== Sân khấu (canvas) ===== */
 #stage{grid-area:stage;position:relative;min-height:0;min-width:0;border:1px solid var(--line);border-radius:12px;background:#fbfaf6;overflow:hidden;box-shadow:var(--shadow)}
 #cv{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
-#badges{position:absolute;left:10px;right:10px;top:10px;display:flex;flex-wrap:wrap;gap:5px;align-items:flex-start;pointer-events:none}
-.badge{padding:3px 9px;background:#fff;border:1.5px solid var(--ink);border-radius:6px;font:600 11.5px/1.3 var(--font);color:var(--ink)}
 #play-wrap{position:absolute;left:0;right:0;bottom:12px;display:flex;justify-content:center;align-items:center;gap:10px;pointer-events:none}
 #play-wrap>*{pointer-events:auto}
 #btn-play{min-height:50px;padding:0 26px 0 20px;border:0;border-radius:28px;background:var(--red);color:#fff;font:800 16px var(--font);letter-spacing:.02em;display:inline-flex;align-items:center;gap:10px;cursor:pointer;box-shadow:0 3px 0 #8f0f14}
@@ -162,17 +143,15 @@ button{-webkit-tap-highlight-color:transparent}
  :root{--pad:8px}
  #app{gap:6px 12px}
  #title{padding:6px 22px}#title h1{font-size:19px}
- #school{font-size:12px;padding:5px 12px 5px 14px}
+ #school{padding:5px 12px 5px 14px}
  .grp{padding:7px 11px;gap:5px}
  .chip{min-height:30px}.seg>button{min-height:30px}.tg{min-height:36px;font-size:10px}
  #btn-play{min-height:44px}
- #info-in{gap:6px}
 }
 @media (min-width:1000px) and (max-width:1180px){
- :root{--ctrl-w:270px;--info-w:236px}
+ :root{--ctrl-w:270px}
  #title h1{font-size:17px}#title{padding:7px 16px}
- #school{font-size:10.5px;padding:5px 10px 5px 12px}
- .m-val{font-size:15px}
+ #school{padding:5px 10px 5px 12px}
  #btn-mute .mlab{display:none}
 }
 
@@ -180,12 +159,12 @@ button{-webkit-tap-highlight-color:transparent}
 @media (max-width:999px),(max-height:520px){
  :root{--pad:6px}
  #app{gap:6px;padding:6px 8px calc(6px + env(safe-area-inset-bottom));
-  grid-template-columns:minmax(0,1fr);grid-template-rows:auto auto auto minmax(0,1fr) auto;
-  grid-template-areas:"top" "tabs" "info" "stage" "ctrl"}
- #top{grid-template-columns:auto minmax(0,1fr);grid-template-areas:"title title" "school tools";gap:6px 8px;align-items:center}
- #title{grid-area:title;justify-self:stretch;text-align:center;padding:6px 10px;white-space:normal}
- #title h1{font-size:15px;letter-spacing:.02em}
- #school{grid-area:school;justify-self:start;max-width:none;font-size:10px;padding:3px 8px;border-left:0;border-bottom:2px solid var(--red);border-radius:6px}
+  grid-template-columns:minmax(0,1fr);grid-template-rows:auto auto minmax(0,1fr) auto;
+  grid-template-areas:"top" "tabs" "stage" "ctrl"}
+ #top{grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"title tools" "school school";gap:5px 8px;align-items:center}
+ #title{grid-area:title;justify-self:stretch;text-align:center;padding:5px 8px;white-space:nowrap}
+ #title h1{font-size:clamp(11px,3.7vw,16px);letter-spacing:.01em}
+ #school{grid-area:school;justify-self:stretch;text-align:center;max-width:none;font-size:clamp(7.5px,2.55vw,12px);letter-spacing:0;padding:3px 4px;border-left:0;border-bottom:2px solid var(--red);border-radius:6px}
  #tools{grid-area:tools;justify-self:end;padding:2px;gap:0}
  #tools::before,.brk::before{display:none}
  #tools .tbtn{width:36px;height:36px}
@@ -195,19 +174,11 @@ button{-webkit-tap-highlight-color:transparent}
  #tabs{justify-self:stretch;width:100%}
  #tabs button{flex-direction:column;gap:2px;min-height:44px;padding:3px 2px;font-size:11px;white-space:normal;line-height:1.1}
  #tabs .t-l{display:none}#tabs .t-s{display:inline}
- #info{padding:5px;align-self:stretch;max-height:none}
- #info-in{gap:0}
- #info .grp-h,#info .formula,#info .feat{display:none}
- #metrics{grid-template-columns:repeat(4,1fr);gap:4px}
- .metric{padding:3px 5px;gap:0}
- .m-lab{font-size:10px}.m-lab .l{display:none}.m-lab .s{font-size:12px;font-weight:800;color:var(--ink)}
- .m-val{font-size:13px}.m-val small{font-size:10px;margin-left:1px}
  #ctrl{background:var(--card);border-radius:12px}
  #ctrl .grps{flex:none;max-height:38vh;overflow:auto;border-bottom:1px solid var(--line)}
  #ctrl[data-tab=none] .grps{display:none}
  #ctrl .grp{display:none;padding:9px 12px 8px}
- #ctrl[data-tab=wave] .grp[data-grp=wave],#ctrl[data-tab=show] .grp[data-grp=show],#ctrl[data-tab=feat] .grp[data-grp=feat]{display:flex}
- #ctrl .feat{border:0;border-radius:0}
+ #ctrl[data-tab=wave] .grp[data-grp=wave],#ctrl[data-tab=show] .grp[data-grp=show]{display:flex}
  .dock-tabs{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:2px;padding:3px 4px}
  .dock-tabs button{min-height:46px;border:0;border-radius:8px;background:transparent;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:10.5px;font-weight:700;color:var(--muted);cursor:pointer}
  .dock-tabs button[aria-pressed=true]{color:var(--red);background:var(--red-soft)}
@@ -215,32 +186,25 @@ button{-webkit-tap-highlight-color:transparent}
  #btn-play{min-height:46px;padding:0 20px 0 15px;font-size:14.5px}
  #play-wrap{bottom:8px}
  .spd{display:none}
- #app:has(#ctrl:not([data-tab=none])) #badges{display:none}
 }
 
 /* ===== Điện thoại nằm ngang: cột trái nhỏ + sân khấu chiếm toàn bộ chiều cao ===== */
 @media (max-height:520px) and (orientation:landscape){
- #app{grid-template-columns:212px minmax(0,1fr);grid-template-rows:auto auto auto minmax(0,1fr) auto;gap:5px 8px;
+ #app{grid-template-columns:212px minmax(0,1fr);grid-template-rows:auto auto minmax(0,1fr) auto;gap:5px 8px;
   padding:6px max(8px,env(safe-area-inset-right)) 6px max(8px,env(safe-area-inset-left));
-  grid-template-areas:"top stage" "tabs stage" "info stage" "ctrl stage" "ctrl stage"}
+  grid-template-areas:"top stage" "tabs stage" "ctrl stage" "ctrl stage"}
  #top{grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"title tools" "school school";gap:4px}
- #title{padding:4px 6px}#title h1{font-size:12.5px;line-height:1.2}
- #school{justify-self:stretch;text-align:center;font-size:8.2px;padding:2px 4px;line-height:1.25;letter-spacing:0}
+ #title{padding:4px 6px;white-space:normal}#title h1{font-size:11.5px;line-height:1.2}
+ #school{justify-self:stretch;text-align:center;font-size:7.4px;padding:2px 2px;line-height:1.25;letter-spacing:0}
  #tools .tbtn{width:34px;height:34px}
  #tabs{display:grid;grid-template-columns:1fr 1fr;gap:2px}
  #tabs button{flex-direction:row;min-height:34px;gap:4px;font-size:10.5px;padding:2px 3px}
  #tabs button svg{width:15px;height:15px}
- #metrics{grid-template-columns:1fr 1fr}
- .metric{padding:2px 5px}
  #ctrl{align-self:end;position:relative}
  #ctrl .grps{position:absolute;left:calc(100% + 8px);bottom:0;width:min(340px,calc(100vw - 240px));max-height:calc(100dvh - 12px);z-index:6;background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow)}
  .dock-tabs button{min-height:40px;font-size:10px}
  #btn-play{min-height:40px}
  #play-wrap{bottom:6px}
- #badges{top:6px;left:8px;right:auto;max-width:60%}
- .badge{font-size:10.5px;padding:2px 7px}
- #app:has(#ctrl:not([data-tab=none])) #badges{display:flex}
 }
-@media (max-width:420px){#school{font-size:9.5px}}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{transition-duration:.01ms!important;animation-duration:.01ms!important}}
-.grp[data-grp=feat]:empty{display:none}
+

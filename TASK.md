@@ -3,14 +3,14 @@ Status: `[ ]` todo · `[~]` in progress (resume) · `[x]` done · `[!]` blocked 
 Read only this header and YOUR phase section (`grep -n '^## Phase' TASK.md`, then a partial read).
 Phase-local rule: touch only what the phase lists; files that a later phase rewrites get only the minimum edit so nothing breaks.
 
-## Phase 11 – Khung gọn + "dừng hình mới hiện nhãn"  `[ ]`  · Sonnet (High)
+## Phase 11 – Khung gọn + "dừng hình mới hiện nhãn"  `[x]`  · Sonnet (High)
 SPEC §1, §4, §6 (mode interface), §3.2/§3.3 pause lists. Files: `index.html`, `css/style.css`, `js/ui.js`, `js/main.js`, `js/draw/ink.js`,
 `js/state.js`, `js/modes/longitudinal.js`, `js/modes/surface.js`. In `transverse.js` / `em.js` only delete what the shell stops calling (they are rewritten in 13/14).
-- [ ] Delete right panel (`#info`, metrics, formula, Đặc điểm), `#badges`, legend/help sentences on the stage, tap-caption + hover highlight, toggles Nhãn / Thước λ / Dừng hình. Grid = `ctrl | stage`; phone metrics row gone; dock ≤ 2 groups.
-- [ ] `main.js`: `draw()` every frame, `annotate()` only when paused (`fx.a` 0 → 1 in 0,25 s, play hides at once, slider change while paused redraws). Readout chip on canvas (line 1 real f · T · λ · v from `metrics()`, line 2 muted `readout()`).
-- [ ] longitudinal + surface: move every word/ruler/VTCB tick/arrow-with-text into `annotate()`.
-- [ ] School name one line at all sizes (`nowrap` + `clamp()`), no page scrollbar, help ≤ 5 bullets.
-- [ ] Check (`--all --paused`, modes longitudinal + surface): running = no text but axis letters; paused labels don't overlap; chip shows λ = 78,0 cm at 440 Hz air.
+- [x] Delete right panel (`#info`, metrics, formula, Đặc điểm), `#badges`, legend/help sentences on the stage, tap-caption + hover highlight, toggles Nhãn / Thước λ / Dừng hình. Grid = `ctrl | stage`; phone metrics row gone; dock ≤ 2 groups.
+- [x] `main.js`: `draw()` every frame, `annotate()` only when paused (`fx.a` 0 → 1 in 0,25 s, play hides at once, slider change while paused redraws). Readout chip on canvas (line 1 real f · T · λ · v from `metrics()`, line 2 muted `readout()`).
+- [x] longitudinal + surface: move every word/ruler/VTCB tick/arrow-with-text into `annotate()`.
+- [x] School name one line at all sizes (`nowrap` + `clamp()`), no page scrollbar, help ≤ 5 bullets.
+- [x] Check (`--all --paused`, modes longitudinal + surface): running = no text but axis letters; paused labels don't overlap; chip shows λ = 78,0 cm at 440 Hz air.
 
 ## Phase 12 – Hạt cầu 3D + nền + bộ nạp SVG  `[ ]`  · Sonnet (High)
 SPEC §5, §6 (ball.js, sprite.js, SVG rules). Files: `js/draw/*.js`, `js/main.js`, particle parts of `longitudinal.js`, `surface.js` (grep).
@@ -68,3 +68,4 @@ SPEC §3.3, §6. Files: grep first.
 
 ## Log
 <!-- one line per session: date · phase · what · numbers checked · hash -->
+2026-11-18 · P11 · bỏ panel phải/badges/chú thích/toggle, main.js annotate() chỉ khi dừng + chip số liệu, longitudinal+surface tách nhãn · --all --paused OK, λ=78,0 cm @440 Hz không khí, tên trường 1 dòng ở 5 cỡ · (hash ghi ở commit)

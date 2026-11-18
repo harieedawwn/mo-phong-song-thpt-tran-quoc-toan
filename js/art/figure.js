@@ -181,7 +181,7 @@ export function layoutLabels(ctx, fig, items, o) {
 }
 
 export function drawLabels(ctx, labels, sel, fs = 11, hov = null) {
-  const ga = ctx.globalAlpha; ctx.globalAlpha = ga * fx.a;
+  const ga = ctx.globalAlpha;
   ctx.lineCap = 'round';
   for (const l of labels) {                                                      // leaders first, then pills on top
     ctx.strokeStyle = C.ink2; ctx.lineWidth = 1.1;

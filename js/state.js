@@ -13,7 +13,8 @@ export const state = {
   slow: 0.005,      // slow-motion factor: simulated seconds per real second
   t: 0,             // simulated physical time since the wave started (s)
   muted: true,      // sound off on first open; the speaker button turns it on
-  labels: true, ruler: true, track: true,
+  track: true,
+  labels: false, ruler: false,   // legacy shim for transverse/em (rewritten in phases 13/14): main.js sets both = paused
   // sóng dọc – sóng âm
   f: 440,           // Hz (real)
   level: 70,        // dB (độ to) → drawn amplitude + audio gain

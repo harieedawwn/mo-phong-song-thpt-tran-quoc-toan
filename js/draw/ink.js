@@ -5,7 +5,7 @@ export const C = {
 };
 export const UI = '"Be Vietnam Pro",system-ui,sans-serif', MONO = '"JetBrains Mono",ui-monospace,monospace';
 export const font = (size, weight = 700, mono = false) => weight + ' ' + size + 'px ' + (mono ? MONO : UI);
-// label opacity: main.js ramps it 0 → 1 over 0,4 s after a mode switch / restart (labels fade in while the wave starts)
+// annotation opacity: main.js ramps it 0 → 1 over 0,25 s after Pause and applies it as globalAlpha around annotate()
 export const fx = {a: 1};
 
 const widths = new Map();
@@ -23,14 +23,12 @@ export function roundRect(ctx, x, y, w, h, r) {
 // Label pill centred at (x, y). Returns its width.
 export function pill(ctx, text, x, y, {size = 12, fill = '#fff', stroke = C.ink, color = C.ink, mono = false, weight = 700, pad = 7} = {}) {
   ctx.font = font(size, weight, mono);
-  const w = textW(ctx, text) + pad * 2, h = size + 9, ga = ctx.globalAlpha;
-  if (fx.a < 1) ctx.globalAlpha = ga * fx.a;
+  const w = textW(ctx, text) + pad * 2, h = size + 9;
   ctx.beginPath(); roundRect(ctx, x - w / 2, y - h / 2, w, h, 6);
   ctx.fillStyle = fill; ctx.fill();
   if (stroke) { ctx.lineWidth = 1.5; ctx.strokeStyle = stroke; ctx.stroke(); }
   ctx.fillStyle = color; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   ctx.fillText(text, x, y + 0.5);
-  ctx.globalAlpha = ga;
   return w;
 }
 export function text(ctx, s, x, y, {size = 12, weight = 600, color = C.ink, align = 'center', base = 'middle', mono = false} = {}) {

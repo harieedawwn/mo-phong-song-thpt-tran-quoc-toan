@@ -206,27 +206,13 @@ function controls() {
       ...slowControl()),
     group('show', 'Hiển thị',
       h('div', {class: 'tgs'},
-        toggle('pause', 'Dừng hình', () => !state.playing, v => set('playing', !v)),
-        toggle('ruler', 'Thước λ', () => state.ruler, v => set('ruler', v)),
-        toggle('target', 'Phần tử đỏ', () => state.track, v => set('track', v), 'Theo dõi một phần tử (màu đỏ)'),
-        toggle('tag', 'Nhãn', () => state.labels, v => set('labels', v))))
+        toggle('target', 'Phần tử đỏ', () => state.track, v => set('track', v), 'Theo dõi một phần tử (màu đỏ)')))
   ];
-}
-
-function badges() {
-  const out = ['Biên độ được phóng đại'];
-  if (L.w) { syncWave(); if (wave.clamped) out.push('λ thực quá ' + (wave.clamped < 0 ? 'nhỏ' : 'lớn') + ' – hình rút gọn'); }
-  return out;
 }
 
 export default {
   id: 'transverse', title: 'Sóng ngang', short: 'Sóng ngang', icon: 'transverse',
   defaults: {slow: 1},
   metrics: () => ({f: state.tf, v: state.tv}),
-  features: () => [
-    ['Phương dao động', 'Vuông góc phương truyền sóng'],
-    ['Phương truyền', 'Dọc theo sợi dây →'],
-    ['Môi trường', 'Chất rắn, mặt chất lỏng'],
-    ['Ví dụ', 'Sóng trên sợi dây']],
-  controls, badges, layout, draw, update() {}, reset() {}
+  controls, layout, draw, update() {}, reset() {}
 };

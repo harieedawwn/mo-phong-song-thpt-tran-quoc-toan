@@ -1,10 +1,10 @@
 // Sóng dọc – Sóng âm: air layers (dot grid) displaced along x by u(x,t); colours from −∂u/∂x (vùng nén / vùng giãn).
-import {state, set, bus} from '../state.js';
+import {state, set} from '../state.js';
 import {h, seg, chip, toggle, slider, group, lab, slowControl} from '../ui.js';
-import {lenParts, freqParts} from '../fmt.js';
+import {lenParts, freqParts, slowText} from '../fmt.js';
 import {SPEED, MEDIUM, HEARING, clamp, describePitch, niceSlow, makeWave} from '../physics.js';
 import {C, font, pill, text, arrow, ruler, roundRect, textW} from '../draw/ink.js';
-import {layoutLabels, drawLabels, pickLabel} from '../art/figure.js';
+import {layoutLabels, drawLabels} from '../art/figure.js';
 import {makeSpeaker, SPK_RIM, SPK_NAMES, SPK_CAPS, SPK_LABELS} from '../art/speaker.js';
 import {makeTalker, TALK_W, TALK_H, MOUTH, TALK_NAMES, TALK_CAPS, TALK_LABELS} from '../art/talker.js';
 import {makeEar, EAR_W, EAR_H, EAR_NAMES, EAR_CAPS, EAR_LABELS} from '../art/ear.js';
@@ -23,9 +23,9 @@ function setF(f) { set('f', f); set('slow', niceSlow(f)); }
 
 const spk = makeSpeaker(), talk = makeTalker(), ear = makeEar();
 // phone: labels in priority order – as many as fit beside the figure
-const PHONE_LABELS = {ear: ['drum', 'cochlea', 'nerve', 'malleus', 'pinna'], talker: ['cords', 'mouth', 'throat', 'tongue'], speaker: ['cone', 'coil', 'magnet']};
+const PHONE_LABELS = {ear: ['drum', 'cochlea', 'pinna', 'canal', 'canals'], talker: ['cords', 'mouth', 'throat', 'tongue'], speaker: ['cone', 'coil', 'magnet']};
 const fitN = (ids, band) => ids.slice(0, Math.max(1, Math.min(ids.length, Math.floor((band - 30) / 23))));
-let sel = null, selWho = '', labelKey = '', hov = null, hovWho = '';
+let labelKey = '';
 
 function layout(w, hh) {
   const phone = w < 600;
@@ -98,16 +98,11 @@ function syncWave() {
 
 function draw(ctx) {
   if (!L.w) return;
-  if (L.srcKey !== state.source) { layout(L.w, L.h); if (sel && selWho === 'src') setSel(null, ''); }
+  if (L.srcKey !== state.source) layout(L.w, L.h);
   syncWave();
   const {airL, airW, dx, dy, fieldTop, fieldBot, cols, rows, r, fs} = L;
   const lam = wave.lamPx, cyc = wave.cycles(), front = wave.front;
   ctx.lineJoin = 'round'; ctx.lineCap = 'round';
-
-  // --- propagation direction
-  const ay = fieldTop - 76, arrowOn = L.layout === 'side' && !L.compact;
-  if (arrowOn) arrow(ctx, airL, ay, L.airR, ay, {width: 2, size: 9, color: C.ink2});
-  if (state.labels && arrowOn) pill(ctx, 'Phương truyền sóng', airL + airW / 2, ay, {size: fs, fill: C.paper, stroke: null, color: C.ink2});
 
   // --- thin bar above the field: vùng nén (orange) / vùng giãn (blue), same formula as the dots
   const by = fieldTop - 12;
@@ -115,44 +110,6 @@ function draw(ctx) {
     ctx.fillStyle = col; ctx.beginPath();
     for (let i = 0; i < cols; i++) { const s = wave.s(restX[i]) * sign; if (s > TH) ctx.rect(airL + restX[i] - dx / 2, by - 3, dx + 0.5, 6); }
     ctx.fill();
-  }
-
-  // --- labels "Vùng nén" / "Vùng giãn" at the centres (cos = +1 / −1); centres travel with the wave.
-  // One row if both fit side by side, else giãn goes to an upper row with a thin leader to its bar.
-  if (state.labels && !L.tiny) {
-    ctx.font = font(fs, 700);
-    const short = L.layout === 'stack', tN = short ? 'Nén' : 'Vùng nén', tG = short ? 'Giãn' : 'Vùng giãn';
-    const wN = textW(ctx, tG) + 14, ly = by - 17;
-    const oneRow = lam / 2 >= wN + 6, every = lam >= wN + 6 ? 1 : 2;
-    const showG = oneRow || lam / 2 >= wN / 2 + 6, gy = oneRow ? ly : ly - 23;
-    for (let n = Math.ceil(cyc - airW / lam - 0.5); n <= Math.floor(cyc) + 1; n++) {
-      if (n % every) continue;                                 // parity keeps each label attached to its own centre
-      const xc = lam * (cyc - n);
-      if (n >= 1 && xc > 16 && xc < airW - 16) pill(ctx, tN, airL + xc, ly, {size: fs, fill: C.comp, stroke: C.comp, color: '#fff'});
-      const xg = xc - lam / 2;                                 // n = 0 is the front itself (half a compression): no label
-      if (showG && n >= 0 && xg > 16 && xg < airW - 16 && xg <= front) {
-        if (!oneRow) { ctx.strokeStyle = C.rare; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(airL + xg, gy + 8); ctx.lineTo(airL + xg, by - 4); ctx.stroke(); }
-        pill(ctx, tG, airL + xg, gy, {size: fs, fill: C.rare, stroke: C.rare, color: '#fff'});
-      }
-    }
-  }
-
-  // --- λ ruler between two consecutive compression centres (kept in place for several periods: no jitter).
-  // rulerN counts half-periods: even = compression centres, odd = rarefaction centres (used only while no compression pair fits).
-  const xAt = m => lam * (cyc - m / 2);
-  const ok = m => { const x = xAt(m); return m >= 2 && x >= dx * 0.5 && x + lam <= Math.min(front, airW - dx * 0.5); };
-  let rx = -1;
-  if (state.ruler) {
-    if (!ok(rulerN)) {
-      const mc = 2 * Math.floor(cyc - dx * 0.5 / lam), mr = 2 * Math.floor(cyc - 0.5 - dx * 0.5 / lam) + 1;
-      rulerN = ok(mc) ? mc : ok(mr) ? mr : -1;
-    }
-    if (rulerN >= 2) {
-      rx = airL + xAt(rulerN); const gl = L.compact ? 0 : L.layout === 'side' ? 64 : 38;
-      ctx.strokeStyle = 'rgba(21,24,29,.45)'; ctx.lineWidth = 1; ctx.setLineDash([4, 4]);
-      ctx.beginPath(); ctx.moveTo(rx, by + 4); ctx.lineTo(rx, fieldBot + gl); ctx.moveTo(rx + lam, by + 4); ctx.lineTo(rx + lam, fieldBot + gl); ctx.stroke();
-      ctx.setLineDash([]);
-    }
   }
 
   // --- air dots: three flat colour batches (nén / bình thường / giãn)
@@ -180,77 +137,17 @@ function draw(ctx) {
     const yd = fieldTop + (rows - 0.5) * dy;
     ctx.fillStyle = C.track; ctx.strokeStyle = C.ink; ctx.lineWidth = 1.2;
     ctx.beginPath(); ctx.arc(x, yd, r + 1.6, 0, 6.2832); ctx.fill(); ctx.stroke();
-    const ty = fieldBot + 12;
-    ctx.strokeStyle = C.ink; ctx.lineWidth = 1.5;
-    ctx.beginPath(); ctx.moveTo(x0, fieldBot + 3); ctx.lineTo(x0, fieldBot + 20); ctx.stroke();
-    const a = Math.max(wave.A, 6);
-    arrow(ctx, x0 - a - 5, ty, x0 + a + 5, ty, {color: C.track, width: 2, size: 7, both: true});
-    if (state.labels && !L.compact) {
-      pill(ctx, 'VTCB', x0, fieldBot + 28, {size: fs - 1, weight: 700, color: C.ink, fill: C.paper, stroke: null, pad: 3});
-      const t = L.layout === 'side' && L.airW > 330 ? 'Một lớp không khí: dao động quanh VTCB' : 'Một lớp không khí';
-      ctx.font = font(fs - 0.5, 600);
-      pill(ctx, t, x0 + dx * 0.6 + a + 8 + textW(ctx, t) / 2 + 3, ty, {size: fs - 0.5, weight: 600, color: C.ink2, fill: C.paper, stroke: null, pad: 3});
-    }
   }
 
-  // --- λ ruler bracket under the field (label shows the REAL wavelength)
-  if (rx >= 0 && !L.compact) {
-    const [n, u] = lenParts(wave.lam);
-    ruler(ctx, rx, rx + lam, fieldBot + (L.layout === 'side' ? 56 : 47), 'λ = ' + n + ' ' + u, {size: fs + 0.5, color: C.ink, maxX: L.w - 4});
-  }
-
-  // --- figures (source, ear) + legend / caption
   drawArt(ctx);
-  if (L.layout === 'side' && !L.compact) {
-    const gy = Math.max(fieldBot + 86, L.artBottom + 18);
-    legend(ctx, gy);
-    if (sel) drawCaption(ctx, L.w / 2, gy + 26, L.w - 24);
-    else if (state.labels) {
-      text(ctx, 'Các phần tử không khí chỉ dao động quanh VTCB – năng lượng sóng truyền đi, không khí không bị đẩy theo.', L.w / 2, gy + 24, {size: fs - 0.5, weight: 600, color: C.muted});
-      text(ctx, 'Chạm vào loa / người nói / tai để xem tên và chức năng từng bộ phận', L.w / 2, gy + 44, {size: fs - 1, weight: 600, color: C.muted});
-    }
-  }
-  if (L.layout === 'stack') drawCaption(ctx, L.w / 2, 51, L.w - 20);
-}
-
-function legend(ctx, y) {
-  const items = [[C.comp, 'Vùng nén'], [C.neutral, 'Bình thường'], [C.rare, 'Vùng giãn']];
-  if (state.track) items.push([C.track, L.phone ? 'Theo dõi' : 'Phần tử theo dõi']);
-  let fs = L.fs - 0.5, w = 0;
-  for (; fs > 8; fs -= 0.5) {
-    ctx.font = font(fs, 600); w = 0;
-    for (const [, t] of items) w += 14 + textW(ctx, t) + 16;
-    if (w - 16 <= L.w - 12) break;
-  }
-  let x = L.w / 2 - (w - 16) / 2;
-  for (const [col, t] of items) {
-    ctx.fillStyle = col; ctx.beginPath(); ctx.arc(x + 5, y, 5, 0, 6.2832); ctx.fill();
-    text(ctx, t, x + 14, y, {size: fs, weight: 600, color: C.ink2, align: 'left'});
-    x += 14 + textW(ctx, t) + 16;
-  }
 }
 
 const SRC = {speaker: {names: SPK_NAMES, caps: SPK_CAPS, labels: SPK_LABELS, title: 'Loa'}, talker: {names: TALK_NAMES, caps: TALK_CAPS, labels: TALK_LABELS, title: 'Người nói'}};
 const srcFig = () => state.source === 'talker' ? talk : spk;
 const clampB = x => Math.max(-1, Math.min(1, x));
 
-function partAt(x, y) {
-  const lab = L.lab || {src: [], ear: []};
-  let id = pickLabel(lab.src, x, y), who = 'src';
-  if (!id) { id = pickLabel(lab.ear, x, y); who = 'ear'; }
-  if (!id) { id = ear.pick(x, y); who = 'ear'; }
-  if (!id) { id = srcFig().pick(x, y); who = 'src'; }
-  return [id, who];
-}
-function setSel(id, who) {
-  sel = id; selWho = id ? who : '';
-  spk.sel = talk.sel = ear.sel = null;
-  if (id) (who === 'ear' ? ear : srcFig()).sel = id;
-  bus.emit('change', {key: 'sel'});
-}
-
 function buildLabels(ctx) {
-  const key = L.w + 'x' + L.h + state.source + L.layout + state.labels + L.compact;
+  const key = L.w + 'x' + L.h + state.source + L.layout + L.compact;
   if (key === labelKey) return;
   labelKey = key;
   const lab = {src: [], ear: [], tops: {src: 1e9, ear: 1e9}};
@@ -258,7 +155,7 @@ function buildLabels(ctx) {
   const sf = srcFig(), S = SRC[state.source];
   const mk = (tbl, ids, side) => tbl.filter(t => !ids || ids.includes(t[0])).map(t => ({id: t[0], text: t[1], tx: t[2], ty: t[3], side: side || t[4], row: t[5]}));
   for (const f of [sf, ear]) L.artBottom = Math.max(L.artBottom, f.y + f.h * f.s);
-  if (L.layout === 'bars' || L.compact || !state.labels) return;
+  if (L.layout === 'bars' || L.compact) return;
   if (L.layout === 'stack') {
     lab.src = layoutLabels(ctx, sf, mk(S.labels, fitN(PHONE_LABELS[state.source], L.bandA), 'right'), {mode: 'side', size: 10.5, xR: sf.x + sf.w * sf.s + 10, xL: 0, ymin: sf.y + 26, ymax: sf.y + sf.h * sf.s - 12});
     lab.ear = layoutLabels(ctx, ear, mk(EAR_LABELS, fitN(PHONE_LABELS.ear, L.bandB), 'left'), {mode: 'side', size: 10.5, xR: 0, xL: ear.x - 8, ymin: ear.y + 26, ymax: ear.y + ear.h * ear.s - 10});
@@ -275,7 +172,7 @@ function buildLabels(ctx) {
 
 function drawArt(ctx) {
   buildLabels(ctx);
-  const {fieldTop, fieldBot} = L, sf = srcFig(), show = state.labels && L.layout !== 'bars' && !L.compact;
+  const {fieldTop, fieldBot} = L, sf = srcFig();
   const u0 = wave.u(0) * 0.8, ear0 = L.airR - L.airL + 6, ue = wave.u(ear0);
   const amp = Math.max(wave.A, 1);
   if (L.layout === 'bars') {
@@ -293,45 +190,97 @@ function drawArt(ctx) {
   // ear: eardrum follows the arriving air displacement; nerve pulses start when the wave front has reached the ear
   ear.drawStatic(ctx, dpr);
   const phase = wave.front >= ear0 ? (((wave.cycles() - ear0 / wave.lamPx) % 1) + 1) % 1 : -1;
-  ear.drawDyn(ctx, clampB(ue / amp) * 4.2, phase, show);
+  ear.drawDyn(ctx, clampB(ue / amp) * 4.2, phase, false);
   if (L.layout === 'stack') {                                           // small markers where the air meets source / ear
     ctx.lineCap = 'round'; ctx.strokeStyle = C.ink; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(L.airL - 6 + u0, fieldTop); ctx.lineTo(L.airL - 6 + u0, fieldBot); ctx.stroke();
     ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(L.airR + 6 + ue * 0.8, fieldTop); ctx.lineTo(L.airR + 6 + ue * 0.8, fieldBot); ctx.stroke();
   }
-  if (!show) return;
-  const lab = L.lab; if (!lab) return;
-  drawLabels(ctx, lab.src, selWho === 'src' ? sel : null, L.layout === 'stack' ? 10.5 : 11, hovWho === 'src' ? hov : null);
-  drawLabels(ctx, lab.ear, selWho === 'ear' ? sel : null, L.layout === 'stack' ? 10.5 : 11, hovWho === 'ear' ? hov : null);
-  // headings
-  const fs = L.fs + 1;
-  if (L.layout === 'side') {
-    text(ctx, SRC[state.source].title, (sf.x + L.airL) / 2 + (state.source === 'talker' ? -20 : 0), Math.min(lab.tops.src, sf.y) - 14, {size: fs, weight: 800});
-    text(ctx, 'Tai người nghe', (L.airR + L.w) / 2, Math.min(lab.tops.ear, ear.y) - 14, {size: fs, weight: 800});
-  } else {
-    text(ctx, SRC[state.source].title, sf.x + sf.w * sf.s + 10, sf.y + 8, {size: fs - 1, weight: 800, align: 'left'});
-    if (L.h >= 520) text(ctx, 'Tai người nghe', ear.x - 8, ear.y + 8, {size: fs - 1, weight: 800, align: 'right'});
-  }
 }
 
-// one-line caption of the selected part (shrinks, then wraps onto two lines); a muted hint when nothing is selected (phones)
-function drawCaption(ctx, cx, cy, maxW) {
-  const caps = selWho === 'ear' ? EAR_CAPS : SRC[state.source].caps;
-  const msg = sel && caps[sel];
-  if (!msg) { if (L.layout === 'stack') text(ctx, 'Chạm vào hình để xem tên và chức năng', cx, cy, {size: 11, weight: 600, color: C.muted}); return; }
-  let fs = L.phone ? 11 : 12.5, lines = [msg];
-  ctx.font = font(fs, 700);
-  if (textW(ctx, msg) + 24 > maxW) {
-    fs = L.phone ? 10.5 : 11.5; ctx.font = font(fs, 700);
-    if (textW(ctx, msg) + 24 > maxW) {
-      const words = msg.split(' '); let a = '', i = 0;
-      while (i < words.length && textW(ctx, a + words[i]) + 24 < maxW * (words.length > 10 ? 0.62 : 1) && textW(ctx, a + words[i]) < textW(ctx, msg) * 0.55 + 20) a += words[i++] + ' ';
-      lines = [a.trim(), words.slice(i).join(' ')];
+// second (muted) line of the readout chip: only the parts that apply
+function readout() {
+  const pitch = state.f < HEARING.min ? 'Hạ âm · tai không nghe được' : state.f > HEARING.max ? 'Siêu âm · tai không nghe được' : 'Âm trung · tai nghe được';
+  return 'Hình đã làm chậm ' + slowText(state.slow) + ' · biên độ phóng đại · ' + pitch;
+}
+
+// everything with words / rulers / guides: drawn only while paused (main.js calls it after draw(), fx.a fades it in)
+function annotate(ctx) {
+  if (!L.w) return;
+  const {airL, airW, dx, dy, fieldTop, fieldBot, cols, rows, r, fs} = L;
+  const lam = wave.lamPx, cyc = wave.cycles(), front = wave.front, by = fieldTop - 12;
+  ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+  const arrowOn = L.layout === 'side' && !L.compact;
+  // --- "Phương truyền sóng →"
+  if (arrowOn) {
+    const ay = fieldTop - 76;
+    arrow(ctx, airL, ay, L.airR, ay, {width: 2, size: 9, color: C.ink2});
+    pill(ctx, 'Phương truyền sóng', airL + airW / 2, ay, {size: fs, fill: C.paper, stroke: null, color: C.ink2});
+  }
+  // --- "Vùng nén" / "Vùng giãn" at the centres (cos = +1 / −1)
+  if (!L.tiny) {
+    ctx.font = font(fs, 700);
+    const short = L.layout === 'stack', tN = short ? 'Nén' : 'Vùng nén', tG = short ? 'Giãn' : 'Vùng giãn';
+    const wN = textW(ctx, tG) + 14, ly = by - 17;
+    const oneRow = lam / 2 >= wN + 6, every = lam >= wN + 6 ? 1 : 2;
+    const showG = oneRow || lam / 2 >= wN / 2 + 6, gy = oneRow ? ly : ly - 23;
+    for (let n = Math.ceil(cyc - airW / lam - 0.5); n <= Math.floor(cyc) + 1; n++) {
+      if (n % every) continue;
+      const xc = lam * (cyc - n);
+      if (n >= 1 && xc > 16 && xc < airW - 16) pill(ctx, tN, airL + xc, ly, {size: fs, fill: C.comp, stroke: C.comp, color: '#fff'});
+      const xg = xc - lam / 2;
+      if (showG && n >= 0 && xg > 16 && xg < airW - 16 && xg <= front) {
+        if (!oneRow) { ctx.strokeStyle = C.rare; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(airL + xg, gy + 8); ctx.lineTo(airL + xg, by - 4); ctx.stroke(); }
+        pill(ctx, tG, airL + xg, gy, {size: fs, fill: C.rare, stroke: C.rare, color: '#fff'});
+      }
     }
   }
-  const lh = fs + 4, w = Math.min(maxW, Math.max(...lines.map(l => textW(ctx, l))) + 24), h = lines.length * lh + 8;
-  ctx.beginPath(); roundRect(ctx, cx - w / 2, cy - h / 2, w, h, 8); ctx.fillStyle = C.ink; ctx.fill();
-  ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  lines.forEach((l, k) => ctx.fillText(l, cx, cy - h / 2 + 4 + lh * (k + 0.5) + 0.5));
+  // --- λ ruler between two consecutive compression centres (frame is frozen, so the pair is stable)
+  const xAt = m => lam * (cyc - m / 2);
+  const ok = m => { const x = xAt(m); return m >= 2 && x >= dx * 0.5 && x + lam <= Math.min(front, airW - dx * 0.5); };
+  let rx = -1;
+  if (!ok(rulerN)) {
+    const mc = 2 * Math.floor(cyc - dx * 0.5 / lam), mr = 2 * Math.floor(cyc - 0.5 - dx * 0.5 / lam) + 1;
+    rulerN = ok(mc) ? mc : ok(mr) ? mr : -1;
+  }
+  if (rulerN >= 2) {
+    rx = airL + xAt(rulerN); const gl = L.compact ? 0 : L.layout === 'side' ? 64 : 38;
+    ctx.strokeStyle = 'rgba(21,24,29,.45)'; ctx.lineWidth = 1; ctx.setLineDash([4, 4]);
+    ctx.beginPath(); ctx.moveTo(rx, by + 4); ctx.lineTo(rx, fieldBot + gl); ctx.moveTo(rx + lam, by + 4); ctx.lineTo(rx + lam, fieldBot + gl); ctx.stroke();
+    ctx.setLineDash([]);
+  }
+  // --- tracked particle: VTCB tick, ↔ arrow, labels
+  if (state.track) {
+    const x0 = airL + restX[L.trackCol], ty = fieldBot + 12;
+    ctx.strokeStyle = C.ink; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(x0, fieldBot + 3); ctx.lineTo(x0, fieldBot + 20); ctx.stroke();
+    const a = Math.max(wave.A, 6);
+    arrow(ctx, x0 - a - 5, ty, x0 + a + 5, ty, {color: C.track, width: 2, size: 7, both: true});
+    if (!L.compact) {
+      pill(ctx, 'VTCB', x0, fieldBot + 28, {size: fs - 1, weight: 700, color: C.ink, fill: C.paper, stroke: null, pad: 3});
+      const t = L.layout === 'side' && L.airW > 330 ? 'Phần tử khí dao động quanh VTCB' : 'Dao động quanh VTCB';
+      ctx.font = font(fs - 0.5, 600);
+      pill(ctx, t, x0 + dx * 0.6 + a + 8 + textW(ctx, t) / 2 + 3, ty, {size: fs - 0.5, weight: 600, color: C.ink2, fill: C.paper, stroke: null, pad: 3});
+    }
+  }
+  // --- λ bracket under the field (REAL wavelength)
+  if (rx >= 0 && !L.compact) {
+    const [n, u] = lenParts(wave.lam);
+    ruler(ctx, rx, rx + lam, fieldBot + (L.layout === 'side' ? 56 : 47), 'λ = ' + n + ' ' + u, {size: fs + 0.5, color: C.ink, maxX: L.w - 4});
+  }
+  // --- part labels + headings
+  if (L.layout === 'bars' || L.compact) return;
+  const lab = L.lab; if (!lab) return;
+  const sf = srcFig(), lfs = L.layout === 'stack' ? 10.5 : 11;
+  drawLabels(ctx, lab.src, null, lfs, null);
+  drawLabels(ctx, lab.ear, null, lfs, null);
+  const hs = L.fs + 1;
+  if (L.layout === 'side') {
+    text(ctx, SRC[state.source].title, (sf.x + L.airL) / 2 + (state.source === 'talker' ? -20 : 0), Math.min(lab.tops.src, sf.y) - 14, {size: hs, weight: 800});
+    text(ctx, 'Tai người nghe', (L.airR + L.w) / 2, Math.min(lab.tops.ear, ear.y) - 14, {size: hs, weight: 800});
+  } else {
+    text(ctx, SRC[state.source].title, sf.x + sf.w * sf.s + 10, sf.y + 8, {size: hs - 1, weight: 800, align: 'left'});
+    if (L.h >= 520) text(ctx, 'Tai người nghe', ear.x - 8, ear.y + 22, {size: hs - 1, weight: 800, align: 'right'});
+  }
 }
 
 function controls() {
@@ -363,46 +312,15 @@ function controls() {
       ...slowControl()),
     group('show', 'Hiển thị',
       h('div', {class: 'tgs'},
-        toggle('ruler', 'Thước λ', () => state.ruler, v => set('ruler', v)),
-        toggle('target', 'Phần tử đỏ', () => state.track, v => set('track', v), 'Theo dõi một phần tử (màu đỏ)'),
-        toggle('tag', 'Nhãn', () => state.labels, v => set('labels', v))))
+        toggle('target', 'Phần tử đỏ', () => state.track, v => set('track', v), 'Theo dõi một phần tử (màu đỏ)')))
   ];
-}
-
-function badges() {
-  const out = ['Biên độ được phóng đại'];
-  if (L.w) { syncWave(); if (wave.clamped) out.push('λ thực quá ' + (wave.clamped < 0 ? 'nhỏ' : 'lớn') + ' – hình rút gọn'); }
-  if (state.f < HEARING.min) out.push('Hạ âm – tai không nghe được');
-  else if (state.f > HEARING.max) out.push('Siêu âm – tai không nghe được');
-  return out;
 }
 
 export default {
   id: 'longitudinal', title: 'Sóng dọc – Sóng âm', short: 'Sóng dọc', icon: 'longitudinal',
   defaults: {get slow() { return niceSlow(state.f); }},
   metrics: () => ({f: state.f, v: SPEED[state.medium] || SPEED.air}),
-  features: () => [
-    ['Phương dao động', 'Trùng phương truyền sóng (dọc trục x)'],
-    ['Phương truyền', 'Từ nguồn âm đến tai người nghe'],
-    ['Môi trường', 'Rắn, lỏng, khí – không truyền trong chân không'],
-    ['Ví dụ', 'Âm thanh truyền trong không khí']],
-  controls, badges, layout, draw,
-  update() {}, reset() { rulerN = -1; },
-  pointer(x, y) {
-    if (L.layout === 'bars' || L.compact) return;
-    const [id, who] = partAt(x, y);
-    setSel(id, who);
-  },
-  // mouse hover: highlight the part + its label; returns true when something tappable is under the pointer
-  hover(x, y) {
-    let [id, who] = x < 0 || L.layout === 'bars' || L.compact ? [null, ''] : partAt(x, y);
-    if (id !== hov || who !== hovWho) {
-      hov = id; hovWho = id ? who : '';
-      spk.hov = talk.hov = ear.hov = null;
-      if (id) (who === 'ear' ? ear : srcFig()).hov = id;
-      bus.emit('change', {key: 'hover'});
-    }
-    return !!id;
-  },
-  escape() { if (sel) setSel(null, ''); }
+  readout: () => readout(),
+  controls, layout, draw, annotate,
+  update() {}, reset() { rulerN = -1; }
 };

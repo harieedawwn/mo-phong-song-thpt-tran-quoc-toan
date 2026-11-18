@@ -223,11 +223,6 @@ function bandAt(x, y) {
   return i >= 0 && i < 7 ? i : -1;
 }
 function pointer(x, y) { const i = bandAt(x, y); if (i >= 0) set('band', i); }
-function hover(x, y) {
-  const i = x < 0 ? -1 : bandAt(x, y);
-  if (i !== hovBand) { hovBand = i; set('emHover', i); }
-  return i >= 0;
-}
 
 function controls() {
   return [
@@ -236,11 +231,9 @@ function controls() {
       ...slowControl()),
     group('show', 'Hiển thị',
       h('div', {class: 'tgs'},
-        toggle('pause', 'Dừng hình', () => !state.playing, v => set('playing', !v)),
         toggle('em', 'Điện trường E', () => state.emE, v => set('emE', v)),
         toggle('freq', 'Từ trường B', () => state.emB, v => set('emB', v)),
-        toggle('transverse', 'Mũi tên', () => state.emArrows, v => set('emArrows', v)),
-        toggle('ruler', 'Thước λ', () => state.ruler, v => set('ruler', v))))
+        toggle('transverse', 'Mũi tên', () => state.emArrows, v => set('emArrows', v))))
   ];
 }
 
@@ -248,12 +241,6 @@ export default {
   id: 'em', title: 'Sóng điện từ', short: 'Sóng điện từ', icon: 'em',
   defaults: {slow: 1},
   metrics: () => ({f: BANDS[state.band].f, v: CC}),
-  features: () => [
-    ['Phương dao động', 'E ⟂ B ⟂ phương truyền (sóng ngang)'],
-    ['Phương truyền', 'Dọc theo trục x →'],
-    ['Môi trường', 'Chân không và môi trường trong suốt'],
-    ['Ví dụ', 'Sóng FM, lò vi sóng, ánh sáng, tia X']],
   controls,
-  badges: () => L.phone || L.short ? ['Đã làm chậm rất nhiều', 'Biên độ phóng đại'] : ['Đã làm chậm rất nhiều', 'Biên độ phóng đại', 'λ vẽ theo tỉ lệ tương đối'],
-  layout, draw, pointer, hover, update() {}, reset() {}
+  layout, draw, pointer, update() {}, reset() {}
 };

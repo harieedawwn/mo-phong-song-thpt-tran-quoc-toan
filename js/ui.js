@@ -1,6 +1,6 @@
 // DOM helpers + control builders and the app shell (tabs, panels, toolbar, play button).
 import {state, bus, set} from './state.js';
-import {num, freqParts, timeParts, lenParts, speedParts, slowText} from './fmt.js';
+import {slowText} from './fmt.js';
 
 export const PATHS = {
   help: '<circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 2.5-3 4"/><path d="M12 17.5h.01"/>',
@@ -99,20 +99,17 @@ export const lab = (ic, text, valEl) => h('div', {class: 'lab'}, h('span', {clas
 // A controls group; `tab` is its id in the phone bottom sheet ("wave" | "show").
 export const group = (tab, title, ...nodes) => h('section', {class: 'grp', 'data-grp': tab}, h('h2', {class: 'grp-h', text: title}), ...nodes);
 
-const FEAT_TITLE = 'Đặc điểm';
 const HELP = [
-  'Chọn loại sóng ở thanh phía trên (hoặc nhấn phím 1–4): sóng dọc, sóng ngang, sóng mặt, sóng điện từ.',
-  'Nhấn Phát / Tạm dừng (phím cách). Nút ↻ cho sóng xuất phát lại từ nguồn.',
-  'Kéo thanh Làm chậm để quan sát rõ dao động của từng phần tử.',
-  'Số liệu bên phải là giá trị thật (f, T, λ, v); hình vẽ đã làm chậm và phóng đại biên độ.',
-  'λ = v·T = v/f: tăng tần số thì bước sóng ngắn lại (cùng môi trường).',
-  'Chạm vào bộ phận trên hình để xem tên; nhấn Esc hoặc chạm chỗ trống để bỏ chọn.'
+  'Nhấn Phát / Tạm dừng (phím cách): khi sóng chạy chỉ thấy các vật và hạt; khi tạm dừng sẽ hiện nhãn, thước λ và số liệu thật.',
+  'Chọn loại sóng ở thanh phía trên (hoặc nhấn phím 1–4). Nút ↻ cho sóng xuất phát lại từ nguồn.',
+  'Kéo thanh Làm chậm để quan sát rõ dao động của từng phần tử; hình đã làm chậm và phóng đại biên độ.',
+  'Chấm đỏ là một phần tử được theo dõi: nó chỉ dao động quanh vị trí cân bằng, sóng không mang nó đi.',
+  'λ = v·T = v/f: tăng tần số thì bước sóng ngắn lại (cùng môi trường).'
 ];
 
 /* ---- app shell ---- */
 export function mountShell({modes, onMode, onRestart, onToggle, onShot}) {
   const $ = id => document.getElementById(id);
-  const mq = window.matchMedia ? window.matchMedia('(max-width: 999px), (max-height: 520px)') : {matches: false};
 
   // toolbar
   const tb = (id, ic, label, fn, cls) => h('button', {type: 'button', id, class: 'tbtn ' + (cls || ''), 'aria-label': label, title: label, onclick: fn}, icon(ic, 20));
@@ -150,46 +147,20 @@ export function mountShell({modes, onMode, onRestart, onToggle, onShot}) {
     icon(m.icon, 18), h('span', {class: 't-l', text: m.title}), h('span', {class: 't-s', text: m.short})));
   tabs.append(...tabBtns);
 
-  // metrics
-  const cells = {};
-  const metric = (key, long, sym) => {
-    const v = h('b', {class: 'm-val'});
-    cells[key] = {v, last: ''};
-    return h('div', {class: 'metric'}, h('span', {class: 'm-lab'}, h('span', {class: 'l', text: long + ' '}), h('span', {class: 's', text: sym})), v);
-  };
-  $('metrics').append(metric('f', 'Tần số', 'f'), metric('T', 'Chu kì', 'T'), metric('l', 'Bước sóng', 'λ'), metric('v', 'Tốc độ', 'v'));
-  $('formula').append('λ = ', h('b', {text: 'v'}), '·T = ', h('b', {text: 'v'}), '/f');
-  const put = (c, parts) => { const t = parts[0] + '|' + parts[1]; if (c.last !== t) { c.last = t; c.v.replaceChildren(parts[0], h('small', {text: parts[1]})); } };
-  function syncMetrics(m) {
-    const {f, v} = m.metrics();
-    put(cells.f, freqParts(f)); put(cells.T, timeParts(1 / f)); put(cells.l, lenParts(v / f)); put(cells.v, speedParts(v));
-  }
-
-  // controls + Đặc điểm card + phone bottom-sheet tabs
-  const ctrl = $('ctrl'), grps = $('grps'), dock = $('dock'), infoIn = $('info-in');
-  const featBody = h('div', {class: 'feat'}, h('h2', {class: 'grp-h', text: FEAT_TITLE}));
-  const featGrp = h('section', {class: 'grp', 'data-grp': 'feat'});
-  const DOCK = {wave: ['freq', 'Sóng'], show: ['eye', 'Hiển thị'], feat: ['info', FEAT_TITLE]};
-  // Đặc điểm card lives in the right panel on desktop and in the bottom sheet on phones
-  function placeFeat() {
-    if (mq.matches) { featGrp.replaceChildren(featBody); grps.append(featGrp); }
-    else { featGrp.remove(); infoIn.append(featBody); }
-    const ids = [...grps.children].map(g => g.dataset.grp);
-    if (!ids.includes(ctrl.dataset.tab)) ctrl.dataset.tab = 'none';
-  }
+  // controls + phone bottom-sheet tabs + phone bottom-sheet tabs
+  const ctrl = $('ctrl'), grps = $('grps'), dock = $('dock');
+  const DOCK = {wave: ['freq', 'Sóng'], show: ['eye', 'Hiển thị']};
   function buildControls(m) {
     clearBinds();
     const groups = m.controls();
     grps.replaceChildren(...groups);
-    featKey = ''; syncFeat(m);
-    const ids = [...new Set(groups.map(g => g.dataset.grp)), 'feat'];
+    const ids = [...new Set(groups.map(g => g.dataset.grp))];
     ctrl.dataset.tab = 'none';
     dock.replaceChildren(...ids.map(k => h('button', {type: 'button', 'data-k': k, 'aria-pressed': 'false', onclick: () => { ctrl.dataset.tab = ctrl.dataset.tab === k ? 'none' : k; syncDock(); }}, icon(DOCK[k][0], 20), DOCK[k][1])));
-    placeFeat(); syncDock(); syncBinds();
+    syncDock(); syncBinds();
   }
   function syncDock() { for (const b of dock.children) b.setAttribute('aria-pressed', String(b.dataset.k === ctrl.dataset.tab)); }
   ctrl.dataset.tab = 'none';
-  if (mq.addEventListener) mq.addEventListener('change', placeFeat);
 
   // play / restart / speed chip
   const playLab = h('span', {text: 'Phát'});
@@ -198,7 +169,6 @@ export function mountShell({modes, onMode, onRestart, onToggle, onShot}) {
   const spd = h('span', {class: 'spd', title: 'Hệ số làm chậm'});
   const btnRestart = h('button', {type: 'button', id: 'btn-restart', class: 'rbtn', 'aria-label': 'Bắt đầu lại', title: 'Bắt đầu lại', onclick: onRestart}, icon('reset', 20));
   $('play-wrap').append(btnRestart, btnPlay, spd);
-  const badges = $('badges');
   function syncPlay() {
     const p = !!state.playing;
     btnPlay.dataset.playing = String(p);
@@ -206,29 +176,14 @@ export function mountShell({modes, onMode, onRestart, onToggle, onShot}) {
     btnPlay.setAttribute('aria-label', playLab.textContent);
     btnPlay.setAttribute('aria-pressed', String(p));
   }
-  let cur = null, lastBadges = '';
-  function syncBadges() {
-    spd.replaceChildren(icon('slow', 15), 'Làm chậm ' + slowText(state.slow));
-    const list = (state.slow < 1 ? ['Đã làm chậm ' + slowText(state.slow)] : []).concat(cur && cur.badges ? cur.badges() : []);
-    const key = list.join('|');
-    if (key !== lastBadges) { lastBadges = key; badges.replaceChildren(...list.map(t => h('span', {class: 'badge', text: t}))); }
-  }
-
-  let featKey = '';
-  function syncFeat(m) {
-    const f = m.features(), k = f.map(r => r.join('|')).join('/');
-    if (k === featKey) return;
-    featKey = k;
-    featBody.replaceChildren(featBody.firstChild, ...f.map(([a, b]) => h('div', {class: 'feat-row'}, h('span', {class: 'k', text: a}), h('span', {class: 'vv', text: b}))));
-  }
-  bus.on('change', e => { if (cur && e.key !== 'hover' && e.key !== 'emHover') syncFeat(cur); if (e.key === 'muted') syncMute(); if (e.key === 'playing') syncPlay(); syncBadges(); if (cur) syncMetrics(cur); syncBinds(); });
-  syncMute(); syncPlay(); syncBadges();
+  const syncSpd = () => spd.replaceChildren(icon('slow', 15), 'Làm chậm ' + slowText(state.slow));
+  bus.on('change', e => { if (e.key === 'muted') syncMute(); if (e.key === 'playing') syncPlay(); syncSpd(); syncBinds(); });
+  syncMute(); syncPlay(); syncSpd();
 
   return {
     setMode(m) {
-      cur = m;
       for (const b of tabBtns) b.setAttribute('aria-selected', String(b.dataset.id === m.id));
-      buildControls(m); syncMetrics(m); syncBadges();
+      buildControls(m); syncSpd();
     }
   };
 }

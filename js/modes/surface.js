@@ -4,7 +4,7 @@
 // The surface line is drawn through the (displaced) top-row particles, so sharper crests / flatter troughs come out by themselves.
 import {state, set} from '../state.js';
 import {h, chip, toggle, slider, group, lab, seg, slowControl} from '../ui.js';
-import {lenParts, freqParts} from '../fmt.js';
+import {lenParts, freqParts, slowText} from '../fmt.js';
 import {clamp, TAU} from '../physics.js';
 import {C, font, pill, text, arrow, ruler, head, textW} from '../draw/ink.js';
 
@@ -16,9 +16,9 @@ const dec = (x, d = 3) => String(+x.toPrecision(d)).replace('.', ',');
 const fPos = f => Math.round(1000 * Math.log(f / F_MIN) / Math.log(F_MAX / F_MIN));
 let sx = new Float32Array(0), sy0 = new Float32Array(0);          // dense curve buffers
 let ptsX = new Float32Array(0), ptsY = new Float32Array(0);
-let rulerKey = '', rulerTxt = '';
 
 // wave parameters for the current frame (px units)
+const Z = {cols: 0, rows: 0, dx: 0, dz: 0, tx0: 0, tr: [], xp: 0};   // per-frame geometry shared with annotate()
 const P = {y0: 100, lam: 100, k: 0.06, w: TAU, front: 0, A: 10, deep: true, hd: 100, kh: 1, t: 0, clamped: 0};
 
 function layout(w, hh) {
@@ -112,16 +112,13 @@ function drawInner(ctx) {
     ctx.lineWidth = 1.2; ctx.strokeStyle = '#a08a62'; ctx.beginPath();
     for (let x = 14; x < w; x += 26) { ctx.moveTo(x, yBed + 6); ctx.lineTo(x - 7, yBed + 14); }
     ctx.stroke();
-    if (state.labels && !L.micro) pill(ctx, 'Đáy nước nông', w / 2, yBed + 34, {size: fs - 1, fill: '#fff', stroke: '#a08a62', color: '#6b5a3a'});
   }
-  // VTCB level of the surface
-  ctx.strokeStyle = C.muted; ctx.lineWidth = 1; ctx.setLineDash([5, 5]); ctx.beginPath(); ctx.moveTo(0, y0); ctx.lineTo(w, y0); ctx.stroke(); ctx.setLineDash([]);
-
   // --- particles (batched: one path for all neutral dots)
   const tc = Math.max(2, Math.round(cols * 0.3)), tx0 = tc * dx;            // tracked column
   const rowsT = P.deep ? [0, Math.round(P.lam / 4 / dz), Math.round(P.lam / 2 / dz)] : [0, Math.round((rows - 1) / 2), rows - 1];
   const tr = [];
   for (const r of rowsT) { const rr = Math.min(rows - 1, r); if (tr.indexOf(rr) < 0) tr.push(rr); }
+  Z.cols = cols; Z.rows = rows; Z.dx = dx; Z.dz = dz; Z.tx0 = tx0; Z.tr = tr; Z.xp = Math.round(cols * 0.7) * dx;
   const isT = (i, j) => state.track && i === tc && tr.indexOf(j) >= 0;
   ctx.fillStyle = '#1f2933'; ctx.beginPath();
   for (let j = 0; j < rows; j++) for (let i = -1; i <= cols; i++) {
@@ -139,7 +136,6 @@ function drawInner(ctx) {
   if (state.track) {
     for (const j of tr) {
       const d = j * dz, cy = y0 + d, a = axA(d), b = axB(d);
-      ctx.strokeStyle = C.ink; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(tx0 - 4, cy); ctx.lineTo(tx0 + 4, cy); ctx.moveTo(tx0, cy - 4); ctx.lineTo(tx0, cy + 4); ctx.stroke();
       if (state.orbits) { ctx.strokeStyle = C.track; ctx.lineWidth = 1.6; orbit(ctx, tx0, cy, a, b, true); }
     }
     for (const j of tr) {
@@ -159,38 +155,56 @@ function drawInner(ctx) {
     ctx.fillStyle = '#fff'; ctx.fill(); ctx.lineWidth = 1.8; ctx.strokeStyle = C.ink; ctx.stroke();
     ctx.fillStyle = C.red; ctx.fillRect(-6, -12, 12, 10); ctx.strokeRect(-6, -12, 12, 10);
     ctx.restore();
-    if (state.labels) pill(ctx, 'Phao', px, py - 30, {size: fs - 1});   // same white label pill as the anatomy labels
   }
 
-  // --- labels: crest / trough, direction, λ ruler
-  const lam = P.lam, lbl = state.labels && !L.micro;
-  const labY = y0 - L.amax - 20;
-  if (lbl) {
-    const every = Math.max(1, Math.ceil(100 / lam));
-    for (let m = 0; m < 40; m += every) {
-      const xc = (P.w * P.t) / P.k - m * lam, xh = xc - lam / 2;
-      if (xc < 20 && xh < 20) break;
-      if (xc >= 30 && xc <= w - 40 && env(xc) > 0.5 && Math.abs(xc - xp) > 62) pill(ctx, 'Đỉnh sóng', xc, y0 - P.A - 16, {size: fs - 1, fill: C.comp, stroke: C.comp, color: '#fff'});
-      if (xh >= 30 && xh <= w - 40 && env(xh) > 0.5 && Math.abs(xh - xp) > 62) pill(ctx, 'Hõm sóng', xh, y0 + P.A + 16, {size: fs - 1, fill: C.rare, stroke: C.rare, color: '#fff'});
-    }
+}
+
+function readout() {
+  return 'Hình đã làm chậm ' + slowText(state.slow) + ' · biên độ phóng đại' + (P.clamped ? ' · λ vẽ rút gọn' : '');
+}
+
+// words, ruler, VTCB marks: only while paused (main.js calls it right after draw(); fx.a fades it in)
+function annotate(ctx) {
+  if (!L.w) return;
+  const {w, fs} = L, y0 = P.y0, lam = P.lam, {dz, tx0, tr, xp} = Z;
+  ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+  // VTCB level of the surface
+  ctx.strokeStyle = C.muted; ctx.lineWidth = 1; ctx.setLineDash([5, 5]); ctx.beginPath(); ctx.moveTo(0, y0); ctx.lineTo(w, y0); ctx.stroke(); ctx.setLineDash([]);
+  if (!P.deep && !L.micro) pill(ctx, 'Đáy nước nông', w / 2, y0 + P.hd + 34, {size: fs - 1, fill: '#fff', stroke: '#a08a62', color: '#6b5a3a'});
+  // VTCB crosses of the tracked particles
+  if (state.track) {
+    ctx.strokeStyle = C.ink; ctx.lineWidth = 1.2; ctx.beginPath();
+    for (const j of tr) { const cy = y0 + j * dz; ctx.moveTo(tx0 - 4, cy); ctx.lineTo(tx0 + 4, cy); ctx.moveTo(tx0, cy - 4); ctx.lineTo(tx0, cy + 4); }
+    ctx.stroke();
   }
-  if (state.ruler && !L.micro && P.front > 1.5 * lam) {
+  if (L.micro) return;
+  // phao
+  particle(xp, 0); pill(ctx, 'Phao', ox, oy - 30, {size: fs - 1});
+  // đỉnh sóng / hõm sóng
+  const every = Math.max(1, Math.ceil(100 / lam));
+  for (let m = 0; m < 40; m += every) {
+    const xc = (P.w * P.t) / P.k - m * lam, xh = xc - lam / 2;
+    if (xc < 20 && xh < 20) break;
+    if (xc >= 30 && xc <= w - 40 && env(xc) > 0.5 && Math.abs(xc - xp) > 62) pill(ctx, 'Đỉnh sóng', xc, y0 - P.A - 16, {size: fs - 1, fill: C.comp, stroke: C.comp, color: '#fff'});
+    if (xh >= 30 && xh <= w - 40 && env(xh) > 0.5 && Math.abs(xh - xp) > 62) pill(ctx, 'Hõm sóng', xh, y0 + P.A + 16, {size: fs - 1, fill: C.rare, stroke: C.rare, color: '#fff'});
+  }
+  // λ ruler (real value)
+  if (P.front > 1.5 * lam) {
     const first = (P.w * P.t) / P.k;
     const nn = Math.max(0, Math.ceil((first - (w - 20)) / lam)), xb = first - nn * lam, xa = xb - lam;
     if (xa >= 6 && xb <= w - 6) {
-      const key = String(state.sv) + '|' + state.sf;
-      if (key !== rulerKey) { rulerKey = key; const [a, b] = lenParts(state.sv / state.sf); rulerTxt = 'λ = ' + a + ' ' + b; }
-      ruler(ctx, xa, xb, labY - 14, rulerTxt, {size: fs, maxX: w - 4});
+      const [a, b] = lenParts(state.sv / state.sf);
+      ruler(ctx, xa, xb, y0 - L.amax - 34, 'λ = ' + a + ' ' + b, {size: fs, maxX: w - 4});
     }
   }
-  // legend row (top): propagation arrow + what the orbit means
-  if (!L.micro) {
-    const ay = L.phone ? 46 : L.top0 - 40;
-    arrow(ctx, 10, ay, L.phone ? 34 : 120, ay, {width: 2, size: L.phone ? 7 : 9, color: C.ink2});
-    text(ctx, 'Phương truyền sóng', L.phone ? 40 : 128, ay, {size: L.phone ? fs - 1 : fs, weight: 700, align: 'left', color: C.ink2});
-    if (!L.phone) text(ctx, 'Quỹ đạo tròn/elip = dao động dọc + dao động ngang', w - 10, ay, {size: fs, weight: 700, align: 'right', color: C.ink2});
-    else if (w > 330) text(ctx, 'Dao động dọc + ngang', w - 8, ay, {size: fs - 1, weight: 700, align: 'right', color: C.ink2});
-  }
+  // direction + meaning of the orbit
+  const ay = L.phone ? L.top0 - 36 : L.top0 - 40, ph = L.phone;
+  arrow(ctx, w - (ph ? 34 : 120), ay, w - 10, ay, {width: 2, size: ph ? 7 : 9, color: C.ink2});
+  const dir = ph ? 'Truyền sóng' : 'Phương truyền sóng';
+  ctx.font = font(fs - (ph ? 1 : 0), 700);
+  pill(ctx, dir, w - (ph ? 40 : 128) - textW(ctx, dir) / 2 - 14, ay, {size: fs - (ph ? 1 : 0), fill: C.paper, stroke: null, color: C.ink2});
+  if (state.track && state.orbits) pill(ctx, ph ? 'Quỹ đạo = dao động dọc + ngang' : 'Quỹ đạo tròn = dao động dọc + dao động ngang', w / 2, L.h - (ph ? 72 : 78), {size: fs - 1, fill: C.paper, stroke: C.red, color: C.red});
+  if (P.deep) pill(ctx, 'Càng sâu dao động càng yếu', Math.min(w - 90, tx0 + 120), y0 + P.hd * 0.5, {size: fs - 1, fill: C.paper, stroke: null, color: C.ink2});
 }
 
 function controls() {
@@ -214,28 +228,14 @@ function controls() {
       ...slowControl()),
     group('show', 'Hiển thị',
       h('div', {class: 'tgs'},
-        toggle('pause', 'Dừng hình', () => !state.playing, v => set('playing', !v)),
         toggle('target', 'Phần tử đỏ', () => state.track, v => set('track', v), 'Theo dõi các phần tử màu đỏ'),
-        toggle('surface', 'Quỹ đạo', () => state.orbits, v => set('orbits', v)),
-        toggle('ruler', 'Thước λ', () => state.ruler, v => set('ruler', v)),
-        toggle('tag', 'Nhãn', () => state.labels, v => set('labels', v))))
+        toggle('surface', 'Quỹ đạo', () => state.orbits, v => set('orbits', v))))
   ];
-}
-
-function badges() {
-  const out = ['Biên độ được phóng đại'];
-  if (L.w) { syncWave(); if (P.clamped) out.push('λ thực quá ' + (P.clamped < 0 ? 'nhỏ' : 'lớn') + ' – hình rút gọn'); }
-  return out;
 }
 
 export default {
   id: 'surface', title: 'Sóng mặt', short: 'Sóng mặt', icon: 'surface',
   defaults: {slow: 1},
   metrics: () => ({f: state.sf, v: state.sv}),
-  features: () => [
-    ['Phương dao động', 'Cả dọc và ngang (quỹ đạo tròn/elip)'],
-    ['Phương truyền', 'Dọc theo mặt thoáng →'],
-    ['Quỹ đạo', state.deep ? 'Tròn, nhỏ dần khi xuống sâu' : 'Elip, dẹt dần về đáy'],
-    ['Ví dụ', 'Sóng trên mặt nước']],
-  controls, badges, layout, draw, update() {}, reset() {}
+  readout, controls, layout, draw, annotate, update() {}, reset() {}
 };
