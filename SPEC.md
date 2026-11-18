@@ -169,7 +169,7 @@ in shallow mode. Orbit outlines may stay while running (they are geometry, not t
 - **SVG file rules:** `viewBox` in design units + `width`/`height`; no `<text>`, no `<image>`, no external refs, no CSS files;
   gradient ids prefixed with the file name; `feGaussianBlur` allowed (rasterised once); ≤ 40 KB per file; moving parts are separate
   top-level `<g data-move>` with an `a-<id>-pivot` anchor when they rotate. Open the file alone with `node tools/shot.mjs <n> --page=art/<f>.svg`.
-- Files after v3: `js/modes/{waves,sound,surface,em}.js`; `js/art/sprite.js`; `art/{driver,speaker,transducer,talker,ear}.svg`;
+- Files after v3: `js/modes/{waves,sound,surface,em}.js`; `js/art/sprite.js`; `art/{driver,speaker,transducer,head,talker,ear}.svg` (`head.svg` = shared realistic side-profile head, used by the talker and, scaled/mirrored, by the listener);
   `js/draw/{grid,ink,ball}.js`. Old Path2D art (`js/art/figure.js, speaker.js, talker.js, ear.js`) is deleted once its SVG replacement works.
 - Zalo/in-app safety: no reliance on Fullscreen API, `localStorage` in try/catch, AudioContext on first tap, `touch-action` on the canvas,
   touch targets ≥ 40 px, no hover-only features. `prefers-reduced-motion` starts paused (annotations visible).

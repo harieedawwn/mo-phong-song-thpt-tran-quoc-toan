@@ -7,10 +7,25 @@
 Current work = **v3 rebuild** (big clean stage, labels only when paused, 3D-looking spheres and shaded SVG art).
 `SPEC.md` = what to build, `TASK.md` = phases. Work on exactly **one phase per session**.
 
+## Session routine (the owner pastes a short prompt; this is the full procedure)
+1. `git pull --ff-only origin main`. CLAUDE.md is already in your context – do not re-read it.
+2. Find the phase: `grep -n '^## Phase' TASK.md` → first `[~]`, else first `[ ]`; read the TASK header + that section only. None left → report "Đã xong v3".
+3. **Model gate:** if the phase names another model than yours, change nothing and reply only:
+   "Phase N cần <model> – gõ /clear, /model <model> rồi dán lại prompt."
+4. Mark `[~]`. Read only the SPEC sections the phase lists (`grep -n '^#' SPEC.md`, partial reads) and the listed files (grep inside big ones).
+5. `node tools/serve.mjs &`. Visual phase → `node tools/shot.mjs before<N> <hash> --paused` (do not open these yet).
+6. Do the checkboxes of this ONE phase.
+7. Verify once at the end (not after every small edit): `node --check` on changed JS, `shot.mjs after<N> … --paused` (+`--all` if the phase says)
+   must exit 0; open desk, phone, desk-paused (+ before-desk-paused to compare, + any viewport the checker flagged). One fix round, then re-shoot once.
+8. Tick boxes, `[x]` (or `[!]` + one-line note), one Log line, `version.json`, Vietnamese commit(s), `git push origin main`.
+9. Deploy check (light): wait 60 s, fetch `version.json` once (one retry after 30 s). Full 5-retry check only in Phase 19.
+10. Report in Vietnamese, ≤ 5 lines: phase + kết quả, số liệu đã kiểm, commit + deploy, phase tiếp theo + model, "Gõ /clear rồi dán lại prompt."
+
 ## Save tokens (important)
-- Read only `CLAUDE.md`, `TASK.md` and the SPEC sections + files the phase lists. Use `grep -n` / partial reads for big files.
-- Never read `fonts/`, `docs/history.md`, `node_modules/`, or reference PNGs unless the phase names them.
-- Do not paste whole files back; edit in place. Do not refactor outside the phase.
+- **No subagents / Task / Explore agents**, no web search, no package installs beyond `tools/` (Playwright is already set up).
+- Never read `fonts/`, `docs/history.md`, `node_modules/`, `shots/` (except the PNGs from step 7), reference PNGs unless the phase names them.
+- Edit in place; never rewrite or print whole files that only need a few changes. No refactors outside the phase.
+- While drawing SVG art, iterate with `--page=art/<file>.svg` shots (1 image) instead of full-app shots (several images).
 
 ## Code map (v3 target – some files appear during the phases)
 - `index.html`, `css/style.css` (phone layouts at the end), `fonts/` – shell, header, left panel, stage.
@@ -42,10 +57,9 @@ node tools/shot.mjs <name> --page=art/ear.svg   # one SVG (or any repo file) alo
 # first time: cd tools && npm i && npx playwright install chromium   (if the download fails, shot.mjs falls back to any installed Chromium; or CHROME=/path)
 find js -name '*.js' -exec node --check {} \;   # syntax check
 ```
-Open and look at the PNGs you rely on (desk, phone, desk-paused at least) before claiming something works.
+Never claim something works without opening the screenshot that shows it.
 `window.__app` exposes `play()`, `pause()`, `restart()`, `setMode(id)`, `mode`, `state`.
 
 ## Deploy check
-After `git push`, wait ~60 s, fetch `https://harieedawwn.github.io/mo-phong-song-thpt-tran-quoc-toan/version.json` and confirm the
-`phase`/`build` you wrote (last commit of each phase sets `{"phase":"<N>","build":"<YYYY-MM-DD HH:MM>"}`). Retry up to 5 times, 30 s apart.
-If `gh` is installed, `gh run list -L 1` must show `success`.
+`https://harieedawwn.github.io/mo-phong-song-thpt-tran-quoc-toan/version.json` must show the `{"phase":"<N>","build":"<YYYY-MM-DD HH:MM>"}`
+written in the phase's last commit (routine step 9). If `gh` is installed, `gh run list -L 1` showing `success` is enough.
