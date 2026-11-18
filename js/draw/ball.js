@@ -1,7 +1,7 @@
 // 3D-looking sphere sprites. One offscreen canvas per (colour, radius, dpr), built once; per frame only drawImage.
-// Light comes from the upper-left (same as the SVG art). Colours: medium particle #1c7ed6, steel #868e96, tracked #e03131, rope bead #1971c2.
+// Light comes from the upper-left (same as the SVG art). Colours: medium particle #1c7ed6, tracked #e03131, rope bead #1971c2.
 export const ballDpr = () => DPR;
-export const BALL = {blue: '#1c7ed6', orange: '#e8590c', pale: '#74c0fc', steel: '#868e96', red: '#e03131', bead: '#1971c2'};
+export const BALL = {blue: '#1c7ed6', orange: '#e8590c', pale: '#74c0fc', red: '#e03131', bead: '#1971c2'};
 
 const cache = new Map();
 let DPR = 1;

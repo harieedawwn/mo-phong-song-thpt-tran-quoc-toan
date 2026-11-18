@@ -77,13 +77,13 @@ Before: `node tools/shot.mjs before20 mode=sound --paused --all`.
 - [x] Phone portrait: magnifier full stage width under the air column; phone landscape: right half of the stage. If a part is unclear at large size (e.g. ossicles, oval window, round window), refine that part in `ear.svg` (≤ 1 round, `--page` shot).
 - [x] Check (`--all --paused`): at 1366×768 the circle diameter ≥ 450 px, each ossicle clearly distinguishable; 440 Hz air → λ = 78,0 cm; ≥ 50 fps with `--perf` in sound mode.
 
-## Phase 21 – Sửa nhanh giao diện + sóng âm (bỏ Thép, bỏ Giọng nói, nước đúng)  `[ ]`  · Sonnet (Medium)
+## Phase 21 – Sửa nhanh giao diện + sóng âm (bỏ Thép, bỏ Giọng nói, nước đúng)  `[x]`  · Sonnet (Medium)
 SPEC §3.2, §3.3 (dashed orbits), §4 (tabs, speed chip). Files: `css/style.css` (tabs/header), `js/ui.js` (play bar, help), `js/modes/sound.js` (grep `steel|voice|medium|wave.set|spkOut`), `js/modes/surface.js` (grep `orbit`), `js/audio.js` (voice), `js/main.js` (hash `med=`), `art/transducer.svg`.
-- [ ] Mode tabs centred under the title pill (page centre), all sizes; delete the "Làm chậm ×N" chip next to Phát/Tạm dừng.
-- [ ] Sound: delete "Giọng nói" (control + audio voice code); delete Thép (scene, lattice, clamps, `med=steel` → air); delete `speaker-out.svg` + "Xem bên trong loa" toggle (cut-away only).
-- [ ] Water honest: same px/m as air (λ 4,32× longer, front 4,32× faster at the same f); transducer membrane flush with the housing (no sliding bar) for source and receiver.
-- [ ] Surface: orbit outlines dashed (`setLineDash`, reset after).
-- [ ] Check: 440 Hz air → 78,0 cm, water → 3,37 m and visibly longer λ; `--all --paused` for sound + surface.
+- [x] Mode tabs centred under the title pill (page centre), all sizes; delete the "Làm chậm ×N" chip next to Phát/Tạm dừng.
+- [x] Sound: delete "Giọng nói" (control + audio voice code); delete Thép (scene, lattice, clamps, `med=steel` → air); delete `speaker-out.svg` + "Xem bên trong loa" toggle (cut-away only).
+- [x] Water honest: same px/m as air (λ 4,32× longer, front 4,32× faster at the same f); transducer membrane flush with the housing (no sliding bar) for source and receiver.
+- [x] Surface: orbit outlines dashed (`setLineDash`, reset after).
+- [x] Check: 440 Hz air → 78,0 cm, water → 3,37 m and visibly longer λ; `--all --paused` for sound + surface.
 
 ## Phase 22 – Loa bên ngoài đẹp + âm thanh đi vào ống tai  `[ ]`  · Sonnet (High)
 SPEC §3.2 (Loudspeaker v4, Sound enters the ear). Files: `art/speaker.svg`, `art/ear.svg` (canal anchors only), `js/modes/sound.js` (grep `spk|ear|canal|drum`).
@@ -113,3 +113,4 @@ SPEC §3.3 (duck), §4 (Left panel v4, Zoom v4). Files: `js/main.js`, `js/ui.js`
 2026-11-18 · P18 · art/ear.svg (kính lúp: viền kim loại + cán, mặt cắt đứng ngang: da, mô mỡ, cơ thái dương, não + màng cứng, xương thái dương có vân xương + tế bào chũm, vành tai + dái tai có sụn, ống tai chữ S + lông, màng nhĩ/xương búa/đe/bàn đạp `data-move` + trục, hòm nhĩ, vòi nhĩ, ốc tai 2,5 vòng, 3 ống bán khuyên, tiền đình, dây thần kinh + 4 neo xung), người nghe = head.svg lật gương + vòng chú thích; màng nhĩ theo u tại ống tai, búa–đe quay quanh 1 trục, bàn đạp = đòn bẩy 26/37; nhãn chuyển sang sprite.js + gỡ chéo đường dẫn; xoá ear.js, figure.js · shot --all --paused exit 0, 7 nhãn desk / 5 phone, không đường dẫn cắt, ear.svg 36 KB · (hash ở commit)
 2026-11-18 · P19 · sprite.js cắt mỗi lớp SVG theo vùng có nét vẽ (sóng âm trên điện thoại 39→53 fps), shot.mjs --perf, sóng mặt kiểm bằng công thức (thuận chiều kim đồng hồ, không trôi, a(λ/2)=4,32 %), README/CLAUDE.md cập nhật; không còn mã chết (hover CSS chỉ là hiệu ứng, metrics() là giao diện mode) · --all --paused 4 chế độ exit 0, perf (CPU×4, 390×844) waves 58,9 · sound 53,1 · surface 51,9 · em 51,3 fps · (hash ở commit)
 2026-11-18 · P20 · kính lúp tai to (đĩa Ø≈485 px ở 1366×768 = 75 % chiều cao sân khấu; đầu người nhỏ ≈ 18 %), ear.svg rasterise ở scale lớn, chạm đĩa / nút tròn kính lúp± / Esc / đổi chế độ = phóng to ↔ thu nhỏ (#zoom=1), nhãn 7 + Não (cột bên hoặc hàng trên/dưới), điện thoại dọc: đĩa dưới cột khí + gợi ý chạm, ngang: nửa phải · shot --all --paused exit 0, 440 Hz → λ=78,0 cm, --perf sound 56 fps · (hash ở commit)
+2026-11-18 · P21 · tab căn giữa trang, bỏ chip Làm chậm; sóng âm: bỏ Thép/Giọng nói/loa ngoài (speaker-out.svg); nước cùng px/m với không khí (λ 3,37 m vs 78,0 cm), màng đầu phát/máy thu phẳng với vỏ và phồng ở giữa; quỹ đạo sóng mặt nét đứt.

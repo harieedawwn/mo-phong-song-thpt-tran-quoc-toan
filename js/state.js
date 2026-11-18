@@ -18,10 +18,8 @@ export const state = {
   // sóng dọc – sóng âm
   f: 440,           // Hz (real)
   level: 70,        // dB (độ to) → drawn amplitude + audio gain
-  medium: 'air',    // air | water | steel
+  medium: 'air',    // air | water
   source: 'speaker',// speaker | talker
-  inside: false,    // loa: false = nhìn bên ngoài (mặc định) | true = mặt cắt bên trong
-  sound: 'tone',    // tone (âm đơn) | voice (giọng nói)
   // sóng ngang – dây
   tf: 1,            // Hz (real, 0,2–5)
   tA: 5,            // cm (real amplitude)

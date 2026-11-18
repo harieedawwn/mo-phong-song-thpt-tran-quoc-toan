@@ -21,9 +21,8 @@ function setF(f) { set('f', f); set('slow', niceSlow(f)); }
 
 // Loudspeaker = art/speaker.svg (static cabinet / basket / magnet + moving layer "cone": cone, dust cap, voice coil).
 // Surround + spider are canvas curves from a static anchor to the moving rim / coil, so they stretch with u(0,t).
-const spkIn = loadArt('speaker'), spkOut = loadArt('speaker-out');      // cut-away | closed cabinet seen from outside (toggle "Xem bên trong loa")
-for (const a of [spkIn, spkOut]) a.ready.then(() => { labelKey = ''; bus.emit('change', {key: 'art'}); });
-let spkArt = spkOut;
+const spkArt = loadArt('speaker');                                      // cut-away view only (v4)
+spkArt.ready.then(() => { labelKey = ''; bus.emit('change', {key: 'art'}); });
 const SPK_W = 156, SPK_H = 200;
 const spkPt = (id, fx, fy) => spkArt.pt(id) || {x: fx, y: fy};
 const spk = {
@@ -37,10 +36,9 @@ const spk = {
   // dd = cone displacement in design units (+ toward the air) = u(0,t)/s, the same u as the first air layer
   drawDyn(ctx, dd) {
     const s = this.s, dpr = ballDpr();
-    spkArt = state.inside ? spkIn : spkOut;
     if (spkArt.scale !== s || spkArt.dpr !== dpr) spkArt.render(s, dpr);
     spkArt.draw(ctx, this.x, this.y, {cone: {dx: dd}});
-    if (!spkArt.layers.length || !state.inside) return;
+    if (!spkArt.layers.length) return;
     const X = (u) => this.x + u * s, Y = (v) => this.y + v * s;
     const rt = spkPt('a-rimtop', 146, 44), rb = spkPt('a-rimbot', 146, 156), ft = spkPt('a-fl-top', 139, 40), fb = spkPt('a-fl-bot', 139, 160);
     const st = spkPt('a-sp-top', 84, 76), sb = spkPt('a-sp-bot', 84, 124), cl = spkPt('a-coil', 84, 85);
@@ -61,8 +59,7 @@ const spk = {
   }
 };
 const SPK_LAB_IN = [['cone', 'Màng loa', 'a-cone', 122, 65, 'top'], ['basket', 'Khung loa', 'a-basket', 108, 54, 'top', 1], ['coil', 'Cuộn dây', 'a-coil', 84, 85, 'bottom'], ['magnet', 'Nam châm', 'a-magnet', 42, 75, 'bottom']];
-const SPK_LAB_OUT = [['cone', 'Màng loa', 'a-cone', 142, 70, 'top'], ['box', 'Thùng loa', 'a-box', 70, 150, 'bottom']];
-const spkLabels = () => (state.inside ? SPK_LAB_IN : SPK_LAB_OUT)
+const spkLabels = () => SPK_LAB_IN
   .map(([id, t, a, fx, fy, side, row]) => { const p = spkPt(a, fx, fy); return [id, t, p.x, p.y, side, row]; });
 // Talker = art/talker.svg (head + sagittal cut of the vocal tract); moving layer "folds" (vocal folds) vibrates with u(0,t).
 // The air column starts at the lips (anchor a-mouth) and is a bit narrower than the loudspeaker's (TALK_COL design units).
@@ -175,11 +172,11 @@ const EAR_LAB = [['pinna', 'Vành tai', 'a-pinna', 57, 76, 'top'], ['canal', '�
 const BRAIN_LAB = ['brain', 'Não', 'a-brain', 176, 33, 'top'];
 const ZOOM_SIDE = {pinna: 'left', canal: 'left', drum: 'left', ossicles: 'left', canals: 'right', cochlea: 'right', nerve: 'right', brain: 'right'};
 const earLabels = () => (zoom ? EAR_LAB.concat([BRAIN_LAB]) : EAR_LAB).map(([id, t, a, fx, fy, side, row]) => { const p = earPt(a, fx, fy); return [id, t, p.x, p.y, side, row]; });
-// Water / steel scenes: the same art/transducer.svg is the source (left) and, mirrored, the receiver (right); its moving layer "face" follows u.
+// Water scene: the same art/transducer.svg is the source (left) and, mirrored, the receiver (right); its moving layer "face" follows u.
 const trd = loadArt('transducer');
 trd.ready.then(() => { bus.emit('change', {key: 'art'}); });
 const TR = {W: 150, FACE_X: 136, FACE_Y: 50, FACE_H: 60};      // design units of art/transducer.svg: face plane x, centre y, height
-const solid = () => state.medium !== 'air' && L.layout !== 'bars';
+const solid = () => state.medium === 'water' && L.layout !== 'bars';
 // phone: labels in priority order – as many as fit beside the figure
 const PHONE_LABELS = {ear: ['drum', 'cochlea', 'pinna', 'canal', 'canals'], talker: ['cords', 'mouth', 'tongue'], speaker: ['cone', 'coil', 'magnet']};
 const fitN = (ids, band) => ids.slice(0, Math.max(1, Math.min(ids.length, Math.floor((band - 30) / 23))));
@@ -196,7 +193,7 @@ function layout(w, hh) {
   L.compact = L.layout === 'stack' ? false : hh < 440;
   const talker = state.source === 'talker';
   labelKey = '';
-  if (state.medium !== 'air' && L.layout !== 'bars') layoutSolid(w, hh);
+  if (state.medium === 'water' && L.layout !== 'bars') layoutSolid(w, hh);
   else if (L.layout === 'stack') {
     L.cols = 26;
     L.airL = 12; L.airR = w - 12; L.airW = L.airR - L.airL; L.dx = L.airW / (L.cols + 1);
@@ -259,7 +256,7 @@ function layout(w, hh) {
   rulerN = -1; spr = null;
 }
 
-// Water tank / steel bar: transducer (left) → column of particles → receiver (right); the faces are at airL / airR.
+// Water tank: transducer (left) → column of particles → receiver (right); the faces are at airL / airR.
 // "phóng to" placement: the disc alone, as big as the stage allows; labels in two side columns (wide stage) or in rows above / below
 function zoomPlace(w, hh) {
   const top = L.layout === 'stack' ? 66 : L.compact ? 36 : 34, bot = 72, availH = hh - top - bot, col = L.phone ? 190 : 205, ph = (L.phone ? 12 : 13) + 9;
@@ -270,13 +267,13 @@ function zoomPlace(w, hh) {
 }
 
 function layoutSolid(w, hh) {
-  const stack = L.layout === 'stack', steel = state.medium === 'steel', m = stack ? 12 : 30;
+  const stack = L.layout === 'stack', m = stack ? 12 : 30;
   const srcW = stack ? clamp(w * 0.2, 60, 108) : clamp(w * 0.235, 120, 230);           // face plane − left margin
   L.airL = m + srcW; L.airR = w - m - srcW; L.airW = L.airR - L.airL;
   L.cols = clamp(Math.round(L.airW / 9), stack ? 18 : 24, 40); L.dx = L.airW / (L.cols + 1);
   const top = stack ? 150 : L.compact ? 40 : 76, bottom = stack ? 120 : L.compact ? 60 : 108;
-  const F = Math.max(26, Math.min(srcW / TR.FACE_X * TR.FACE_H, (hh - top - bottom) / 2.1, 130));   // face height (px) = height of the particle column (+ one row in steel)
-  const dyT = clamp(L.dx * 1.5, 9, 17), rowsPx = F - (steel ? dyT : 0);
+  const F = Math.max(26, Math.min(srcW / TR.FACE_X * TR.FACE_H, (hh - top - bottom) / 2.1, 130));   // face height (px) = height of the particle column
+  const dyT = clamp(L.dx * 1.5, 9, 17), rowsPx = F;
   L.rows = clamp(Math.round(rowsPx / dyT), 3, 12); L.dy = rowsPx / L.rows; L.F = F;
   const cy = stack ? Math.max(top + F * 0.6, hh * 0.36) : top + Math.max(F * 1.05, (hh - top - bottom) / 2);
   L.fieldTop = cy - L.rows * L.dy / 2; L.fieldBot = cy + L.rows * L.dy / 2; L.cy = cy;
@@ -285,12 +282,23 @@ function layoutSolid(w, hh) {
   L.above = 88; L.below = 70;
 }
 
+// width (px) of the air column the AIR scene would have at this stage size (reference scale for the water scene)
+function airSpan(w, hh) {
+  const phone = w < 600, lay = !phone ? 'side' : hh >= 420 ? 'stack' : 'bars', compact = lay === 'stack' ? false : hh < 440;
+  if (lay === 'stack') return w - 24;
+  if (lay === 'bars') return w - 28;
+  const srcW = clamp(w * 0.2, 120, 245), eTop = compact ? 8 : 60, eBot = compact ? 70 : 100;
+  const se = Math.max(0.3, Math.min(w * (compact ? 0.5 : 0.38) / EAR_W, (hh - eTop - eBot) / (2 * RB) * (compact ? 1 : 0.72)));
+  return w - EAR_W * se - 8 - srcW - 12;
+}
+
 // recompute the drawn wave from the state (cheap, no allocation)
 function syncWave() {
   const v = SPEED[state.medium] || SPEED.air;
   const g = clamp((state.level - DB_MIN) / (DB_MAX - DB_MIN), 0, 1);
-  const minPx = Math.max(7 * L.dx, 60), maxPx = L.airW * 0.56;
-  wave.set(state.f, v, L.airW / SHOW_M, minPx, maxPx, 0);
+  // water uses the SAME px per metre as air (λ_water = 4,32 λ_air on screen, front 4,32× faster); clamp only if λ < 14 px
+  const water = state.medium === 'water', minPx = water ? Math.max(14, 2.2 * L.dx) : Math.max(7 * L.dx, 60), maxPx = water ? 1e6 : L.airW * 0.56;
+  wave.set(state.f, v, (water ? airSpan(L.w, L.h) : L.airW) / SHOW_M, minPx, maxPx, 0);
   wave.A = Math.min((0.28 + 0.32 * g) * wave.lamPx / (2 * Math.PI), 1.05 * L.dx);   // k·A ≤ 0,6 (< 0,8): layers never cross and never touch the cone face
   wave.at(state.t);
 }
@@ -304,7 +312,7 @@ function draw(ctx) {
   const {airL, airW, dx, dy, fieldTop, fieldBot, cols, rows, r, fs} = L;
   const lam = wave.lamPx, cyc = wave.cycles(), front = wave.front;
   ctx.lineJoin = 'round'; ctx.lineCap = 'round';
-  const isSolid = solid(), steel = state.medium === 'steel';
+  const isSolid = solid();
   if (isSolid) drawSolidBack(ctx);
 
   // --- paused only: faint nén / giãn column bands behind the particles + thin bar above the field (same formula as the particles)
@@ -322,18 +330,8 @@ function draw(ctx) {
   }
 
   // --- air spheres: uniform blue while running; paused → nén orange / giãn pale blue (one sprite per class, drawImage only)
-  if (!spr) spr = [ball(steel ? BALL.steel : BALL.blue, r), ball(BALL.orange, r), ball(BALL.pale, r), ball(BALL.red, r + 1.8)];
+  if (!spr) spr = [ball(BALL.blue, r), ball(BALL.orange, r), ball(BALL.pale, r), ball(BALL.red, r + 1.8)];
   const sprites = spr;
-  if (steel && isSolid) {                    // lattice: thin bonds between neighbouring atoms (one path, stroked once)
-    ctx.beginPath();
-    for (let j = 0; j < rows; j++) {
-      const y = fieldTop + (j + 0.5) * dy;
-      ctx.moveTo(airL + restX[0] + wave.u(restX[0]), y);
-      for (let i = 1; i < cols; i++) ctx.lineTo(airL + restX[i] + wave.u(restX[i]), y);
-    }
-    for (let i = 0; i < cols; i++) { const x = airL + restX[i] + wave.u(restX[i]); ctx.moveTo(x, fieldTop + dy * 0.5); ctx.lineTo(x, fieldBot - dy * 0.5); }
-    ctx.strokeStyle = 'rgba(52,58,64,.38)'; ctx.lineWidth = 1.1; ctx.stroke();
-  }
   for (let pass = 0; pass < (still ? 3 : 1); pass++) {
     const sp = sprites[pass];
     for (let i = 0; i < cols; i++) {
@@ -358,7 +356,7 @@ function draw(ctx) {
   if (isSolid) drawSolidFront(ctx); else drawArt(ctx);
 }
 
-// ---- water tank / steel bar scenes (baked once per layout; per frame drawImage only) ----
+// ---- water tank scene (baked once per layout; per frame drawImage only) ----
 function mkCanvas(w, hh) {
   const dpr = ballDpr(), c = document.createElement('canvas');
   c.width = Math.max(1, Math.ceil(w * dpr)); c.height = Math.max(1, Math.ceil(hh * dpr));
@@ -367,8 +365,8 @@ function mkCanvas(w, hh) {
 }
 function lin(g, x0, y0, x1, y1, stops) { const gr = g.createLinearGradient(x0, y0, x1, y1); for (const [o, col] of stops) gr.addColorStop(o, col); return gr; }
 function bakeScene() {
-  const steel = state.medium === 'steel', {cy, F, airL, airR, w} = L, tr = L.tr, dpr = ballDpr();
-  if (!steel) {                                              // glass tank + water with depth gradient
+  const {cy, F, w} = L, tr = L.tr;
+  {                                                          // glass tank + water with depth gradient
     const x0 = 4, x1 = w - 4, y0 = cy - F * 1.08, y1 = cy + F * 1.08, pad = 24, W = x1 - x0, H = y1 - y0;
     const {c, g} = mkCanvas(W + 2 * pad, H + 2 * pad + 22); g.translate(pad - x0, pad - y0);
     const sh = g.createRadialGradient((x0 + x1) / 2, y1 + 8, 10, (x0 + x1) / 2, y1 + 8, W / 2);
@@ -390,56 +388,28 @@ function bakeScene() {
       g.beginPath(); g.moveTo(ax, ay); g.bezierCurveTo(ax + dir * 12, ay, ax + dir * 12, y0 + 10, ax + dir * 12, y0 - 14); g.stroke();
     }
     L.scene = {c, x: x0 - pad, y: y0 - pad, w: W + 2 * pad, h: H + 2 * pad + 22, ytop: y0, ybot: y1};
-  } else {                                                   // bench + two C-clamps + brushed steel bar
-    const bh = F, by0 = cy - bh / 2, by1 = cy + bh / 2, bx0 = airL - L.dx * 1.4, bx1 = airR + L.dx * 1.4, bw = bx1 - bx0;
-    const bar = mkCanvas(bw, bh), g = bar.g;
-    g.fillStyle = lin(g, 0, 0, 0, bh, [[0, '#eef0f2'], [0.18, '#cdd2d7'], [0.55, '#9aa1a9'], [0.85, '#7a828a'], [1, '#5c636b']]);
-    g.fillRect(0, 0, bw, bh);
-    g.strokeStyle = 'rgba(255,255,255,.22)'; g.lineWidth = 0.7;                              // brushed lines
-    for (let y = 2; y < bh - 1; y += 2.6) { g.beginPath(); g.moveTo(0, y + (y * 7 % 3) * 0.2); g.lineTo(bw, y + (y * 7 % 3) * 0.2); g.stroke(); }
-    g.fillStyle = 'rgba(255,255,255,.55)'; g.fillRect(0, 2, bw, 2);
-    g.fillStyle = 'rgba(30,34,40,.45)'; g.fillRect(0, bh - 2.5, bw, 2.5);
-    g.strokeStyle = '#3d4349'; g.lineWidth = 1.4; g.beginPath(); g.moveTo(0, 0.7); g.lineTo(bw, 0.7); g.moveTo(0, bh - 0.7); g.lineTo(bw, bh - 0.7); g.stroke();
-    L.bar = {c: bar.c, x: bx0, y: by0, w: bw, h: bh};
-    const pad = 20, ytab = by1 + 40, x0 = 6, x1 = w - 6, sc = mkCanvas(w, ytab + 24 - by0 + pad), s2 = sc.g;
-    s2.translate(0, pad - by0);
-    // bench
-    s2.fillStyle = lin(s2, 0, ytab, 0, ytab + 12, [[0, '#d8c7a6'], [1, '#b9a47c']]); s2.beginPath(); roundRect(s2, x0, ytab, x1 - x0, 12, 3); s2.fill();
-    s2.strokeStyle = '#8b7a56'; s2.lineWidth = 1; s2.stroke();
-    s2.fillStyle = 'rgba(40,30,10,.16)'; s2.fillRect(x0 + 6, ytab + 12, x1 - x0 - 12, 5);
-    // C-clamps at 22 % and 78 % of the bar
-    for (const fx of [0.12, 0.88]) {
-      const x = airL + L.airW * fx, jaw = Math.max(6, F * 0.08), sp = 9;
-      s2.fillStyle = lin(s2, x - 16, 0, x + 18, 0, [[0, '#e9ecef'], [0.4, '#868e96'], [1, '#3d4349']]); s2.strokeStyle = '#2b3036'; s2.lineWidth = 1;
-      s2.beginPath(); s2.rect(x - 22, by1 + 0.5, 44, jaw); s2.fill(); s2.stroke();                       // lower jaw under the bar
-      s2.beginPath(); s2.rect(x - 22, by0 - jaw - 8, 44, jaw); s2.fill(); s2.stroke();                   // upper arm over the bar
-      s2.beginPath(); s2.rect(x + 12, by0 - jaw - 8, sp, by1 - by0 + 2 * jaw + 8); s2.fill(); s2.stroke();   // spine
-      s2.fillStyle = lin(s2, x - 3, 0, x + 3, 0, [[0, '#6c747d'], [0.4, '#f4f6f8'], [1, '#6c747d']]);
-      s2.beginPath(); s2.rect(x - 3, by0 - 8, 6, 8); s2.fill(); s2.stroke();                              // screw pressing the bar
-      s2.beginPath(); s2.rect(x - 9, by0 - jaw - 13, 18, 5); s2.fill(); s2.stroke();                        // handle
-      s2.fillStyle = lin(s2, x - 12, 0, x + 12, 0, [[0, '#adb5bd'], [1, '#495057']]);
-      s2.beginPath(); s2.rect(x - 11, by1 + jaw + 0.5, 22 + sp + 8, ytab - by1 - jaw - 0.5); s2.fill(); s2.stroke();   // foot
-    }
-    L.scene = {c: sc.c, x: 0, y: by0 - pad, w, h: ytab + 24 - by0 + pad};
   }
 }
 function drawSolidBack(ctx) {
   if (!L.scene) bakeScene();
   const sc = L.scene;
   ctx.drawImage(sc.c, sc.x, sc.y, sc.w, sc.h);
-  if (state.medium === 'steel') {                              // bar ends follow the two vibrating faces, so no gap ever opens
-    const u0 = wave.u(0), ue = wave.u(L.airW), b = L.bar, dpr = ballDpr();
-    const xl = L.airL + u0 - b.x, xr = L.airR + ue - b.x;
-    ctx.drawImage(b.c, xl * dpr, 0, (xr - xl) * dpr, b.h * dpr, b.x + xl, b.y, xr - xl, b.h);
-  }
+}
+// transducer membrane: edges fixed flush with the housing front, centre bulges by dd (design units, same u as the first particle layer)
+function drawMembrane(ctx, s, dd) {
+  const fx = TR.FACE_X, h2 = TR.FACE_H / 2 - 2, y0 = TR.FACE_Y - h2, y1 = TR.FACE_Y + h2, cx = fx + 2 * dd;
+  ctx.beginPath(); ctx.moveTo(fx, y0); ctx.quadraticCurveTo(cx, TR.FACE_Y, fx, y1);
+  ctx.lineCap = 'round';
+  ctx.strokeStyle = '#2f343a'; ctx.lineWidth = 4.2; ctx.stroke();
+  ctx.strokeStyle = '#d9dee3'; ctx.lineWidth = 2.6; ctx.stroke();
+  ctx.strokeStyle = 'rgba(255,255,255,.8)'; ctx.lineWidth = 0.9; ctx.stroke();
 }
 function drawSolidFront(ctx) {
   const tr = L.tr, s = tr.s, dpr = ballDpr(), u0 = wave.u(0), ue = wave.u(L.airW);
   if (trd.scale !== s || trd.dpr !== dpr) trd.render(s, dpr);
-  trd.draw(ctx, tr.x, tr.y, {face: {dx: u0 / s}});
-  ctx.save(); ctx.translate(tr.rx, tr.y); ctx.scale(-1, 1);
-  trd.draw(ctx, 0, 0, {face: {dx: -ue / s}});
-  ctx.restore();
+  trd.draw(ctx, tr.x, tr.y);
+  ctx.save(); ctx.translate(tr.x, tr.y); ctx.scale(s, s); drawMembrane(ctx, s, u0 / s); ctx.restore();
+  ctx.save(); ctx.translate(tr.rx, tr.y); ctx.scale(-1, 1); trd.draw(ctx, 0, 0); ctx.scale(s, s); drawMembrane(ctx, s, -ue / s); ctx.restore();
 }
 
 const SRC = {speaker: {get labels() { return spkLabels(); }, title: 'Loa'}, talker: {get labels() { return talkLabels(); }, title: 'Người nói'}};
@@ -447,7 +417,7 @@ const srcFig = () => state.source === 'talker' ? talk : spk;
 const clampB = x => Math.max(-1, Math.min(1, x));
 
 function buildLabels(ctx) {
-  const key = L.w + 'x' + L.h + state.source + L.layout + L.compact + state.inside + zoom;
+  const key = L.w + 'x' + L.h + state.source + L.layout + L.compact + zoom;
   if (key === labelKey) return;
   labelKey = key;
   const lab = {src: [], ear: [], tops: {src: 1e9, ear: 1e9}};
@@ -590,17 +560,17 @@ function annotate(ctx) {
     const [n, u] = lenParts(wave.lam);
     ruler(ctx, rx, rx + lam, fieldBot + (L.layout === 'side' ? 56 : 47), 'λ = ' + n + ' ' + u, {size: fs + 0.5, color: C.ink, maxX: L.w - 4});
   }
-  // --- water / steel: names of the two devices and of the medium
+  // --- water: names of the two devices and of the medium
   if (solid()) {
     if (L.compact) return;
-    const tr = L.tr, s = tr.s, steel = state.medium === 'steel', yb = tr.y + 13 * s;
+    const tr = L.tr, s = tr.s, yb = tr.y + 13 * s;
     for (const [x, t] of [[tr.x + 72 * s, 'Đầu phát'], [tr.rx - 72 * s, 'Máy thu']]) {
-      const ly = yb - 22 - (steel ? 10 : 0);
+      const ly = yb - 22;
       ctx.strokeStyle = C.ink2; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(x, ly + 9); ctx.lineTo(x, yb + 3); ctx.stroke();
       pill(ctx, t, x, ly, {size: fs, fill: C.paper, stroke: C.ink2, color: C.ink});
     }
-    const yn = steel ? L.fieldBot + 82 : Math.max(L.scene.ybot + 16, L.fieldBot + 82);
-    if (yn < L.h - 12) pill(ctx, steel ? 'Thanh thép được kẹp chặt' : 'Bể nước', airL + airW / 2, yn, {size: fs, weight: 800, fill: C.paper, stroke: null, color: C.ink2});
+    const yn = Math.max(L.scene.ybot + 16, L.fieldBot + 82);
+    if (yn < L.h - 12) pill(ctx, 'Bể nước', airL + airW / 2, yn, {size: fs, weight: 800, fill: C.paper, stroke: null, color: C.ink2});
     return;
   }
   // --- part labels + headings
@@ -623,7 +593,7 @@ function annotate(ctx) {
   }
 }
 
-// source chips / loudspeaker view exist only in air (in water and steel the source touches the medium)
+// source chips / loudspeaker view exist only in air (in water the source touches the medium)
 function airOnly(el) { bind(() => { el.hidden = state.medium !== 'air'; }); return el; }
 
 function controls() {
@@ -642,21 +612,19 @@ function controls() {
     pos: () => state.level, apply: v => set('level', v),
     sync: () => { dbVal.replaceChildren(String(state.level), h('small', {text: 'dB'})); }});
   return [
-    group('wave', 'Nguồn âm',
-      airOnly(seg([['speaker', 'Loa'], ['talker', 'Người nói']], () => state.source, v => set('source', v), 'Nguồn âm')),
-      h('div', {class: 'chips g2'}, chip('Âm đơn', () => state.sound === 'tone', () => set('sound', 'tone')), chip('Giọng nói', () => state.sound === 'voice', () => set('sound', 'voice')))),
+    airOnly(group('wave', 'Nguồn âm',
+      seg([['speaker', 'Loa'], ['talker', 'Người nói']], () => state.source, v => set('source', v), 'Nguồn âm'))),
     group('wave', 'Sóng âm',
       lab('freq', 'Tần số f', fVal), fSlider,
       h('div', {class: 'chips g5'}, ...[100, 262, 440, 1000, 4000].map(f => chip(f >= 1000 ? f / 1000 + 'k' : String(f), () => state.f === f, () => setF(f), 'sm'))),
       fNote,
       lab('vol', 'Độ to', dbVal), dbSlider,
       lab('medium', 'Môi trường'),
-      h('div', {class: 'chips g3'}, ...Object.keys(MEDIUM).map(k => chip(MEDIUM[k], () => state.medium === k, () => set('medium', k)))),
+      h('div', {class: 'chips g2'}, ...Object.keys(MEDIUM).map(k => chip(MEDIUM[k], () => state.medium === k, () => set('medium', k)))),
       ...slowControl()),
     group('show', 'Hiển thị',
       h('div', {class: 'tgs'},
-        toggle('target', 'Phần tử đỏ', () => state.track, v => set('track', v), 'Theo dõi một phần tử (màu đỏ)'),
-        airOnly(toggle('eye', 'Xem bên trong loa', () => state.inside, v => set('inside', v), 'Hiện mặt cắt bên trong loa: màng, cuộn dây, nam châm, khung'))))
+        toggle('target', 'Phần tử đỏ', () => state.track, v => set('track', v), 'Theo dõi một phần tử (màu đỏ)')))
   ];
 }
 

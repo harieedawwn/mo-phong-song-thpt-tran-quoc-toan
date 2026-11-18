@@ -1,6 +1,6 @@
 // Wave physics shared by the modes (Vật lí 11 KNTT, Bài 8–9). Real values for readouts, clamped values for drawing.
-export const SPEED = {air: 343, water: 1482, steel: 5960};          // m/s
-export const MEDIUM = {air: 'Không khí', water: 'Nước', steel: 'Thép'};
+export const SPEED = {air: 343, water: 1482};          // m/s
+export const MEDIUM = {air: 'Không khí', water: 'Nước'};
 export const HEARING = {min: 20, max: 20000};                     // Hz
 export const clamp = (x, a, b) => Math.min(b, Math.max(a, x));
 export const TAU = Math.PI * 2;

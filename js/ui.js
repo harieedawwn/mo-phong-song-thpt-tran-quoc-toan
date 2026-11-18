@@ -104,8 +104,7 @@ const HELP = [
   'Chọn loại sóng ở thanh phía trên (hoặc nhấn phím 1–4). Nút ↻ cho sóng xuất phát lại từ nguồn.',
   'Kéo thanh Làm chậm để quan sát rõ dao động của từng phần tử; hình đã làm chậm và phóng đại biên độ.',
   'Chấm đỏ là một phần tử được theo dõi: nó chỉ dao động quanh vị trí cân bằng, sóng không mang nó đi.',
-  'λ = v·T = v/f: tăng tần số thì bước sóng ngắn lại (cùng môi trường).',
-  'Trong nước và thép, nguồn là đầu phát âm áp sát môi trường: loa trong không khí không thể đẩy âm vào khối thép như đẩy không khí.'
+  'Trong nước, nguồn là đầu phát âm dưới nước áp sát môi trường (loa trong không khí không đẩy âm vào nước tốt); cùng tần số, bước sóng trong nước dài gấp 4,32 lần.'
 ];
 
 /* ---- app shell ---- */
@@ -167,9 +166,8 @@ export function mountShell({modes, onMode, onRestart, onToggle, onShot}) {
   const playLab = h('span', {text: 'Phát'});
   const btnPlay = h('button', {type: 'button', id: 'btn-play', 'data-playing': 'false', 'aria-label': 'Phát', onclick: onToggle},
     icon('play', 22, 'i-play'), icon('pause', 22, 'i-pause'), playLab);
-  const spd = h('span', {class: 'spd', title: 'Hệ số làm chậm'});
   const btnRestart = h('button', {type: 'button', id: 'btn-restart', class: 'rbtn', 'aria-label': 'Bắt đầu lại', title: 'Bắt đầu lại', onclick: onRestart}, icon('reset', 20));
-  $('play-wrap').append(btnRestart, btnPlay, spd);
+  $('play-wrap').append(btnRestart, btnPlay);
   function syncPlay() {
     const p = !!state.playing;
     btnPlay.dataset.playing = String(p);
@@ -177,14 +175,13 @@ export function mountShell({modes, onMode, onRestart, onToggle, onShot}) {
     btnPlay.setAttribute('aria-label', playLab.textContent);
     btnPlay.setAttribute('aria-pressed', String(p));
   }
-  const syncSpd = () => spd.replaceChildren(icon('slow', 15), 'Làm chậm ' + slowText(state.slow));
-  bus.on('change', e => { if (e.key === 'muted') syncMute(); if (e.key === 'playing') syncPlay(); syncSpd(); syncBinds(); });
-  syncMute(); syncPlay(); syncSpd();
+  bus.on('change', e => { if (e.key === 'muted') syncMute(); if (e.key === 'playing') syncPlay(); syncBinds(); });
+  syncMute(); syncPlay();
 
   return {
     setMode(m) {
       for (const b of tabBtns) b.setAttribute('aria-selected', String(b.dataset.id === m.id));
-      buildControls(m); syncSpd();
+      buildControls(m);
     }
   };
 }

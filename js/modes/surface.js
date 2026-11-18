@@ -89,7 +89,9 @@ function curve(d, n) {        // dense material line at depth d → sx/sy0
 function pathCurve(ctx, n, move) { for (let i = 0; i < n; i++) (i || !move) ? ctx.lineTo(sx[i], sy0[i]) : ctx.moveTo(sx[i], sy0[i]); }
 
 function orbit(ctx, cx, cy, a, b, arrowOn) {
+  ctx.setLineDash([5, 4]);                                       // dashed outline (orbit is a path, not a solid object)
   ctx.beginPath(); ctx.ellipse(cx, cy, Math.max(a, 0.6), Math.max(b, 0.6), 0, 0, TAU); ctx.stroke();
+  ctx.setLineDash([]);
   if (arrowOn && a > 8) {                     // clockwise: at the right-hand point the motion is downward
     ctx.fillStyle = C.track; head(ctx, cx + a, cy + (b > 5 ? 3 : 0), Math.PI / 2, 7);
   }
