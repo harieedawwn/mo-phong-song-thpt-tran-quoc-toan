@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 150 100" width="150" height="100">
+  <defs>
+    <linearGradient id="tr-house" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f1f3f5"/><stop offset=".22" stop-color="#c3c9cf"/><stop offset=".6" stop-color="#7f8790"/><stop offset="1" stop-color="#3b4147"/></linearGradient>
+    <linearGradient id="tr-ring" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#dfe3e7"/><stop offset=".5" stop-color="#8d949c"/><stop offset="1" stop-color="#454b52"/></linearGradient>
+    <linearGradient id="tr-face" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#8d949c"/><stop offset=".35" stop-color="#f4f6f8"/><stop offset=".7" stop-color="#b4bac1"/><stop offset="1" stop-color="#5c636b"/></linearGradient>
+    <linearGradient id="tr-piezo" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#f2dc9a"/><stop offset=".5" stop-color="#d4aa45"/><stop offset="1" stop-color="#8f6a1c"/></linearGradient>
+    <linearGradient id="tr-rubber" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4a4f55"/><stop offset=".4" stop-color="#25282c"/><stop offset="1" stop-color="#0e0f11"/></linearGradient>
+    <linearGradient id="tr-cav" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#2d3238"/><stop offset="1" stop-color="#555c64"/></linearGradient>
+  </defs>
+  <!-- cable + strain relief -->
+  <path d="M13 50H1" stroke="#15171a" stroke-width="5" stroke-linecap="round"/>
+  <path d="M13 48.6H2" stroke="#fff" stroke-opacity=".25" stroke-width="1" stroke-linecap="round"/>
+  <rect x="11" y="37" width="14" height="26" rx="3.5" fill="url(#tr-rubber)" stroke="#0b0c0d" stroke-width=".7"/>
+  <!-- back cap + main housing -->
+  <rect x="22" y="21" width="14" height="58" rx="4" fill="url(#tr-ring)" stroke="#2f343a" stroke-width=".8"/>
+  <rect x="34" y="13" width="74" height="74" rx="7" fill="url(#tr-house)" stroke="#2b3036" stroke-width=".9"/>
+  <rect x="37" y="15" width="68" height="3" rx="1.5" fill="#fff" opacity=".5"/>
+  <g fill="#3d4349" opacity=".5"><rect x="48" y="14" width="2.6" height="72"/><rect x="56" y="14" width="2.6" height="72"/><rect x="64" y="14" width="2.6" height="72"/></g>
+  <g fill="#fff" opacity=".35"><rect x="50.6" y="14" width=".9" height="72"/><rect x="58.6" y="14" width=".9" height="72"/><rect x="66.6" y="14" width=".9" height="72"/></g>
+  <rect x="76" y="40" width="26" height="20" rx="2" fill="#e9ecef" stroke="#6b727a" stroke-width=".6"/>
+  <path d="M80 46h18M80 50h18M80 54h12" stroke="#7b838b" stroke-width="1.1" stroke-linecap="round"/>
+  <!-- cut-away front: dark cavity with piezo stack -->
+  <rect x="108" y="22" width="18" height="56" fill="url(#tr-cav)" stroke="#2b3036" stroke-width=".7"/>
+  <rect x="108" y="9" width="20" height="14" rx="3" fill="url(#tr-ring)" stroke="#2f343a" stroke-width=".8"/>
+  <rect x="108" y="77" width="20" height="14" rx="3" fill="url(#tr-ring)" stroke="#2f343a" stroke-width=".8"/>
+  <rect x="110.6" y="26" width="2.2" height="48" fill="#dfe3e7" stroke="#6b727a" stroke-width=".4"/>
+  <rect x="112.8" y="26" width="9" height="48" fill="url(#tr-piezo)" stroke="#6b4f12" stroke-width=".6"/>
+  <rect x="113.8" y="27" width="1.6" height="46" fill="#fff" opacity=".35"/>
+  <rect x="121.8" y="26" width="2.2" height="48" fill="#dfe3e7" stroke="#6b727a" stroke-width=".4"/>
+  <g id="face" data-move="1">
+    <rect x="125" y="20" width="11" height="60" rx="2.2" fill="url(#tr-face)" stroke="#2f343a" stroke-width=".9"/>
+    <rect x="126.4" y="22" width="2" height="56" rx="1" fill="#fff" opacity=".55"/>
+  </g>
+  <circle class="anchor" id="a-faceR" cx="136" cy="50" r="0"/>
+  <circle class="anchor" id="a-body" cx="72" cy="13" r="0"/>
+  <circle class="anchor" id="a-piezo" cx="117" cy="50" r="0"/>
+  <circle class="anchor" id="a-cable" cx="1" cy="50" r="0"/>
+</svg>

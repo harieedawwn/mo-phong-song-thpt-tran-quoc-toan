@@ -1,6 +1,6 @@
 // Sóng dọc – Sóng âm: air layers (dot grid) displaced along x by u(x,t); colours from −∂u/∂x (vùng nén / vùng giãn).
 import {state, set, bus} from '../state.js';
-import {h, seg, chip, toggle, slider, group, lab, slowControl} from '../ui.js';
+import {h, seg, chip, toggle, slider, group, lab, slowControl, bind} from '../ui.js';
 import {lenParts, freqParts, slowText} from '../fmt.js';
 import {SPEED, MEDIUM, HEARING, clamp, describePitch, niceSlow, makeWave} from '../physics.js';
 import {C, font, pill, text, arrow, ruler, roundRect, textW} from '../draw/ink.js';
@@ -69,6 +69,11 @@ const SPK_LAB_OUT = [['cone', 'Màng loa', 'a-cone', 142, 70, 'top'], ['box', 'T
 const spkLabels = () => (state.inside ? SPK_LAB_IN : SPK_LAB_OUT)
   .map(([id, t, a, fx, fy, side, row]) => { const p = spkPt(a, fx, fy); return [id, t, p.x, p.y, side, row]; });
 const talk = makeTalker(), ear = makeEar();
+// Water / steel scenes: the same art/transducer.svg is the source (left) and, mirrored, the receiver (right); its moving layer "face" follows u.
+const trd = loadArt('transducer');
+trd.ready.then(() => { bus.emit('change', {key: 'art'}); });
+const TR = {W: 150, FACE_X: 136, FACE_Y: 50, FACE_H: 60};      // design units of art/transducer.svg: face plane x, centre y, height
+const solid = () => state.medium !== 'air' && L.layout !== 'bars';
 // phone: labels in priority order – as many as fit beside the figure
 const PHONE_LABELS = {ear: ['drum', 'cochlea', 'pinna', 'canal', 'canals'], talker: ['cords', 'mouth', 'throat', 'tongue'], speaker: ['cone', 'coil', 'magnet']};
 const fitN = (ids, band) => ids.slice(0, Math.max(1, Math.min(ids.length, Math.floor((band - 30) / 23))));
@@ -77,7 +82,7 @@ let labelKey = '';
 let spr = null;   // sphere sprites (blue, orange, pale, red), rebuilt after every layout / resize
 function layout(w, hh) {
   const phone = w < 600;
-  L.w = w; L.h = hh; L.phone = phone; L.srcKey = state.source;
+  L.w = w; L.h = hh; L.phone = phone; L.srcKey = state.source; L.medKey = state.medium; L.scene = null; L.bar = null;
   L.fs = phone ? 11 : 12.5;
   // compact = short stage (phone with the control sheet open): only labels + field
   L.tiny = hh < 240;                                  // tiny = landscape phone: field only
@@ -85,7 +90,8 @@ function layout(w, hh) {
   L.compact = L.layout === 'stack' ? false : hh < 440;
   const talker = state.source === 'talker';
   labelKey = '';
-  if (L.layout === 'stack') {
+  if (state.medium !== 'air' && L.layout !== 'bars') layoutSolid(w, hh);
+  else if (L.layout === 'stack') {
     L.cols = 26;
     L.airL = 12; L.airR = w - 12; L.airW = L.airR - L.airL; L.dx = L.airW / (L.cols + 1);
     const top0 = 74, avail = hh - top0 - 70;
@@ -137,6 +143,23 @@ function layout(w, hh) {
   rulerN = -1; spr = null;
 }
 
+// Water tank / steel bar: transducer (left) → column of particles → receiver (right); the faces are at airL / airR.
+function layoutSolid(w, hh) {
+  const stack = L.layout === 'stack', steel = state.medium === 'steel', m = stack ? 12 : 30;
+  const srcW = stack ? clamp(w * 0.2, 60, 108) : clamp(w * 0.235, 120, 230);           // face plane − left margin
+  L.airL = m + srcW; L.airR = w - m - srcW; L.airW = L.airR - L.airL;
+  L.cols = clamp(Math.round(L.airW / 9), stack ? 18 : 24, 40); L.dx = L.airW / (L.cols + 1);
+  const top = stack ? 150 : L.compact ? 40 : 76, bottom = stack ? 120 : L.compact ? 60 : 108;
+  const F = Math.max(26, Math.min(srcW / TR.FACE_X * TR.FACE_H, (hh - top - bottom) / 2.1, 130));   // face height (px) = height of the particle column (+ one row in steel)
+  const dyT = clamp(L.dx * 1.5, 9, 17), rowsPx = F - (steel ? dyT : 0);
+  L.rows = clamp(Math.round(rowsPx / dyT), 3, 12); L.dy = rowsPx / L.rows; L.F = F;
+  const cy = stack ? Math.max(top + F * 0.6, hh * 0.36) : top + Math.max(F * 1.05, (hh - top - bottom) / 2);
+  L.fieldTop = cy - L.rows * L.dy / 2; L.fieldBot = cy + L.rows * L.dy / 2; L.cy = cy;
+  const s = F / TR.FACE_H;
+  L.tr = {s, x: L.airL - TR.FACE_X * s, y: cy - TR.FACE_Y * s, rx: L.airR + TR.FACE_X * s};
+  L.above = 88; L.below = 70;
+}
+
 // recompute the drawn wave from the state (cheap, no allocation)
 function syncWave() {
   const v = SPEED[state.medium] || SPEED.air;
@@ -149,11 +172,13 @@ function syncWave() {
 
 function draw(ctx) {
   if (!L.w) return;
-  if (L.srcKey !== state.source) layout(L.w, L.h);
+  if (L.srcKey !== state.source || L.medKey !== state.medium) layout(L.w, L.h);
   syncWave();
   const {airL, airW, dx, dy, fieldTop, fieldBot, cols, rows, r, fs} = L;
   const lam = wave.lamPx, cyc = wave.cycles(), front = wave.front;
   ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+  const isSolid = solid(), steel = state.medium === 'steel';
+  if (isSolid) drawSolidBack(ctx);
 
   // --- paused only: faint nén / giãn column bands behind the particles + thin bar above the field (same formula as the particles)
   const still = !state.playing;
@@ -170,8 +195,18 @@ function draw(ctx) {
   }
 
   // --- air spheres: uniform blue while running; paused → nén orange / giãn pale blue (one sprite per class, drawImage only)
-  if (!spr) spr = [ball(BALL.blue, r), ball(BALL.orange, r), ball(BALL.pale, r), ball(BALL.red, r + 1.8)];
+  if (!spr) spr = [ball(steel ? BALL.steel : BALL.blue, r), ball(BALL.orange, r), ball(BALL.pale, r), ball(BALL.red, r + 1.8)];
   const sprites = spr;
+  if (steel && isSolid) {                    // lattice: thin bonds between neighbouring atoms (one path, stroked once)
+    ctx.beginPath();
+    for (let j = 0; j < rows; j++) {
+      const y = fieldTop + (j + 0.5) * dy;
+      ctx.moveTo(airL + restX[0] + wave.u(restX[0]), y);
+      for (let i = 1; i < cols; i++) ctx.lineTo(airL + restX[i] + wave.u(restX[i]), y);
+    }
+    for (let i = 0; i < cols; i++) { const x = airL + restX[i] + wave.u(restX[i]); ctx.moveTo(x, fieldTop + dy * 0.5); ctx.lineTo(x, fieldBot - dy * 0.5); }
+    ctx.strokeStyle = 'rgba(52,58,64,.38)'; ctx.lineWidth = 1.1; ctx.stroke();
+  }
   for (let pass = 0; pass < (still ? 3 : 1); pass++) {
     const sp = sprites[pass];
     for (let i = 0; i < cols; i++) {
@@ -193,7 +228,91 @@ function draw(ctx) {
     drawBall(ctx, spr[3], x, yd);
   }
 
-  drawArt(ctx);
+  if (isSolid) drawSolidFront(ctx); else drawArt(ctx);
+}
+
+// ---- water tank / steel bar scenes (baked once per layout; per frame drawImage only) ----
+function mkCanvas(w, hh) {
+  const dpr = ballDpr(), c = document.createElement('canvas');
+  c.width = Math.max(1, Math.ceil(w * dpr)); c.height = Math.max(1, Math.ceil(hh * dpr));
+  const g = c.getContext('2d'); g.scale(dpr, dpr);
+  return {c, g};
+}
+function lin(g, x0, y0, x1, y1, stops) { const gr = g.createLinearGradient(x0, y0, x1, y1); for (const [o, col] of stops) gr.addColorStop(o, col); return gr; }
+function bakeScene() {
+  const steel = state.medium === 'steel', {cy, F, airL, airR, w} = L, tr = L.tr, dpr = ballDpr();
+  if (!steel) {                                              // glass tank + water with depth gradient
+    const x0 = 4, x1 = w - 4, y0 = cy - F * 1.08, y1 = cy + F * 1.08, pad = 24, W = x1 - x0, H = y1 - y0;
+    const {c, g} = mkCanvas(W + 2 * pad, H + 2 * pad + 22); g.translate(pad - x0, pad - y0);
+    const sh = g.createRadialGradient((x0 + x1) / 2, y1 + 8, 10, (x0 + x1) / 2, y1 + 8, W / 2);
+    sh.addColorStop(0, 'rgba(40,30,10,.20)'); sh.addColorStop(1, 'rgba(40,30,10,0)');
+    g.save(); g.translate((x0 + x1) / 2, y1 + 8); g.scale(1, 0.07); g.translate(-(x0 + x1) / 2, -(y1 + 8)); g.fillStyle = sh; g.fillRect(x0 - 30, y1 - 300, W + 60, 600); g.restore();
+    const top = y0 + H * 0.1;                                // water level
+    g.fillStyle = lin(g, 0, top, 0, y1, [[0, '#d3efff'], [0.35, '#9fd5f5'], [0.75, '#5db0e8'], [1, '#3b8fd0']]);
+    g.beginPath(); roundRect(g, x0 + 3, top, W - 6, y1 - top - 3, 6); g.fill();
+    g.fillStyle = 'rgba(255,255,255,.55)'; g.fillRect(x0 + 3, top, W - 6, 2.2);          // surface
+    g.fillStyle = 'rgba(255,255,255,.2)'; g.fillRect(x0 + 3, top + 2.2, W - 6, 7);
+    g.fillStyle = 'rgba(255,255,255,.22)'; g.beginPath(); roundRect(g, x0 + 8, top + 14, 9, (y1 - top) * 0.62, 4); g.fill();   // glass sheen
+    g.strokeStyle = 'rgba(96,125,150,.95)'; g.lineWidth = 3; g.lineJoin = 'round';
+    g.beginPath(); g.moveTo(x0, y0); g.lineTo(x0, y1 - 6); g.quadraticCurveTo(x0, y1, x0 + 6, y1); g.lineTo(x1 - 6, y1); g.quadraticCurveTo(x1, y1, x1, y1 - 6); g.lineTo(x1, y0); g.stroke();
+    g.strokeStyle = 'rgba(255,255,255,.65)'; g.lineWidth = 1; g.beginPath(); g.moveTo(x0 + 2, y0 + 4); g.lineTo(x0 + 2, y1 - 8); g.stroke();
+    g.strokeStyle = 'rgba(70,95,120,.9)'; g.lineWidth = 5; g.beginPath(); g.moveTo(x0 + 4, y1); g.lineTo(x1 - 4, y1); g.stroke();
+    g.strokeStyle = '#2b2f36'; g.lineWidth = 3.4; g.lineCap = 'round';                       // cables leave the tank through the open top
+    for (const [px, dir] of [[tr.x, -1], [tr.rx, 1]]) {
+      const ax = px + dir * 1 * tr.s, ay = tr.y + TR.FACE_Y * tr.s;
+      g.beginPath(); g.moveTo(ax, ay); g.bezierCurveTo(ax + dir * 12, ay, ax + dir * 12, y0 + 10, ax + dir * 12, y0 - 14); g.stroke();
+    }
+    L.scene = {c, x: x0 - pad, y: y0 - pad, w: W + 2 * pad, h: H + 2 * pad + 22, ytop: y0, ybot: y1};
+  } else {                                                   // bench + two C-clamps + brushed steel bar
+    const bh = F, by0 = cy - bh / 2, by1 = cy + bh / 2, bx0 = airL - L.dx * 1.4, bx1 = airR + L.dx * 1.4, bw = bx1 - bx0;
+    const bar = mkCanvas(bw, bh), g = bar.g;
+    g.fillStyle = lin(g, 0, 0, 0, bh, [[0, '#eef0f2'], [0.18, '#cdd2d7'], [0.55, '#9aa1a9'], [0.85, '#7a828a'], [1, '#5c636b']]);
+    g.fillRect(0, 0, bw, bh);
+    g.strokeStyle = 'rgba(255,255,255,.22)'; g.lineWidth = 0.7;                              // brushed lines
+    for (let y = 2; y < bh - 1; y += 2.6) { g.beginPath(); g.moveTo(0, y + (y * 7 % 3) * 0.2); g.lineTo(bw, y + (y * 7 % 3) * 0.2); g.stroke(); }
+    g.fillStyle = 'rgba(255,255,255,.55)'; g.fillRect(0, 2, bw, 2);
+    g.fillStyle = 'rgba(30,34,40,.45)'; g.fillRect(0, bh - 2.5, bw, 2.5);
+    g.strokeStyle = '#3d4349'; g.lineWidth = 1.4; g.beginPath(); g.moveTo(0, 0.7); g.lineTo(bw, 0.7); g.moveTo(0, bh - 0.7); g.lineTo(bw, bh - 0.7); g.stroke();
+    L.bar = {c: bar.c, x: bx0, y: by0, w: bw, h: bh};
+    const pad = 20, ytab = by1 + 40, x0 = 6, x1 = w - 6, sc = mkCanvas(w, ytab + 24 - by0 + pad), s2 = sc.g;
+    s2.translate(0, pad - by0);
+    // bench
+    s2.fillStyle = lin(s2, 0, ytab, 0, ytab + 12, [[0, '#d8c7a6'], [1, '#b9a47c']]); s2.beginPath(); roundRect(s2, x0, ytab, x1 - x0, 12, 3); s2.fill();
+    s2.strokeStyle = '#8b7a56'; s2.lineWidth = 1; s2.stroke();
+    s2.fillStyle = 'rgba(40,30,10,.16)'; s2.fillRect(x0 + 6, ytab + 12, x1 - x0 - 12, 5);
+    // C-clamps at 22 % and 78 % of the bar
+    for (const fx of [0.12, 0.88]) {
+      const x = airL + L.airW * fx, jaw = Math.max(6, F * 0.08), sp = 9;
+      s2.fillStyle = lin(s2, x - 16, 0, x + 18, 0, [[0, '#e9ecef'], [0.4, '#868e96'], [1, '#3d4349']]); s2.strokeStyle = '#2b3036'; s2.lineWidth = 1;
+      s2.beginPath(); s2.rect(x - 22, by1 + 0.5, 44, jaw); s2.fill(); s2.stroke();                       // lower jaw under the bar
+      s2.beginPath(); s2.rect(x - 22, by0 - jaw - 8, 44, jaw); s2.fill(); s2.stroke();                   // upper arm over the bar
+      s2.beginPath(); s2.rect(x + 12, by0 - jaw - 8, sp, by1 - by0 + 2 * jaw + 8); s2.fill(); s2.stroke();   // spine
+      s2.fillStyle = lin(s2, x - 3, 0, x + 3, 0, [[0, '#6c747d'], [0.4, '#f4f6f8'], [1, '#6c747d']]);
+      s2.beginPath(); s2.rect(x - 3, by0 - 8, 6, 8); s2.fill(); s2.stroke();                              // screw pressing the bar
+      s2.beginPath(); s2.rect(x - 9, by0 - jaw - 13, 18, 5); s2.fill(); s2.stroke();                        // handle
+      s2.fillStyle = lin(s2, x - 12, 0, x + 12, 0, [[0, '#adb5bd'], [1, '#495057']]);
+      s2.beginPath(); s2.rect(x - 11, by1 + jaw + 0.5, 22 + sp + 8, ytab - by1 - jaw - 0.5); s2.fill(); s2.stroke();   // foot
+    }
+    L.scene = {c: sc.c, x: 0, y: by0 - pad, w, h: ytab + 24 - by0 + pad};
+  }
+}
+function drawSolidBack(ctx) {
+  if (!L.scene) bakeScene();
+  const sc = L.scene;
+  ctx.drawImage(sc.c, sc.x, sc.y, sc.w, sc.h);
+  if (state.medium === 'steel') {                              // bar ends follow the two vibrating faces, so no gap ever opens
+    const u0 = wave.u(0), ue = wave.u(L.airW), b = L.bar, dpr = ballDpr();
+    const xl = L.airL + u0 - b.x, xr = L.airR + ue - b.x;
+    ctx.drawImage(b.c, xl * dpr, 0, (xr - xl) * dpr, b.h * dpr, b.x + xl, b.y, xr - xl, b.h);
+  }
+}
+function drawSolidFront(ctx) {
+  const tr = L.tr, s = tr.s, dpr = ballDpr(), u0 = wave.u(0), ue = wave.u(L.airW);
+  if (trd.scale !== s || trd.dpr !== dpr) trd.render(s, dpr);
+  trd.draw(ctx, tr.x, tr.y, {face: {dx: u0 / s}});
+  ctx.save(); ctx.translate(tr.rx, tr.y); ctx.scale(-1, 1);
+  trd.draw(ctx, 0, 0, {face: {dx: -ue / s}});
+  ctx.restore();
 }
 
 const SRC = {speaker: {names: SPK_NAMES, get labels() { return spkLabels(); }, title: 'Loa'}, talker: {names: TALK_NAMES, caps: TALK_CAPS, labels: TALK_LABELS, title: 'Người nói'}};
@@ -328,6 +447,19 @@ function annotate(ctx) {
     const [n, u] = lenParts(wave.lam);
     ruler(ctx, rx, rx + lam, fieldBot + (L.layout === 'side' ? 56 : 47), 'λ = ' + n + ' ' + u, {size: fs + 0.5, color: C.ink, maxX: L.w - 4});
   }
+  // --- water / steel: names of the two devices and of the medium
+  if (solid()) {
+    if (L.compact) return;
+    const tr = L.tr, s = tr.s, steel = state.medium === 'steel', yb = tr.y + 13 * s;
+    for (const [x, t] of [[tr.x + 72 * s, 'Đầu phát'], [tr.rx - 72 * s, 'Máy thu']]) {
+      const ly = yb - 22 - (steel ? 10 : 0);
+      ctx.strokeStyle = C.ink2; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(x, ly + 9); ctx.lineTo(x, yb + 3); ctx.stroke();
+      pill(ctx, t, x, ly, {size: fs, fill: C.paper, stroke: C.ink2, color: C.ink});
+    }
+    const yn = steel ? L.fieldBot + 82 : Math.max(L.scene.ybot + 16, L.fieldBot + 82);
+    if (yn < L.h - 12) pill(ctx, steel ? 'Thanh thép được kẹp chặt' : 'Bể nước', airL + airW / 2, yn, {size: fs, weight: 800, fill: C.paper, stroke: null, color: C.ink2});
+    return;
+  }
   // --- part labels + headings
   if (L.layout === 'bars' || L.compact) return;
   const lab = L.lab; if (!lab) return;
@@ -343,6 +475,9 @@ function annotate(ctx) {
     if (L.h >= 520) text(ctx, 'Tai người nghe', ear.x - 8, ear.y + 22, {size: hs - 1, weight: 800, align: 'right'});
   }
 }
+
+// source chips / loudspeaker view exist only in air (in water and steel the source touches the medium)
+function airOnly(el) { bind(() => { el.hidden = state.medium !== 'air'; }); return el; }
 
 function controls() {
   const fVal = h('span', {class: 'val'}), fNote = h('p', {class: 'note'});
@@ -361,7 +496,7 @@ function controls() {
     sync: () => { dbVal.replaceChildren(String(state.level), h('small', {text: 'dB'})); }});
   return [
     group('wave', 'Nguồn âm',
-      seg([['speaker', 'Loa'], ['talker', 'Người nói']], () => state.source, v => set('source', v), 'Nguồn âm'),
+      airOnly(seg([['speaker', 'Loa'], ['talker', 'Người nói']], () => state.source, v => set('source', v), 'Nguồn âm')),
       h('div', {class: 'chips g2'}, chip('Âm đơn', () => state.sound === 'tone', () => set('sound', 'tone')), chip('Giọng nói', () => state.sound === 'voice', () => set('sound', 'voice')))),
     group('wave', 'Sóng âm',
       lab('freq', 'Tần số f', fVal), fSlider,
@@ -374,7 +509,7 @@ function controls() {
     group('show', 'Hiển thị',
       h('div', {class: 'tgs'},
         toggle('target', 'Phần tử đỏ', () => state.track, v => set('track', v), 'Theo dõi một phần tử (màu đỏ)'),
-        toggle('eye', 'Xem bên trong loa', () => state.inside, v => set('inside', v), 'Hiện mặt cắt bên trong loa: màng, cuộn dây, nam châm, khung')))
+        airOnly(toggle('eye', 'Xem bên trong loa', () => state.inside, v => set('inside', v), 'Hiện mặt cắt bên trong loa: màng, cuộn dây, nam châm, khung'))))
   ];
 }
 

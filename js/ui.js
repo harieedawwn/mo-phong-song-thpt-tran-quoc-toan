@@ -104,7 +104,8 @@ const HELP = [
   'Chọn loại sóng ở thanh phía trên (hoặc nhấn phím 1–4). Nút ↻ cho sóng xuất phát lại từ nguồn.',
   'Kéo thanh Làm chậm để quan sát rõ dao động của từng phần tử; hình đã làm chậm và phóng đại biên độ.',
   'Chấm đỏ là một phần tử được theo dõi: nó chỉ dao động quanh vị trí cân bằng, sóng không mang nó đi.',
-  'λ = v·T = v/f: tăng tần số thì bước sóng ngắn lại (cùng môi trường).'
+  'λ = v·T = v/f: tăng tần số thì bước sóng ngắn lại (cùng môi trường).',
+  'Trong nước và thép, nguồn là đầu phát âm áp sát môi trường: loa trong không khí không thể đẩy âm vào khối thép như đẩy không khí.'
 ];
 
 /* ---- app shell ---- */

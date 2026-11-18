@@ -40,11 +40,11 @@ SPEC §2, §3.2 (Loudspeaker, Air column), §5, §6. Files: `js/modes/sound.js` 
 - [x] Paused labels ≤ 4 from anchors. Check: pause at max push – first layer never touches the cone; 440 Hz air → 78,0 cm.
 - [x] If after 2 drawing rounds the speaker is not clearly more realistic than before15, keep the physics work, mark `[!] cần Opus cho hình loa`.
 
-## Phase 16 – Nước / Thép đúng bản chất + đầu phát/máy thu  `[ ]`  · Sonnet (High)
+## Phase 16 – Nước / Thép đúng bản chất + đầu phát/máy thu  `[x]`  · Sonnet (High)
 SPEC §3.2 (Nước, Thép). Files: `js/modes/sound.js` (medium/layout parts), `js/main.js` (hash `med=`), `js/ui.js` (help bullet).
-- [ ] `art/transducer.svg` (metal housing, piezo, `data-move` face plate), mirrored as receiver/sensor.
-- [ ] Nước: glass tank + water gradient, transducer immersed left, receiver right, no speaker/ear. Thép: clamped steel bar (metal gradient), grey lattice spheres, transducer + sensor on the end faces. Source chips only in air.
-- [ ] Check: water 440 Hz → 3,37 m; steel 4 kHz → 1,49 m; `#mode=sound&med=steel` works.
+- [x] `art/transducer.svg` (metal housing, piezo, `data-move` face plate), mirrored as receiver/sensor.
+- [x] Nước: glass tank + water gradient, transducer immersed left, receiver right, no speaker/ear. Thép: clamped steel bar (metal gradient), grey lattice spheres, transducer + sensor on the end faces. Source chips only in air.
+- [x] Check: water 440 Hz → 3,37 m; steel 4 kHz → 1,49 m; `#mode=sound&med=steel` works.
 
 ## Phase 17 – Đầu người chân thực + Người nói (mặt cắt dọc)  `[ ]`  · **Opus**
 SPEC §3.2 (talker), §5, §6. Look at `docs/ref/web/gray994.png`, `docs/ref/web/places-of-articulation.png` (once). Files: talker parts of
@@ -74,3 +74,4 @@ SPEC §3.3, §6. Files: grep first.
 2026-11-18 · P14 · em.js: BANDS gamma→vô tuyến (mặc định vô tuyến), thanh phổ bo tròn 7 đoạn + gradient + cầu vồng, mũi tên viền tối + mặt phẳng E/B mờ, toàn bộ chữ trong annotate(), chip dòng 2 = dải; bỏ thẻ info + chip dải · shot desk/phone(+paused) exit 0; 100 MHz→3 m, 2,45 GHz→12,2 cm, 5·10¹⁴→600 nm, 3·10²⁰→1 pm · (hash ở commit)
 2026-11-18 · P15 · art/speaker.svg (hộp cắt dọc: thùng, khung, nam châm; lớp động: màng+nắp+cuộn dây), gờ treo + spider vẽ canvas co giãn, js/art/speaker.js xoá; cột khí = đúng chiều cao mép màng (rows refit), lớp đầu cách mặt màng 1 dx, cùng u(0,t), k·A≤0,6 · shot --all --paused exit 0 (desk, desk720, phone, phone360, phoneLand), 440 Hz → λ=78,0 cm, nhãn loa 4 · (hash ở commit)
 2026-11-18 · P15b · loa mặc định nhìn bên ngoài (art/speaker-out.svg, màng nhô ra dao động theo u(0,t)), nút "Xem bên trong loa" bật mặt cắt (state.inside, #inside=1) · shot desk paused 2 chế độ OK · (hash ở commit)
+2026-11-18 · P16 · art/transducer.svg (vỏ kim loại, gốm áp điện, lớp động `face`), bể nước kính + nước gradient / thanh thép kẹp 2 kẹp chữ C trên bàn (nướng sẵn thành canvas, thanh thép cắt theo mặt rung nên không hở), đầu phát trái + máy thu lật gương phải, hạt thép xám + liên kết mạng tinh thể, chip nguồn/“xem bên trong loa” chỉ hiện ở không khí, `#med=water|steel` (main.js), 1 bullet trợ giúp · shot --all --paused exit 0 (nước + thép: desk, desk720, phone, phone360, phoneLand); nước 440 Hz → λ=3,37 m, thép 440 Hz → 13,5 m (4 kHz → 1,49 m = 5960/4000) · (hash ở commit)
