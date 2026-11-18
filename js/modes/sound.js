@@ -24,8 +24,9 @@ function setF(f) { set('f', f); set('slow', niceSlow(f)); }
 
 // Loudspeaker = art/speaker.svg (static cabinet / basket / magnet + moving layer "cone": cone, dust cap, voice coil).
 // Surround + spider are canvas curves from a static anchor to the moving rim / coil, so they stretch with u(0,t).
-const spkArt = loadArt('speaker');
-spkArt.ready.then(() => { labelKey = ''; bus.emit('change', {key: 'art'}); });
+const spkIn = loadArt('speaker'), spkOut = loadArt('speaker-out');      // cut-away | closed cabinet seen from outside (toggle "Xem bên trong loa")
+for (const a of [spkIn, spkOut]) a.ready.then(() => { labelKey = ''; bus.emit('change', {key: 'art'}); });
+let spkArt = spkOut;
 const SPK_W = 156, SPK_H = 200;
 const spkPt = (id, fx, fy) => spkArt.pt(id) || {x: fx, y: fy};
 const spk = {
@@ -39,9 +40,10 @@ const spk = {
   // dd = cone displacement in design units (+ toward the air) = u(0,t)/s, the same u as the first air layer
   drawDyn(ctx, dd) {
     const s = this.s, dpr = ballDpr();
+    spkArt = state.inside ? spkIn : spkOut;
     if (spkArt.scale !== s || spkArt.dpr !== dpr) spkArt.render(s, dpr);
     spkArt.draw(ctx, this.x, this.y, {cone: {dx: dd}});
-    if (!spkArt.layers.length) return;
+    if (!spkArt.layers.length || !state.inside) return;
     const X = (u) => this.x + u * s, Y = (v) => this.y + v * s;
     const rt = spkPt('a-rimtop', 146, 44), rb = spkPt('a-rimbot', 146, 156), ft = spkPt('a-fl-top', 139, 40), fb = spkPt('a-fl-bot', 139, 160);
     const st = spkPt('a-sp-top', 84, 76), sb = spkPt('a-sp-bot', 84, 124), cl = spkPt('a-coil', 84, 85);
@@ -61,8 +63,10 @@ const spk = {
     }
   }
 };
-const SPK_NAMES = {cone: 'Màng loa', coil: 'Cuộn dây', magnet: 'Nam châm', basket: 'Khung loa'};
-const spkLabels = () => [['cone', 'Màng loa', 'a-cone', 122, 65, 'top'], ['basket', 'Khung loa', 'a-basket', 108, 54, 'top', 1], ['coil', 'Cuộn dây', 'a-coil', 84, 85, 'bottom'], ['magnet', 'Nam châm', 'a-magnet', 42, 75, 'bottom']]
+const SPK_NAMES = {cone: 'Màng loa', coil: 'Cuộn dây', magnet: 'Nam châm', basket: 'Khung loa', box: 'Thùng loa'};
+const SPK_LAB_IN = [['cone', 'Màng loa', 'a-cone', 122, 65, 'top'], ['basket', 'Khung loa', 'a-basket', 108, 54, 'top', 1], ['coil', 'Cuộn dây', 'a-coil', 84, 85, 'bottom'], ['magnet', 'Nam châm', 'a-magnet', 42, 75, 'bottom']];
+const SPK_LAB_OUT = [['cone', 'Màng loa', 'a-cone', 142, 70, 'top'], ['box', 'Thùng loa', 'a-box', 70, 150, 'bottom']];
+const spkLabels = () => (state.inside ? SPK_LAB_IN : SPK_LAB_OUT)
   .map(([id, t, a, fx, fy, side, row]) => { const p = spkPt(a, fx, fy); return [id, t, p.x, p.y, side, row]; });
 const talk = makeTalker(), ear = makeEar();
 // phone: labels in priority order – as many as fit beside the figure
@@ -197,7 +201,7 @@ const srcFig = () => state.source === 'talker' ? talk : spk;
 const clampB = x => Math.max(-1, Math.min(1, x));
 
 function buildLabels(ctx) {
-  const key = L.w + 'x' + L.h + state.source + L.layout + L.compact;
+  const key = L.w + 'x' + L.h + state.source + L.layout + L.compact + state.inside;
   if (key === labelKey) return;
   labelKey = key;
   const lab = {src: [], ear: [], tops: {src: 1e9, ear: 1e9}};
@@ -369,7 +373,8 @@ function controls() {
       ...slowControl()),
     group('show', 'Hiển thị',
       h('div', {class: 'tgs'},
-        toggle('target', 'Phần tử đỏ', () => state.track, v => set('track', v), 'Theo dõi một phần tử (màu đỏ)')))
+        toggle('target', 'Phần tử đỏ', () => state.track, v => set('track', v), 'Theo dõi một phần tử (màu đỏ)'),
+        toggle('eye', 'Xem bên trong loa', () => state.inside, v => set('inside', v), 'Hiện mặt cắt bên trong loa: màng, cuộn dây, nam châm, khung')))
   ];
 }
 

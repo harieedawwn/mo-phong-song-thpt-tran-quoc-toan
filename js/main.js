@@ -135,6 +135,7 @@ if (calm) state.playing = false;
 fx.a = state.playing ? 0 : 1;
 window.__app = {play, pause, restart, setMode, get mode() { return mode.id; }, state};
 if (/src=talker/.test(location.hash)) state.source = 'talker';   // checker / teacher link: #mode=sound&src=talker
+if (/inside=1/.test(location.hash)) state.inside = true;   // checker: #mode=sound&inside=1
 setMode(modeFromHash() || 'waves');
 resize();
 startLoop();
