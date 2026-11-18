@@ -5,28 +5,29 @@ import {makeGrid} from './draw/grid.js';
 import {setBallDpr} from './draw/ball.js';
 import {fx, C, font, textW, roundRect} from './draw/ink.js';
 import {freqParts, timeParts, lenParts, speedParts} from './fmt.js';
-import longitudinal from './modes/longitudinal.js';
-import transverse from './modes/transverse.js';
+import waves from './modes/waves.js';
+import sound from './modes/sound.js';
 import surface from './modes/surface.js';
 import em from './modes/em.js';
 import './audio.js';
 
-const MODES = [longitudinal, transverse, surface, em];
-const byId = id => MODES.find(m => m.id === id);
+const MODES = [waves, sound, surface, em];
+const ALIAS = {transverse: 'waves', longitudinal: 'sound'};   // old #mode= links keep working
+const byId = id => MODES.find(m => m.id === (ALIAS[id] || id));
 const canvas = document.getElementById('cv'), stage = document.getElementById('stage');
 const ctx = canvas.getContext('2d');
 let mode = MODES[0], W = 0, H = 0, grid = null, dirty = true, raf = 0, last = 0, fadeT0 = 0;
 const FADE = 250, calm = !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
 // annotations (annotate()) exist only while paused: fade in over 0,25 s after Pause, vanish at once on Play
 function startFade() { if (calm) fx.a = 1; else { fx.a = 0; fadeT0 = performance.now(); } }
-// legacy modes (transverse, em) still gate their labels on state.labels / state.ruler → "on" only while paused (until phases 13/14)
+// legacy mode em still gates its labels on state.labels / state.ruler → "on" only while paused (until phase 14)
 function syncLegacy() { state.labels = state.ruler = !state.playing; }
 
 function play() { set('playing', true); }
 function pause() { set('playing', false); }
 function toggle() { state.playing ? pause() : play(); }
 function restart() { state.t = 0; if (mode.reset) mode.reset(); dirty = true; }
-function modeFromHash() { const m = /mode=([a-z]+)/.exec(location.hash); return m && byId(m[1]) ? m[1] : null; }
+function modeFromHash() { const m = /mode=([a-z]+)/.exec(location.hash); return m && byId(m[1]) ? byId(m[1]).id : null; }
 
 const ui = mountShell({
   modes: MODES, onMode: id => setMode(id), onRestart: restart, onToggle: toggle,
@@ -135,8 +136,8 @@ if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { di
 if (calm) state.playing = false;
 syncLegacy(); fx.a = state.playing ? 0 : 1;
 window.__app = {play, pause, restart, setMode, get mode() { return mode.id; }, state};
-if (/src=talker/.test(location.hash)) state.source = 'talker';   // checker / teacher link: #mode=longitudinal&src=talker
-setMode(modeFromHash() || 'longitudinal');
+if (/src=talker/.test(location.hash)) state.source = 'talker';   // checker / teacher link: #mode=sound&src=talker
+setMode(modeFromHash() || 'waves');
 resize();
 startLoop();
 // make sure canvas text uses the web fonts as soon as they are loaded

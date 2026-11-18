@@ -20,12 +20,12 @@ SPEC §5, §6 (ball.js, sprite.js, SVG rules). Files: `js/draw/*.js`, `js/main.j
 - [x] Write `js/art/sprite.js` per SPEC §6 (not used yet – verified in Phase 13; only `node --check` now).
 - [x] Check before/after for both modes.
 
-## Phase 13 – Tab "Sóng ngang – Sóng dọc" + máy rung + trục Ox  `[ ]`  · Sonnet (High)
+## Phase 13 – Tab "Sóng ngang – Sóng dọc" + máy rung + trục Ox  `[x]`  · Sonnet (High)
 SPEC §2, §3.1, §6. Files: `js/modes/transverse.js` (reuse wave/rope logic), `js/main.js`, `js/ui.js` (tabs), `js/art/sprite.js`, `js/draw/ball.js`.
-- [ ] `art/driver.svg` (static body, `<g id="shaft" data-move>`, anchor `a-clamp`); check alone with `--page`. This also proves `sprite.js` – fix it if needed.
-- [ ] `js/modes/waves.js`: rope lane (driver upright, shaft ↕) + bead–spring lane (driver lying, shaft ↔), same wave + x scale, spheres, rope tube, k·A ≤ 0,8, axes O/x/u, lane seg, shared red bead; `annotate()` per SPEC §3.1. No graphs.
-- [ ] Delete `transverse.js`; `git mv longitudinal.js sound.js` (id `sound`); tabs waves, sound, surface, em; aliases `transverse`→`waves`, `longitudinal`→`sound`; default `waves`.
-- [ ] Check (`--all --paused`): f = 1 Hz, v = 2 m/s → λ = 2 m on both rulers; crowded beads exactly under "Vùng nén".
+- [x] `art/driver.svg` (static body, `<g id="shaft" data-move>`, anchor `a-clamp`); check alone with `--page`. This also proves `sprite.js` – fix it if needed.
+- [x] `js/modes/waves.js`: rope lane (driver upright, shaft ↕) + bead–spring lane (driver lying, shaft ↔), same wave + x scale, spheres, rope tube, k·A ≤ 0,8, axes O/x/u, lane seg, shared red bead; `annotate()` per SPEC §3.1. No graphs.
+- [x] Delete `transverse.js`; `git mv longitudinal.js sound.js` (id `sound`); tabs waves, sound, surface, em; aliases `transverse`→`waves`, `longitudinal`→`sound`; default `waves`.
+- [x] Check (`--all --paused`): f = 1 Hz, v = 2 m/s → λ = 2 m on both rulers; crowded beads exactly under "Vùng nén".
 
 ## Phase 14 – Sóng điện từ  `[ ]`  · Sonnet (High)
 SPEC §2 table, §3.4. Files: `js/modes/em.js`, `js/state.js`.
@@ -70,3 +70,4 @@ SPEC §3.3, §6. Files: grep first.
 <!-- one line per session: date · phase · what · numbers checked · hash -->
 2026-11-18 · P11 · bỏ panel phải/badges/chú thích/toggle, main.js annotate() chỉ khi dừng + chip số liệu, longitudinal+surface tách nhãn · --all --paused OK, λ=78,0 cm @440 Hz không khí, tên trường 1 dòng ở 5 cỡ · (hash ghi ở commit)
 2026-11-18 · P12 · ball.js (cầu 3D), nền lưới nhạt + vignette, nước gradient + đường mặt bóng + đáy gradient, pill đổ bóng khi dừng, sprite.js (đã thử tải/xoay layer, chưa dùng) · shot --all longitudinal+surface exit 0, r=4,2px desk / 3,5px phone · (hash ở commit)
+2026-11-18 · P13 · art/driver.svg (+ sprite.js: clipY, render trước khi tải), waves.js (dây + lò xo song song, máy rung đứng/nằm, trục O/x/u, k·A≤0,8), longitudinal→sound, bỏ transverse, tab waves/sound/surface/em + alias · shot --all --paused exit 0; f=1 Hz, v=2 m/s → λ=2 m cả hai thước, hạt dồn đúng dưới "Vùng nén"; lane rope/spring/both không lỗi · (hash ở commit)

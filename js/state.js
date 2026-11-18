@@ -8,13 +8,14 @@ export const bus = {
   }
 };
 export const state = {
-  mode: 'longitudinal',
+  mode: 'waves',
   playing: true,
   slow: 0.005,      // slow-motion factor: simulated seconds per real second
   t: 0,             // simulated physical time since the wave started (s)
   muted: true,      // sound off on first open; the speaker button turns it on
   track: true,
-  labels: false, ruler: false,   // legacy shim for transverse/em (rewritten in phases 13/14): main.js sets both = paused
+  labels: false, ruler: false,   // legacy shim for em (rewritten in phase 14): main.js sets both = paused
+  lane: 'both',     // waves: both | rope | spring
   // sóng dọc – sóng âm
   f: 440,           // Hz (real)
   level: 70,        // dB (độ to) → drawn amplitude + audio gain

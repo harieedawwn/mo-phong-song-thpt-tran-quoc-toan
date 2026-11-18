@@ -24,13 +24,13 @@ function slim(root, keep) {
 export function loadArt(name) {
   if (cache.has(name)) return cache.get(name);
   const art = {
-    name, w: 0, h: 0, ready: null, failed: false, scale: 0, dpr: 1,
+    name, w: 0, h: 0, ready: null, failed: false, scale: 0, dpr: 1, pending: null,
     layers: [],            // {id, move, img, c, px, py}   (static layer first, id '')
     anchors: new Map(),
     pt(id) { return this.anchors.get(id) || null; },
     render(scale, dpr = 1) {
+      if (!this.layers.length) { this.pending = {scale, dpr}; return; }   // called before the SVG is decoded: redo once it is ready
       this.scale = scale; this.dpr = dpr;
-      if (!this.layers.length) return;
       const pw = Math.max(1, Math.ceil(this.w * scale * dpr)), ph = Math.max(1, Math.ceil(this.h * scale * dpr));
       for (const L of this.layers) {
         if (!L.c) L.c = document.createElement('canvas');
@@ -40,7 +40,8 @@ export function loadArt(name) {
         g.drawImage(L.img, 0, 0, pw, ph);
       }
     },
-    // x, y = top-left of the art on the stage (CSS px); dx/dy are design units, rot in radians, sx = horizontal scale about the pivot
+    // x, y = top-left of the art on the stage (CSS px); dx/dy are design units, rot in radians, sx = horizontal scale about the pivot,
+    // clipY = design y (unmoved frame): the layer is only drawn above it (a rod sliding into a body)
     draw(ctx, x, y, moves) {
       const s = this.scale, w = this.w * s, h = this.h * s;
       if (!this.layers.length || !this.layers[0].c || !s) {          // placeholder until loaded + rendered
@@ -51,6 +52,7 @@ export function loadArt(name) {
         const m = L.move && moves && moves[L.id];
         if (!L.move || !m) { ctx.drawImage(L.c, x, y, w, h); continue; }
         ctx.save();
+        if (m.clipY != null) { ctx.beginPath(); ctx.rect(x - 1e4, y - 1e4, 2e4, 1e4 + m.clipY * s); ctx.clip(); }
         ctx.translate(x + (L.px + (m.dx || 0)) * s, y + (L.py + (m.dy || 0)) * s);
         if (m.rot) ctx.rotate(m.rot);
         if (m.sx && m.sx !== 1) ctx.scale(m.sx, 1);
@@ -82,6 +84,7 @@ export function loadArt(name) {
       const p = art.pt('a-' + sp.id + '-pivot');
       return {id: sp.id, move: sp.move, img: imgs[i], c: null, px: p ? p.x : 0, py: p ? p.y : 0};
     });
+    if (art.pending) art.render(art.pending.scale, art.pending.dpr);
     return art;
   }).catch(e => { art.failed = true; console.error('art/' + name + '.svg: ' + e.message); return art; });
   cache.set(name, art);

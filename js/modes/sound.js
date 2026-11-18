@@ -322,7 +322,7 @@ function controls() {
 }
 
 export default {
-  id: 'longitudinal', title: 'Sóng dọc – Sóng âm', short: 'Sóng dọc', icon: 'longitudinal',
+  id: 'sound', title: 'Sóng âm', short: 'Sóng âm', icon: 'vol',
   defaults: {get slow() { return niceSlow(state.f); }},
   metrics: () => ({f: state.f, v: SPEED[state.medium] || SPEED.air}),
   readout: () => readout(),

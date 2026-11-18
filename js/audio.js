@@ -1,6 +1,6 @@
 // WebAudio tone for the sound-wave mode.
 // The AudioContext is created on the first user tap (autoplay rules, Zalo in-app browser).
-// Sounds only while: mode = longitudinal, playing, not muted, f inside 20 Hz – 20 kHz.
+// Sounds only while: mode = sound, playing, not muted, f inside 20 Hz – 20 kHz.
 import {state, bus} from './state.js';
 import {levelToGain, HEARING} from './physics.js';
 
@@ -48,7 +48,7 @@ function stopVoice() { if (voice) { voice.stop(); voice = null; voiceType = null
 
 function sync() {
   const f = state.f;
-  const want = unlocked && state.mode === 'longitudinal' && state.playing && !state.muted && f >= HEARING.min && f <= HEARING.max;
+  const want = unlocked && state.mode === 'sound' && state.playing && !state.muted && f >= HEARING.min && f <= HEARING.max;
   if (!want) { if (master) master.gain.setTargetAtTime(0, ctx.currentTime, 0.02); if (voice) setTimeout(() => { if (!wanted()) stopVoice(); }, 200); return; }
   if (!init()) return;
   if (!voice || voiceType !== state.sound) { stopVoice(); voiceType = state.sound; voice = makeVoice(voiceType, f); }
@@ -56,7 +56,7 @@ function sync() {
   const cap = f > 16000 ? 0.35 : 1;
   master.gain.setTargetAtTime(1.2 * levelToGain(state.level) * cap, ctx.currentTime, 0.015);
 }
-function wanted() { return unlocked && state.mode === 'longitudinal' && state.playing && !state.muted; }
+function wanted() { return unlocked && state.mode === 'sound' && state.playing && !state.muted; }
 
 const WATCH = new Set(['f', 'level', 'sound', 'muted', 'playing', 'mode']);
 bus.on('change', e => { if (e && WATCH.has(e.key)) sync(); });
