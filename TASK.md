@@ -33,12 +33,12 @@ SPEC §2 table, §3.4. Files: `js/modes/em.js`, `js/state.js`.
 - [x] Arrow depth + faint E/B planes; all words in `annotate()`; chip shows band λ/f range + example.
 - [x] Check: 100 MHz → 3 m, 2,45 GHz → 12,2 cm, 5·10¹⁴ Hz → 600 nm, 3·10²⁰ Hz → 1 pm; E and B maxima at the same x.
 
-## Phase 15 – Loa thật + cột không khí đúng  `[ ]`  · Sonnet (High)
+## Phase 15 – Loa thật + cột không khí đúng  `[x]`  · Sonnet (High)
 SPEC §2, §3.2 (Loudspeaker, Air column), §5, §6. Files: `js/modes/sound.js` (speaker + air parts, grep), `js/art/sprite.js`, old `js/art/speaker.js` (delete after).
-- [ ] `art/speaker.svg`: cabinet + driver cut-away; static cabinet/basket/magnet/plate/pole; `data-move` cone+dust cap, voice coil; anchors: labels, cone rim top/bottom, cone face. Check alone with `--page`.
-- [ ] Surround + spider = canvas curves static anchor → moving rim. Air column rows = rim height, starts at the cone face (same u(0,t)), nothing behind/around; talker column in front of the lips; k·A ≤ 0,8.
-- [ ] Paused labels ≤ 4 from anchors. Check: pause at max push – first layer never touches the cone; 440 Hz air → 78,0 cm.
-- [ ] If after 2 drawing rounds the speaker is not clearly more realistic than before15, keep the physics work, mark `[!] cần Opus cho hình loa`.
+- [x] `art/speaker.svg`: cabinet + driver cut-away; static cabinet/basket/magnet/plate/pole; `data-move` cone+dust cap, voice coil; anchors: labels, cone rim top/bottom, cone face. Check alone with `--page`.
+- [x] Surround + spider = canvas curves static anchor → moving rim. Air column rows = rim height, starts at the cone face (same u(0,t)), nothing behind/around; talker column in front of the lips; k·A ≤ 0,8.
+- [x] Paused labels ≤ 4 from anchors. Check: pause at max push – first layer never touches the cone; 440 Hz air → 78,0 cm.
+- [x] If after 2 drawing rounds the speaker is not clearly more realistic than before15, keep the physics work, mark `[!] cần Opus cho hình loa`.
 
 ## Phase 16 – Nước / Thép đúng bản chất + đầu phát/máy thu  `[ ]`  · Sonnet (High)
 SPEC §3.2 (Nước, Thép). Files: `js/modes/sound.js` (medium/layout parts), `js/main.js` (hash `med=`), `js/ui.js` (help bullet).
@@ -72,3 +72,4 @@ SPEC §3.3, §6. Files: grep first.
 2026-11-18 · P12 · ball.js (cầu 3D), nền lưới nhạt + vignette, nước gradient + đường mặt bóng + đáy gradient, pill đổ bóng khi dừng, sprite.js (đã thử tải/xoay layer, chưa dùng) · shot --all longitudinal+surface exit 0, r=4,2px desk / 3,5px phone · (hash ở commit)
 2026-11-18 · P13 · art/driver.svg (+ sprite.js: clipY, render trước khi tải), waves.js (dây + lò xo song song, máy rung đứng/nằm, trục O/x/u, k·A≤0,8), longitudinal→sound, bỏ transverse, tab waves/sound/surface/em + alias · shot --all --paused exit 0; f=1 Hz, v=2 m/s → λ=2 m cả hai thước, hạt dồn đúng dưới "Vùng nén"; lane rope/spring/both không lỗi · (hash ở commit)
 2026-11-18 · P14 · em.js: BANDS gamma→vô tuyến (mặc định vô tuyến), thanh phổ bo tròn 7 đoạn + gradient + cầu vồng, mũi tên viền tối + mặt phẳng E/B mờ, toàn bộ chữ trong annotate(), chip dòng 2 = dải; bỏ thẻ info + chip dải · shot desk/phone(+paused) exit 0; 100 MHz→3 m, 2,45 GHz→12,2 cm, 5·10¹⁴→600 nm, 3·10²⁰→1 pm · (hash ở commit)
+2026-11-18 · P15 · art/speaker.svg (hộp cắt dọc: thùng, khung, nam châm; lớp động: màng+nắp+cuộn dây), gờ treo + spider vẽ canvas co giãn, js/art/speaker.js xoá; cột khí = đúng chiều cao mép màng (rows refit), lớp đầu cách mặt màng 1 dx, cùng u(0,t), k·A≤0,6 · shot --all --paused exit 0 (desk, desk720, phone, phone360, phoneLand), 440 Hz → λ=78,0 cm, nhãn loa 4 · (hash ở commit)

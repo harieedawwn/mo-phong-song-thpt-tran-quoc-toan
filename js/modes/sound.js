@@ -1,12 +1,12 @@
 // Sóng dọc – Sóng âm: air layers (dot grid) displaced along x by u(x,t); colours from −∂u/∂x (vùng nén / vùng giãn).
-import {state, set} from '../state.js';
+import {state, set, bus} from '../state.js';
 import {h, seg, chip, toggle, slider, group, lab, slowControl} from '../ui.js';
 import {lenParts, freqParts, slowText} from '../fmt.js';
 import {SPEED, MEDIUM, HEARING, clamp, describePitch, niceSlow, makeWave} from '../physics.js';
 import {C, font, pill, text, arrow, ruler, roundRect, textW} from '../draw/ink.js';
-import {ball, drawBall, BALL} from '../draw/ball.js';
+import {ball, drawBall, BALL, ballDpr} from '../draw/ball.js';
 import {layoutLabels, drawLabels} from '../art/figure.js';
-import {makeSpeaker, SPK_RIM, SPK_NAMES, SPK_CAPS, SPK_LABELS} from '../art/speaker.js';
+import {loadArt} from '../art/sprite.js';
 import {makeTalker, TALK_W, TALK_H, MOUTH, TALK_NAMES, TALK_CAPS, TALK_LABELS} from '../art/talker.js';
 import {makeEar, EAR_W, EAR_H, EAR_NAMES, EAR_CAPS, EAR_LABELS} from '../art/ear.js';
 
@@ -22,7 +22,49 @@ const niceF = f => f < 100 ? Math.round(f) : Number(f.toPrecision(f < 1000 ? 2 :
 const fPos = f => Math.round(1000 * Math.log(f / F_MIN) / Math.log(F_MAX / F_MIN));
 function setF(f) { set('f', f); set('slow', niceSlow(f)); }
 
-const spk = makeSpeaker(), talk = makeTalker(), ear = makeEar();
+// Loudspeaker = art/speaker.svg (static cabinet / basket / magnet + moving layer "cone": cone, dust cap, voice coil).
+// Surround + spider are canvas curves from a static anchor to the moving rim / coil, so they stretch with u(0,t).
+const spkArt = loadArt('speaker');
+spkArt.ready.then(() => { labelKey = ''; bus.emit('change', {key: 'art'}); });
+const SPK_W = 156, SPK_H = 200;
+const spkPt = (id, fx, fy) => spkArt.pt(id) || {x: fx, y: fy};
+const spk = {
+  w: SPK_W, h: SPK_H, x: 0, y: 0, s: 1,
+  place(x, y, bw, bh, ax = 0.5, ay = 0.5) { const s = Math.min(bw / SPK_W, bh / SPK_H); this.s = s; this.x = x + (bw - SPK_W * s) * ax; this.y = y + (bh - SPK_H * s) * ay; },
+  px(dx, dy) { return [this.x + dx * this.s, this.y + dy * this.s]; },
+  rimH() { return spkPt('a-rimbot', 146, 156).y - spkPt('a-rimtop', 146, 44).y; },
+  rimX() { return spkPt('a-rimtop', 146, 44).x; },
+  rimCy() { return (spkPt('a-rimbot', 146, 156).y + spkPt('a-rimtop', 146, 44).y) / 2; },
+  drawStatic() {},
+  // dd = cone displacement in design units (+ toward the air) = u(0,t)/s, the same u as the first air layer
+  drawDyn(ctx, dd) {
+    const s = this.s, dpr = ballDpr();
+    if (spkArt.scale !== s || spkArt.dpr !== dpr) spkArt.render(s, dpr);
+    spkArt.draw(ctx, this.x, this.y, {cone: {dx: dd}});
+    if (!spkArt.layers.length) return;
+    const X = (u) => this.x + u * s, Y = (v) => this.y + v * s;
+    const rt = spkPt('a-rimtop', 146, 44), rb = spkPt('a-rimbot', 146, 156), ft = spkPt('a-fl-top', 139, 40), fb = spkPt('a-fl-bot', 139, 160);
+    const st = spkPt('a-sp-top', 84, 76), sb = spkPt('a-sp-bot', 84, 124), cl = spkPt('a-coil', 84, 85);
+    ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    // surround (gờ treo): rubber half-roll from the fixed basket flange to the moving cone rim
+    for (const [f, r, k] of [[ft, rt, -1], [fb, rb, 1]]) {
+      ctx.beginPath(); ctx.moveTo(X(f.x), Y(f.y)); ctx.quadraticCurveTo(X((f.x + r.x) / 2 + 2 + dd * 0.5), Y((f.y + r.y) / 2 + k * 8), X(r.x + dd), Y(r.y));
+      ctx.strokeStyle = '#16181b'; ctx.lineWidth = 2.8 * s; ctx.stroke();
+      ctx.strokeStyle = 'rgba(255,255,255,.28)'; ctx.lineWidth = 0.8 * s; ctx.stroke();
+    }
+    // spider: corrugated cloth from the fixed basket to the moving voice coil
+    for (const [a, k] of [[st, 1], [sb, -1]]) {
+      const cy = cl.y + (k > 0 ? 0 : 30), x1 = X(cl.x - 2 + dd);
+      ctx.beginPath(); ctx.moveTo(X(a.x), Y(a.y));
+      ctx.bezierCurveTo(X(a.x + 4 + dd * 0.3), Y(a.y + k * 3), X(a.x - 5 + dd * 0.6), Y(a.y + k * 5), x1, Y(cy));
+      ctx.strokeStyle = '#b9965f'; ctx.lineWidth = 1.8 * s; ctx.stroke();
+    }
+  }
+};
+const SPK_NAMES = {cone: 'Màng loa', coil: 'Cuộn dây', magnet: 'Nam châm', basket: 'Khung loa'};
+const spkLabels = () => [['cone', 'Màng loa', 'a-cone', 122, 65, 'top'], ['basket', 'Khung loa', 'a-basket', 108, 54, 'top', 1], ['coil', 'Cuộn dây', 'a-coil', 84, 85, 'bottom'], ['magnet', 'Nam châm', 'a-magnet', 42, 75, 'bottom']]
+  .map(([id, t, a, fx, fy, side, row]) => { const p = spkPt(a, fx, fy); return [id, t, p.x, p.y, side, row]; });
+const talk = makeTalker(), ear = makeEar();
 // phone: labels in priority order – as many as fit beside the figure
 const PHONE_LABELS = {ear: ['drum', 'cochlea', 'pinna', 'canal', 'canals'], talker: ['cords', 'mouth', 'throat', 'tongue'], speaker: ['cone', 'coil', 'magnet']};
 const fitN = (ids, band) => ids.slice(0, Math.max(1, Math.min(ids.length, Math.floor((band - 30) / 23))));
@@ -41,7 +83,7 @@ function layout(w, hh) {
   labelKey = '';
   if (L.layout === 'stack') {
     L.cols = 26;
-    L.airL = 12; L.airR = w - 12; L.airW = L.airR - L.airL; L.dx = L.airW / L.cols;
+    L.airL = 12; L.airR = w - 12; L.airW = L.airR - L.airL; L.dx = L.airW / (L.cols + 1);
     const top0 = 74, avail = hh - top0 - 70;
     L.rows = avail < 340 ? 4 : 6;                                    // short phone: fewer rows keep room for the ear
     L.bandA = talker ? clamp(avail * 0.27, 92, 130) : clamp(avail * 0.2, 62, 100); L.bandB = clamp(avail * 0.4, 128, 200) - (talker ? 8 : 0);   // the ear (head + magnifier) needs the most room
@@ -53,16 +95,16 @@ function layout(w, hh) {
     ear.place(6, L.fieldBot + L.below, w - 12, L.bandB - 2, 1, 0.5);
   } else if (L.layout === 'bars') {
     L.cols = 24; L.rows = 8;
-    L.airL = 14; L.airR = w - 14; L.airW = L.airR - L.airL; L.dx = L.airW / L.cols;
+    L.airL = 14; L.airR = w - 14; L.airW = L.airR - L.airL; L.dx = L.airW / (L.cols + 1);
     L.above = L.tiny ? 16 : 62; L.below = 6;
     const top = 8, bottom = 66, avail = hh - top - bottom - L.above - L.below;
     L.dy = clamp(avail / L.rows, 8, 20);
     const block = L.above + L.rows * L.dy + L.below;
     L.fieldTop = top + Math.max(0, (hh - top - bottom - block) / 2) + L.above; L.fieldBot = L.fieldTop + L.rows * L.dy;
   } else {
-    const srcW = talker ? clamp(w * 0.27, 140, 235) : clamp(w * 0.19, 100, 150), earW = clamp(w * 0.36, 190, 300);
+    const srcW = talker ? clamp(w * 0.27, 140, 235) : clamp(w * 0.255, 130, 245), earW = clamp(w * 0.36, 190, 300);
     L.airL = srcW + 12; L.airR = w - earW - 8; L.airW = L.airR - L.airL;
-    L.cols = clamp(Math.round(L.airW / 9), 24, 40); L.rows = 12; L.dx = L.airW / L.cols;
+    L.cols = clamp(Math.round(L.airW / 9), 24, 40); L.rows = 12; L.dx = L.airW / (L.cols + 1);
     const top = L.tiny ? 4 : L.compact ? 8 : 46, bottom = L.compact ? 66 : 76;
     L.above = L.tiny ? 16 : L.compact ? 62 : 88; L.below = L.compact ? 6 : 112;
     const avail = hh - top - bottom - L.above - L.below;
@@ -75,8 +117,11 @@ function layout(w, hh) {
       const s = fitS((srcW - 2) / TALK_W, MOUTH[1], TALK_H - MOUTH[1]);
       talk.s = s; talk.x = L.airL - 4 - TALK_W * s; talk.y = cy - MOUTH[1] * s;
     } else {
-      const s = fitS((srcW - 6) / 124, 85, 85);
-      spk.s = s; spk.x = L.airL - 6 - SPK_RIM * s; spk.y = cy - 85 * s;
+      // the air column is exactly as tall as the cone rim: s from the rim height, rows re-fitted to it
+      const rimC = spk.rimCy(), s = fitS((srcW - 4) / SPK_W, rimC, SPK_H - rimC), rimPx = spk.rimH() * s;
+      L.rows = clamp(Math.round(rimPx / L.dy), 4, 12); L.dy = rimPx / L.rows;
+      L.fieldTop = cy - rimPx / 2; L.fieldBot = cy + rimPx / 2;
+      spk.s = s; spk.x = L.airL - spk.rimX() * s; spk.y = cy - rimC * s;
     }
     const se = fitS(earW / EAR_W, 134, 116);
     ear.s = se; ear.x = L.airR + 4; ear.y = cy - 134 * se;
@@ -84,7 +129,7 @@ function layout(w, hh) {
   L.r = clamp(Math.min(L.dx, L.dy) * 0.3, 3, 4.4);
   L.trackCol = Math.round(L.cols * 0.27);
   restX = new Float32Array(L.cols);
-  for (let i = 0; i < L.cols; i++) restX[i] = (i + 0.5) * L.dx;
+  for (let i = 0; i < L.cols; i++) restX[i] = (i + 1) * L.dx;          // first layer = one dx in front of the cone face (x = 0)
   rulerN = -1; spr = null;
 }
 
@@ -94,7 +139,7 @@ function syncWave() {
   const g = clamp((state.level - DB_MIN) / (DB_MAX - DB_MIN), 0, 1);
   const minPx = Math.max(7 * L.dx, 60), maxPx = L.airW * 0.56;
   wave.set(state.f, v, L.airW / SHOW_M, minPx, maxPx, 0);
-  wave.A = Math.min((0.28 + 0.47 * g) * wave.lamPx / (2 * Math.PI), 1.05 * L.dx);
+  wave.A = Math.min((0.28 + 0.32 * g) * wave.lamPx / (2 * Math.PI), 1.05 * L.dx);   // k·A ≤ 0,6 (< 0,8): layers never cross and never touch the cone face
   wave.at(state.t);
 }
 
@@ -147,7 +192,7 @@ function draw(ctx) {
   drawArt(ctx);
 }
 
-const SRC = {speaker: {names: SPK_NAMES, caps: SPK_CAPS, labels: SPK_LABELS, title: 'Loa'}, talker: {names: TALK_NAMES, caps: TALK_CAPS, labels: TALK_LABELS, title: 'Người nói'}};
+const SRC = {speaker: {names: SPK_NAMES, get labels() { return spkLabels(); }, title: 'Loa'}, talker: {names: TALK_NAMES, caps: TALK_CAPS, labels: TALK_LABELS, title: 'Người nói'}};
 const srcFig = () => state.source === 'talker' ? talk : spk;
 const clampB = x => Math.max(-1, Math.min(1, x));
 
@@ -191,7 +236,14 @@ function drawArt(ctx) {
   const dpr = ctx.canvas.width / L.w;
   sf.drawStatic(ctx, dpr);
   if (state.source === 'talker') sf.drawDyn(ctx, clampB(wave.u(0) / amp));
-  else sf.drawDyn(ctx, u0 / sf.s);
+  else {
+    sf.drawDyn(ctx, wave.u(0) / sf.s);                                  // cone follows exactly u(0,t), like the first air layer
+    if (L.layout === 'side') {                                          // cone face: the plane the first layer is pushed by
+      const fx = L.airL + wave.u(0);
+      ctx.strokeStyle = 'rgba(54,60,68,.75)'; ctx.lineWidth = 2.2; ctx.lineCap = 'butt';
+      ctx.beginPath(); ctx.moveTo(fx, fieldTop); ctx.lineTo(fx, fieldBot); ctx.stroke();
+    }
+  }
   // ear: eardrum follows the arriving air displacement; nerve pulses start when the wave front has reached the ear
   ear.drawStatic(ctx, dpr);
   const phase = wave.front >= ear0 ? (((wave.cycles() - ear0 / wave.lamPx) % 1) + 1) % 1 : -1;
