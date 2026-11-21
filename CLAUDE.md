@@ -9,7 +9,7 @@ v3 rebuild = **finished (Phase 19)**; any new work = new phase in `TASK.md`. Was
 
 ## Session routine (the owner pastes a short prompt; this is the full procedure)
 1. `git pull --ff-only origin main`. CLAUDE.md is already in your context – do not re-read it.
-2. Find the phase: `grep -n '^## Phase' TASK.md` → first `[~]`, else first `[ ]`; read the TASK header + that section only. None left → report "Đã xong v3".
+2. Find the phase: `grep -n '^## Phase' TASK.md` → first `[~]`, else first `[ ]`; read the TASK header + that section only. None left → report "Đã xong toàn bộ".
 3. **Model gate:** if the phase names another model than yours, change nothing and reply only:
    "Phase N cần <model> – gõ /clear, /model <model> rồi dán lại prompt."
 4. Mark `[~]`. Read only the SPEC sections the phase lists (`grep -n '^#' SPEC.md`, partial reads) and the listed files (grep inside big ones).
@@ -35,6 +35,7 @@ v3 rebuild = **finished (Phase 19)**; any new work = new phase in `TASK.md`. Was
 - `js/modes/` – `waves.js` (sóng ngang + sóng dọc), `sound.js` (sóng âm), `surface.js` (sóng mặt), `em.js` (sóng điện từ).
 - `js/draw/` – `grid.js` (paper background), `ink.js` (pills, arrows, rulers, `fx.a`), `ball.js` (3D sphere sprites).
 - `js/art/sprite.js` – loads `art/*.svg`, splits `data-move` layers, rasterises once per resize and crops each layer to its painted box (per frame = small drawImage only). `art/` – driver, speaker, speaker-out, transducer, head, talker, ear SVGs.
+- `img/` – realistic WebP art + `anchors.json` (SPEC §7), loaded by `js/art/raster.js`.
 - `tools/` – `serve.mjs`, `shot.mjs` (checker; `--perf` = 4× CPU throttle, 390×844, fps of each mode, must be ≥ 50).
 
 ## Hard rules
