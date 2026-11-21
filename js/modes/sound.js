@@ -49,9 +49,10 @@ const spk = {
 };
 const SPK_LAB_IN = [['cone', 'Màng loa', 'top'], ['basket', 'Khung loa', 'top', 1], ['coil', 'Cuộn dây', 'bottom'], ['magnet', 'Nam châm', 'bottom']];
 const spkLabels = () => labTab('speaker', SPK_LAB_IN);
-// Talker = talker.webp (static) + two pale-pink vocal folds drawn over the larynx; they open / close with u(0,t) (≤ 6 image px).
+// Talker = talker.webp; the glottis region of the image itself is stretched open / closed with u(0,t).
 // The air column starts at the lips (mouth) and is mouthH·3 image px tall (never thinner than 40 px, so the spheres stay readable).
 const TALK_W = 747, TALK_H = 1054;
+const FW_RX = 34, FW_RY = 18, FW_NX = 8, FW_NY = 12;   // vocal-fold warp patch (talker.webp px, half sizes) and grid
 const talk = {
   w: TALK_W, h: TALK_H, x: 0, y: 0, s: 1,
   place(x, y, bw, bh, ax = 0.5, ay = 0.5) { const s = Math.min(bw / TALK_W, bh / TALK_H); this.s = s; this.x = x + (bw - TALK_W * s) * ax; this.y = y + (bh - TALK_H * s) * ay; },
@@ -63,9 +64,20 @@ const talk = {
     const s = this.s, dpr = ballDpr(), b = baked(iTk, TALK_W * s, TALK_H * s, dpr);
     if (!b) { ctx.fillStyle = 'rgba(0,0,0,.05)'; ctx.fillRect(this.x, this.y, TALK_W * s, TALK_H * s); return; }
     ctx.drawImage(b, this.x, this.y, TALK_W * s, TALK_H * s);
-    const f = an('talker').folds, g = 10 + 6 * v, w = 30 * s, hgt = 15 * s, cx = this.x + f[0] * s, cy = this.y + f[1] * s;
-    ctx.fillStyle = '#f2a7b5'; ctx.strokeStyle = '#b4566a'; ctx.lineWidth = Math.max(0.8, 1.6 * s);
-    for (const k of [-1, 1]) { ctx.beginPath(); ctx.ellipse(cx + k * (g * s + w * 0.5), cy, w * 0.5, hgt * 0.5, 0, 0, 6.2832); ctx.fill(); ctx.stroke(); }
+    // Vocal folds: the real image is stretched in place (mesh warp of a small patch around the glottis), no overlay.
+    // Rows are moved by m(t) = t + c·sin(πt) (t = −1…1 across the patch): the slit opens, the patch edges stay fixed.
+    const f = an('talker').folds, c0 = 0.3 * (0.5 + 0.5 * v), k = b.width / TALK_W;
+    for (let i = 0; i < FW_NX; i++) {
+      const u0 = -1 + 2 * i / FW_NX, uc = u0 + 1 / FW_NX, wx = Math.cos(uc * 1.5708) ** 2, c = c0 * wx;   // taper to 0 at the sides
+      const ix = f[0] + u0 * FW_RX, iw = 2 * FW_RX / FW_NX;
+      for (let j = 0; j < FW_NY; j++) {
+        const t0 = -1 + 2 * j / FW_NY, t1 = t0 + 2 / FW_NY;
+        const d0 = t0 + c * Math.sin(Math.PI * t0), d1 = t1 + c * Math.sin(Math.PI * t1);
+        const iy = f[1] + t0 * FW_RY, ih = 2 * FW_RY / FW_NY;
+        ctx.drawImage(b, ix * k, iy * k, iw * k, ih * k,
+          this.x + ix * s, this.y + (f[1] + d0 * FW_RY) * s, iw * s + 0.6, (d1 - d0) * FW_RY * s + 0.6);
+      }
+    }
   }
 };
 const TALK_LAB = [['nasal', 'Khoang mũi', 'top'], ['mouth', 'Khoang miệng', 'top', 1], ['tongue', 'Lưỡi', 'bottom'], ['throat', 'Họng', 'bottom'], ['cords', 'Dây thanh âm', 'bottom']];
