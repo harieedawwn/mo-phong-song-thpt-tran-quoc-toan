@@ -309,7 +309,7 @@ function layout(w, hh) {
     ear.nrm = {x: L.airR + 4, y: cy - EAR_AX * se, s: se};
   }
   zoomPlace(w, hh);
-  L.r = clamp(Math.min(L.dx, L.dy) * 0.3, 3, 4.4);
+  L.r = clamp(Math.min(L.dx, L.dy) * 0.3, 3, 5.2);
   L.trackCol = Math.round(L.cols * 0.27);
   restX = new Float32Array(L.cols);
   for (let i = 0; i < L.cols; i++) restX[i] = (i + 1) * L.dx;          // first layer = one dx in front of the cone face (x = 0)

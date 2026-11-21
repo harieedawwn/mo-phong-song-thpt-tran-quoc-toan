@@ -42,7 +42,7 @@ function layout(w, hh) {
   L.micro = hh < 300;
   L.cols = phone ? 20 : 30; L.rows = phone ? 8 : 10;
   L.dx = w / (L.cols - 0.5);
-  L.r = phone ? 3.5 : 4.2; spr = null;
+  L.r = phone ? 3.5 : 5.7; spr = null;
   L.amax = L.micro ? 14 : clamp(hh * 0.075, 14, 44);
   L.legend = L.micro ? 0 : 52;
   L.top0 = L.micro ? 10 : phone ? 100 : 78;           // room for ruler + crest labels

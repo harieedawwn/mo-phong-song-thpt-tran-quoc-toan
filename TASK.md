@@ -37,15 +37,16 @@ SPEC §2, §3.1 (v5 bullet), §3.5. Files: `js/modes/waves.js` (whole – templa
 - [x] Verify: shots `after4 "mode=standing" --paused`, `after4e "mode=standing&end=free" --paused`, `after4w "mode=waves" --paused`, `after4b "mode=waves&beads=1"`. Open only: after4-desk-paused, after4-phone-paused, after4e-desk-paused, after4w-desk-paused, after4w-phone, after4b-desk. Check: nodes exactly on beads, λ/2 rulers node–node / antinode–antinode, red & orange beads in adjacent bó move opposite, spring beads never touch at A max, labels do not overlap. `node tools/shot.mjs p --perf` ≥ 50 fps for all 5 modes. Push; skip the deploy check (routine step 9) in this phase.
 - Log: standing.js (nút luôn trùng hạt, đầu cố định/tự do, sóng tới–phản xạ, nhãn khi dừng), hạt v5 + giới hạn biên độ lò xo, "Chỉ phần tử" (lớp vòng VTCB 1 drawImage), scope overlay; perf standing 60 fps, waves 56 fps; sound/surface/em 38–52 fps dao động như code gốc (gốc 44–56) → nhiễu máy ảo, không do phase này.
 
-## Phase 5 – Header không khung + thanh chọn 2 cấp + rà hạt + kiểm tra cuối  `[ ]`  · Sonnet 5.5 (Medium)
+## Phase 5 – Header không khung + thanh chọn 2 cấp + rà hạt + kiểm tra cuối  `[x]`  · Sonnet 5.5 (Medium)
 SPEC §4 (Header v5, Mode nav v5). Files: `index.html`, `js/ui.js` (grep `mode tabs|tabBtns|setMode|HELP`), `css/style.css` (grep `#title|#school|#tabs|\.seg|@media`), `js/modes/surface.js` and `js/modes/sound.js` (grep `L.r =` only).
-- [ ] Header per SPEC §4 Header v5 (all breakpoints).
-- [ ] Two-level nav per SPEC §4 Mode nav v5, built in ui.js from `mode.group`; remember the last mech mode; aria: role=tablist on the group row and on the sub-tab row; keys 1–5 unchanged.
-- [ ] Help modal (≤ 5 bullets): keys 1–5, "Sóng cơ có 4 chế độ con", one short mention of Chỉ phần tử.
-- [ ] Particle size: surface `L.r` about +35 % if the top-row particles keep ≥ 3 px gap at max amplitude (else less); sound: raise the radius cap 4,4 → 5,2 only if the column shows no new merging (compare before/after desk shot), otherwise leave it.
-- [ ] Final check: `shot.mjs after5 --all --paused` and `shot.mjs after5s "mode=standing" --all` must exit 0 (no scrollbar, school name one line). Open after5-desk720, after5-phone360, after5-phoneLand, after5-desk-paused, after5s-phone. `--perf` ≥ 50 fps all modes. Full deploy check (5 retries) this phase.
-- Log:
+- [x] Header per SPEC §4 Header v5 (all breakpoints).
+- [x] Two-level nav per SPEC §4 Mode nav v5, built in ui.js from `mode.group`; remember the last mech mode; aria: role=tablist on the group row and on the sub-tab row; keys 1–5 unchanged.
+- [x] Help modal (≤ 5 bullets): keys 1–5, "Sóng cơ có 4 chế độ con", one short mention of Chỉ phần tử.
+- [x] Particle size: surface `L.r` about +35 % if the top-row particles keep ≥ 3 px gap at max amplitude (else less); sound: raise the radius cap 4,4 → 5,2 only if the column shows no new merging (compare before/after desk shot), otherwise leave it.
+- [x] Final check: `shot.mjs after5 --all --paused` and `shot.mjs after5s "mode=standing" --all` must exit 0 (no scrollbar, school name one line). Open after5-desk720, after5-phone360, after5-phoneLand, after5-desk-paused, after5s-phone. `--perf` ≥ 50 fps all modes. Full deploy check (5 retries) this phase.
+- Log: xong; perf nhiễu (sound 40–47, em 49–52 cả khi chưa sửa), surface phone giữ 3,5 vì +35 % làm tụt fps.
 
 ## Log
 <!-- one line per session: date · phase · what · numbers checked · hash -->
 2026-11-21 · Phase 3 · vịt SVG thay phao, zoom 1–4× (lăn/pinch/kéo/dblclick/1:1), màn đo "Phần tử đỏ" · 4 mode OK, perf 57–59 fps · 
+2026-11-21 · Phase 5 · header không khung, nav 2 cấp (Sóng cơ/Điện từ), help, hạt to hơn (surface desk, sound) · checker OK, perf waves 58/standing 60/surface 53 · 

@@ -103,9 +103,9 @@ export const group = (tab, title, ...nodes) => h('section', {class: 'grp', 'data
 
 const HELP = [
   'Nhấn Phát / Tạm dừng (phím cách): khi sóng chạy chỉ thấy các vật và hạt; khi tạm dừng sẽ hiện nhãn, thước λ và số liệu thật.',
-  'Chọn loại sóng ở thanh phía trên (hoặc nhấn phím 1–5). Nút ↻ cho sóng xuất phát lại từ nguồn.',
+  'Chọn loại sóng ở thanh phía trên hoặc nhấn phím 1–5. Sóng cơ có 4 chế độ con: ngang – dọc, sóng âm, sóng mặt, sóng dừng.',
   'Kéo thanh Làm chậm để quan sát rõ dao động của từng phần tử; hình đã làm chậm và phóng đại biên độ.',
-  'Chấm đỏ là một phần tử được theo dõi: nó chỉ dao động quanh vị trí cân bằng, sóng không mang nó đi.',
+  'Chấm đỏ là một phần tử được theo dõi: nó chỉ dao động quanh vị trí cân bằng, sóng không mang nó đi. Bật "Chỉ phần tử" để chỉ xem các hạt.',
   'Trong nước, nguồn là đầu phát âm dưới nước áp sát môi trường (loa trong không khí không đẩy âm vào nước tốt); cùng tần số, bước sóng trong nước dài gấp 4,32 lần.'
 ];
 
@@ -143,11 +143,21 @@ export function mountShell({modes, onMode, onRestart, onToggle, onShot}) {
     btnMute.dataset.muted = String(!!state.muted);
   };
 
-  // mode tabs
+  // mode tabs: level 1 = group (Sóng cơ | Sóng điện từ), level 2 = sub-tabs of the mech group
   const tabs = $('tabs');
-  const tabBtns = modes.map(m => h('button', {type: 'button', role: 'tab', 'data-id': m.id, 'aria-selected': 'false', onclick: () => onMode(m.id)},
-    icon(m.icon, 18), h('span', {class: 't-l', text: m.title}), h('span', {class: 't-s', text: m.short})));
-  tabs.append(...tabBtns);
+  const subBtn = m => h('button', {type: 'button', role: 'tab', 'data-id': m.id, 'aria-selected': 'false', onclick: () => onMode(m.id)},
+    icon(m.icon, 18), h('span', {class: 't-l', text: m.title}), h('span', {class: 't-s', text: m.short}));
+  const mech = modes.filter(m => m.group === 'mech'), emM = modes.filter(m => m.group === 'em');
+  const tabBtns = [...mech, ...emM].map(subBtn);
+  const byId = id => tabBtns.find(b => b.dataset.id === id);
+  let lastMech = (mech[0] || {}).id;
+  const gMech = h('button', {type: 'button', role: 'tab', id: 'gb-mech', 'data-g': 'mech', 'aria-selected': 'false', onclick: () => onMode(lastMech)},
+    h('span', {class: 'g-l', text: 'Sóng cơ'}), h('span', {class: 'g-s'}, 'Sóng', h('br'), 'cơ'));
+  const gEm = h('button', {type: 'button', role: 'tab', id: 'gb-em', 'data-g': 'em', 'aria-selected': 'false', onclick: () => onMode(emM[0].id)},
+    h('span', {class: 'g-l', text: 'Sóng điện từ'}), h('span', {class: 'g-s', text: 'Điện từ'}));
+  const sub = h('div', {class: 'sub', role: 'tablist', 'aria-label': 'Loại sóng cơ'}, ...tabBtns.filter(b => mech.some(m => m.id === b.dataset.id)));
+  tabs.setAttribute('aria-owns', 'gb-mech gb-em');
+  tabs.append(gMech, sub, gEm);
 
   // controls + phone bottom-sheet tabs + phone bottom-sheet tabs
   const ctrl = $('ctrl'), grps = $('grps'), dock = $('dock');
@@ -183,6 +193,10 @@ export function mountShell({modes, onMode, onRestart, onToggle, onShot}) {
   return {
     setMode(m) {
       for (const b of tabBtns) b.setAttribute('aria-selected', String(b.dataset.id === m.id));
+      if (m.group === 'mech') lastMech = m.id;
+      tabs.dataset.g = m.group;
+      gMech.setAttribute('aria-selected', String(m.group === 'mech'));
+      gEm.setAttribute('aria-selected', String(m.group === 'em'));
       buildControls(m);
     }
   };
