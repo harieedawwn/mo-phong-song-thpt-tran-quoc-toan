@@ -691,8 +691,12 @@ function controls() {
   ];
 }
 
+// mini-scope sample: relative pressure at the eardrum (nén > 0, giãn < 0)
+const PR = {xy: false, a: 0, b: 0, ca: '#1c7ed6', cb: '#1c7ed6', lane: 'one'};
+function probe() { PR.a = wave.s(L.airW || 0); PR.b = PR.a; return PR; }
+
 export default {
-  id: 'sound', title: 'Sóng âm', short: 'Sóng âm', icon: 'vol',
+  probe, id: 'sound', title: 'Sóng âm', short: 'Sóng âm', icon: 'vol',
   defaults: {get slow() { return niceSlow(state.f); }},
   metrics: () => ({f: state.f, v: SPEED[state.medium] || SPEED.air}),
   readout: () => readout(),

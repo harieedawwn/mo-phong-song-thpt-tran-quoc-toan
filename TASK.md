@@ -24,12 +24,13 @@ SPEC §7, §3.2 (receiver). Files: ear parts of `js/modes/sound.js` (grep `ear|m
 - [x] Delete `art/ear.svg` + old ear code. Check `--all --paused` sound mode; pause at max push: drum bulges in under a compression.
 - Log: tai thật trong kính lúp (ear-base/drum/ossicles), 36 cầu khí trong ống tai theo cùng u(x,t), màng nhĩ theo áp suất −∂u/∂x (≤ 4 px), xung thần kinh + vòng ốc tai, 8 nhãn, xoá ear.svg; perf sound 58,8 fps.
 
-## Phase 3 – Vịt cao su + zoom bằng lăn chuột + màn đo nhỏ bên trái  `[ ]`  · Sonnet (Medium)
+## Phase 3 – Vịt cao su + zoom bằng lăn chuột + màn đo nhỏ bên trái  `[x]`  · Sonnet (Medium)
 SPEC §3.3 (duck), §4 (Left panel v4, Zoom v4). Files: `js/main.js`, `js/ui.js`, `css/style.css` (left column), `js/modes/surface.js` (grep `phao|buoy|float`), each mode's red-particle code (grep `track`).
-- [ ] `art/duck.svg` (small cute yellow rubber duck, shaded, orange beak) replaces the phao: follows the top particle's orbit, tilts with the slope.
-- [ ] Zoom in `main.js` (wheel + pinch 1–4×, drag pan, double-click / "1:1" resets, mode switch resets); EM band tap and magnifier tap still hit correctly.
-- [ ] Controls card shrinks to content; "Phần tử đỏ" mini-scope card below (`probe()` per mode, ring buffer, no per-frame allocation); hidden on phones.
-- [ ] Check `--all --paused` 4 modes; ≥ 50 fps `--perf`. Then final light cleanup of dead code (grep only).
+- [x] `art/duck.svg` (small cute yellow rubber duck, shaded, orange beak) replaces the phao: follows the top particle's orbit, tilts with the slope.
+- [x] Zoom in `main.js` (wheel + pinch 1–4×, drag pan, double-click / "1:1" resets, mode switch resets); EM band tap and magnifier tap still hit correctly.
+- [x] Controls card shrinks to content; "Phần tử đỏ" mini-scope card below (`probe()` per mode, ring buffer, no per-frame allocation); hidden on phones.
+- [x] Check `--all --paused` 4 modes; ≥ 50 fps `--perf`. Then final light cleanup of dead code (grep only).
 
 ## Log
 <!-- one line per session: date · phase · what · numbers checked · hash -->
+2026-11-21 · Phase 3 · vịt SVG thay phao, zoom 1–4× (lăn/pinch/kéo/dblclick/1:1), màn đo "Phần tử đỏ" · 4 mode OK, perf 57–59 fps · 

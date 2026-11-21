@@ -247,8 +247,15 @@ function controls() {
   ];
 }
 
+// mini-scope sample: displacement of the red bead (u / A), same wave in both lanes
+const PR = {xy: false, a: 0, b: 0, ca: '#e8590c', cb: '#1c7ed6'};
+function probe() {
+  const q = wave.A > 0.01 ? wave.u(L.tI * L.dx) / wave.A : 0;
+  PR.a = q; PR.b = q; PR.lane = state.lane; return PR;
+}
+
 export default {
-  id: 'waves', title: 'Sóng ngang – Sóng dọc', short: 'Ngang – Dọc', icon: 'transverse',
+  probe, id: 'waves', title: 'Sóng ngang – Sóng dọc', short: 'Ngang – Dọc', icon: 'transverse',
   defaults: {slow: 1},
   metrics: () => ({f: state.tf, v: state.tv}),
   readout, controls, layout, draw, annotate, update() {}, reset() {}

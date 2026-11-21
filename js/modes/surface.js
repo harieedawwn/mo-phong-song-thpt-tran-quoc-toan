@@ -7,7 +7,10 @@ import {h, chip, toggle, slider, group, lab, seg, slowControl} from '../ui.js';
 import {lenParts, freqParts, slowText} from '../fmt.js';
 import {clamp, TAU} from '../physics.js';
 import {C, font, pill, text, arrow, ruler, head, textW} from '../draw/ink.js';
-import {ball, drawBall, BALL} from '../draw/ball.js';
+import {ball, drawBall, BALL, ballDpr} from '../draw/ball.js';
+import {loadArt} from '../art/sprite.js';
+
+const duck = loadArt('duck');
 
 const F_MIN = 0.2, F_MAX = 2, V_MIN = 0.5, V_MAX = 4, A_MAX = 10;
 const SHOW_M = 6;
@@ -154,19 +157,25 @@ function drawInner(ctx) {
     }
   }
 
-  // --- phao (float): rides the surface point and its slope, returns to the same place
-  const xp = Math.round(cols * 0.7) * dx;
+  // --- duck (rubber duck): rides the surface point and its slope, returns to the same place
+  const xp = Z.xp;
   if (!L.micro) {
+    const ds = L.phone ? 0.52 : 0.66, dpr = ballDpr();
+    if (duck.scale !== ds || duck.dpr !== dpr) duck.render(ds, dpr);
     particle(xp, 0); const px = ox, py = oy;
     particle(xp - 6, 0); const ax = ox, ay = oy; particle(xp + 6, 0);
     const ang = Math.atan2(oy - ay, ox - ax);
     ctx.save(); ctx.translate(px, py); ctx.rotate(ang);
-    ctx.beginPath(); ctx.moveTo(-14, -2); ctx.lineTo(14, -2); ctx.lineTo(10, -12); ctx.lineTo(-10, -12); ctx.closePath();
-    ctx.fillStyle = '#fff'; ctx.fill(); ctx.lineWidth = 1.8; ctx.strokeStyle = C.ink; ctx.stroke();
-    ctx.fillStyle = C.red; ctx.fillRect(-6, -12, 12, 10); ctx.strokeRect(-6, -12, 12, 10);
+    duck.draw(ctx, -30 * ds, -38 * ds);                 // waterline of the art (y≈38) on the surface point
     ctx.restore();
   }
+}
 
+// mini-scope sample: the red top particle's orbit (ξ horizontal, ζ vertical), normalised by the amplitude
+const PR = {xy: true, a: 0, b: 0};
+function probe() {
+  const A = Math.max(P.A, 1e-3); particle(Z.tx0, 0);
+  PR.a = (ox - Z.tx0) / A; PR.b = (P.y0 - oy) / A; return PR;
 }
 
 function readout() {
@@ -188,8 +197,8 @@ function annotate(ctx) {
     ctx.stroke();
   }
   if (L.micro) return;
-  // phao
-  particle(xp, 0); pill(ctx, 'Phao', ox, oy - 30, {size: fs - 1});
+  // duck
+  particle(xp, 0); pill(ctx, 'Vịt (phần tử mặt nước)', ox, oy - 38, {size: fs - 1});
   // đỉnh sóng / hõm sóng
   const every = Math.max(1, Math.ceil(100 / lam));
   for (let m = 0; m < 40; m += every) {
@@ -247,5 +256,5 @@ export default {
   id: 'surface', title: 'Sóng mặt', short: 'Sóng mặt', icon: 'surface',
   defaults: {slow: 1},
   metrics: () => ({f: state.sf, v: state.sv}),
-  readout, controls, layout, draw, annotate, update() {}, reset() {}
+  readout, controls, layout, draw, annotate, probe, update() {}, reset() {}
 };

@@ -239,8 +239,15 @@ function controls() {
   ];
 }
 
+// mini-scope sample: E and B (in phase) at a point one wavelength from the source
+const PR = {xy: false, a: 0, b: 0, ca: '#d7191f', cb: '#1c7ed6', lane: 'two'};
+function probe() {
+  const g = geom(), xr = Math.min(g.lam, g.front * 0.9), q = amp(xr, g.front, g.lam) * Math.cos(g.ph0 - TAU / g.lam * xr);
+  PR.a = q; PR.b = q; return PR;
+}
+
 export default {
-  id: 'em', title: 'Sóng điện từ', short: 'Sóng điện từ', icon: 'em',
+  probe, id: 'em', title: 'Sóng điện từ', short: 'Sóng điện từ', icon: 'em',
   defaults: {slow: 1},
   metrics: () => ({f: BANDS[state.band].f, v: CC}),
   readout: () => { const b = BANDS[state.band]; return b.name + ' · λ ' + b.lam + ' · f ' + b.fr + ' · ' + b.ex; },

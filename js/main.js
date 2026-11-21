@@ -9,6 +9,7 @@ import waves from './modes/waves.js';
 import sound from './modes/sound.js';
 import surface from './modes/surface.js';
 import em from './modes/em.js';
+import {scopeInit, scopeClear, scopeSize, scopePush, scopeDraw} from './scope.js';
 import './audio.js';
 
 const MODES = [waves, sound, surface, em];
@@ -16,6 +17,9 @@ const ALIAS = {transverse: 'waves', longitudinal: 'sound'};   // old #mode= link
 const byId = id => MODES.find(m => m.id === (ALIAS[id] || id));
 const canvas = document.getElementById('cv'), stage = document.getElementById('stage');
 const ctx = canvas.getContext('2d');
+let zs = 1, zx = 0, zy = 0;       // stage zoom (1–4×) and pan, CSS px
+const zbtn = document.getElementById('btn-zoom'), scv = document.getElementById('scv');
+if (scv) scopeInit(scv);
 let mode = MODES[0], W = 0, H = 0, grid = null, dirty = true, raf = 0, last = 0, fadeT0 = 0;
 const FADE = 250, calm = !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
 // annotations (annotate()) exist only while paused: fade in over 0,25 s after Pause, vanish at once on Play
@@ -24,7 +28,7 @@ function startFade() { if (calm) fx.a = 1; else { fx.a = 0; fadeT0 = performance
 function play() { set('playing', true); }
 function pause() { set('playing', false); }
 function toggle() { state.playing ? pause() : play(); }
-function restart() { state.t = 0; if (mode.reset) mode.reset(); dirty = true; }
+function restart() { state.t = 0; scopeClear(); if (mode.reset) mode.reset(); dirty = true; }
 function modeFromHash() { const m = /mode=([a-z]+)/.exec(location.hash); return m && byId(m[1]) ? byId(m[1]).id : null; }
 
 const ui = mountShell({
@@ -42,7 +46,7 @@ const ui = mountShell({
 function setMode(id) {
   const m = byId(id) || MODES[0];
   if (mode && mode !== m && mode.leave) mode.leave();
-  mode = m; state.t = 0; if (m.reset) m.reset();
+  mode = m; state.t = 0; scopeClear(); zoomTo(1, 0, 0); if (m.reset) m.reset();
   set('mode', m.id);
   set('slow', m.defaults.slow);
   m.layout(W, H);
@@ -60,7 +64,8 @@ function resize() {
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   setBallDpr(dpr);
   grid = makeGrid(W, H, dpr);
-  mode.layout(W, H);
+  mode.layout(W, H); scopeSize();
+  zoomTo(zs, zx, zy);
   bus.emit('change', {key: 'layout'});
   dirty = true;
 }
@@ -88,22 +93,32 @@ function draw(annotate) {
   if (!grid) return;
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.drawImage(grid, 0, 0);
-  ctx.setTransform(canvas.width / W, 0, 0, canvas.height / H, 0, 0);
+  const kx = canvas.width / W, ky = canvas.height / H;
+  ctx.setTransform(kx * zs, 0, 0, ky * zs, kx * zx, ky * zy);
   mode.draw(ctx, W, H);
   if (annotate && fx.a > 0) {
     ctx.globalAlpha = fx.a; fx.shadow = true;
     if (mode.annotate) mode.annotate(ctx, W, H);
+    ctx.setTransform(kx, 0, 0, ky, 0, 0);
     chip();
     fx.shadow = false; ctx.globalAlpha = 1;
   }
+}
+
+// mini-scope: one sample per running frame (mode.probe() returns a reused object), redrawn while running or when something changed
+function sample(push = true) {
+  if (!scv || !mode.probe || !scv.offsetWidth) return;
+  const p = mode.probe();
+  if (push) scopePush(state.t, p);
+  scopeDraw(p, mode.metrics().f);
 }
 
 function frame(ts) {
   raf = requestAnimationFrame(frame);
   const dt = Math.min(0.05, (ts - last) / 1000); last = ts;
   if (!state.playing && fx.a < 1) { const e = Math.min(1, Math.max(0, (performance.now() - fadeT0) / FADE)); fx.a = e * (2 - e); dirty = true; }
-  if (state.playing) { const sdt = dt * state.slow; state.t += sdt; mode.update(sdt); draw(false); dirty = false; }
-  else if (dirty) { draw(true); dirty = false; }
+  if (state.playing) { const sdt = dt * state.slow; state.t += sdt; mode.update(sdt); draw(false); dirty = false; sample(); }
+  else if (dirty) { draw(true); dirty = false; sample(false); }
 }
 function startLoop() { cancelAnimationFrame(raf); last = performance.now(); raf = requestAnimationFrame(frame); }
 
@@ -111,13 +126,52 @@ bus.on('change', e => {
   if (e.key === 'playing') { if (state.playing) fx.a = 0; else startFade(); }
   dirty = true;
 });
-// taps on the stage go to the current mode (only the em spectrum bar uses them)
-canvas.addEventListener('pointerdown', e => {
-  if (!mode.pointer || (e.button && e.button !== 0)) return;
-  const r = canvas.getBoundingClientRect();
-  mode.pointer((e.clientX - r.left) * (W / r.width), (e.clientY - r.top) * (H / r.height));
+// ---- zoom (wheel / pinch 1–4×, drag pans, double-click or "1:1" resets). Mode code never sees the transform: hits use the inverse.
+function zoomTo(z, x, y) {
+  zs = Math.min(4, Math.max(1, z)); zx = zs === 1 ? 0 : Math.min(0, Math.max(W * (1 - zs), x)); zy = zs === 1 ? 0 : Math.min(0, Math.max(H * (1 - zs), y));
+  if (zbtn) zbtn.hidden = zs === 1;
   dirty = true;
+}
+function zoomAt(z, px, py) {                       // keep the stage point under (px, py) fixed
+  const k = Math.min(4, Math.max(1, z)) / zs;
+  zoomTo(zs * k, px - (px - zx) * k, py - (py - zy) * k);
+}
+const loc = e => { const r = canvas.getBoundingClientRect(); return [(e.clientX - r.left) * (W / r.width), (e.clientY - r.top) * (H / r.height)]; };
+canvas.addEventListener('wheel', e => {
+  e.preventDefault();
+  const [x, y] = loc(e); zoomAt(zs * Math.exp(-e.deltaY * 0.0015), x, y);
+}, {passive: false});
+canvas.addEventListener('dblclick', () => zoomTo(1, 0, 0));
+if (zbtn) zbtn.addEventListener('click', () => zoomTo(1, 0, 0));
+const ptrs = new Map();            // active pointers (css px) for pinch
+let drag = null, pinch0 = 0, moved = false;
+canvas.addEventListener('pointerdown', e => {
+  if (e.button && e.button !== 0) return;
+  ptrs.set(e.pointerId, loc(e)); moved = false;
+  try { canvas.setPointerCapture(e.pointerId); } catch (_) { /* ignore */ }
+  if (ptrs.size === 2) { const [a, b] = [...ptrs.values()]; pinch0 = Math.hypot(a[0] - b[0], a[1] - b[1]); drag = null; moved = true; }
+  else drag = {x: ptrs.get(e.pointerId)[0], y: ptrs.get(e.pointerId)[1]};
 });
+canvas.addEventListener('pointermove', e => {
+  if (!ptrs.has(e.pointerId)) return;
+  const p = loc(e), old = ptrs.get(e.pointerId); ptrs.set(e.pointerId, p);
+  if (ptrs.size === 2) {
+    const [a, b] = [...ptrs.values()], d = Math.hypot(a[0] - b[0], a[1] - b[1]);
+    if (pinch0 > 0) zoomAt(zs * d / pinch0, (a[0] + b[0]) / 2, (a[1] + b[1]) / 2);
+    pinch0 = d; return;
+  }
+  if (drag && zs > 1 && (moved || Math.hypot(p[0] - drag.x, p[1] - drag.y) > 5)) { moved = true; zoomTo(zs, zx + p[0] - old[0], zy + p[1] - old[1]); }
+});
+const up = e => {
+  if (!ptrs.has(e.pointerId)) return;
+  const was = ptrs.size; ptrs.delete(e.pointerId);
+  if (was === 1 && !moved && e.type === 'pointerup' && mode.pointer) {       // a tap: inverse transform to stage coordinates
+    const [x, y] = loc(e); mode.pointer((x - zx) / zs, (y - zy) / zs); dirty = true;
+  }
+  if (ptrs.size < 2) pinch0 = 0;
+  if (!ptrs.size) drag = null;
+};
+canvas.addEventListener('pointerup', up); canvas.addEventListener('pointercancel', up);
 addEventListener('keydown', e => {
   if (e.key === 'Escape') return;
   if (e.ctrlKey || e.metaKey || e.altKey) return;
@@ -134,7 +188,7 @@ if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { di
 
 if (calm) state.playing = false;
 fx.a = state.playing ? 0 : 1;
-window.__app = {play, pause, restart, setMode, get mode() { return mode.id; }, state};
+window.__app = {zoom: (z, x, y) => zoomTo(z, x, y), play, pause, restart, setMode, get mode() { return mode.id; }, state};
 if (/src=talker/.test(location.hash)) state.source = 'talker';   // checker / teacher link: #mode=sound&src=talker
 { const mm = /med=(air|water)/.exec(location.hash); if (mm) state.medium = mm[1]; }   // checker / teacher link: #mode=sound&med=water
 setMode(modeFromHash() || 'waves');
