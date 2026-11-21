@@ -76,6 +76,11 @@ button{-webkit-tap-highlight-color:transparent}
 #tabs .sub button:hover{color:#fff}
 #tabs .sub button[aria-selected=true]{background:#fff;color:var(--ink)}
 #tabs .t-s,#tabs .g-s{display:none}
+/* segmented controls inside the panels (restored: Phase 5 dropped these generic rules) */
+.seg{display:flex;padding:3px;gap:3px;background:#ebe7dd;border:1px solid var(--line);border-radius:12px}
+.seg>button{flex:1;min-height:34px;border:0;border-radius:9px;background:transparent;cursor:pointer;font-weight:600;font-size:13px;color:var(--muted);display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:0 12px;white-space:nowrap}
+.seg>button:hover{color:var(--ink)}
+.seg>button[aria-pressed=true]{background:var(--ink);color:#fff}
 
 /* ===== Bảng điều khiển trái ===== */
 #ctrl{grid-area:ctrl;display:flex;flex-direction:column;min-height:0;position:relative;align-self:start}
@@ -222,7 +227,8 @@ button{-webkit-tap-highlight-color:transparent}
  #tabs .sub button{flex-direction:row;min-height:32px;margin:0;gap:4px;font-size:9px;color:var(--muted);background:transparent}
  #tabs .sub button[aria-selected=true]{background:var(--ink);color:#fff}
  #tabs .t-l{display:none}#tabs .t-s{display:inline}
- #tabs .sub button svg{display:none}#tabs .sub button:first-child{flex:1.8}#tabs .sub button{white-space:nowrap;padding:2px 1px}
+ #tabs .sub button svg{display:none}#tabs .sub button:first-child{flex:1.35}#tabs .sub button{white-space:nowrap;padding:2px 1px}
+ #tabs .sub{gap:3px}#tabs .sub button{background:#f7f4ed;border-radius:7px}
  #ctrl{align-self:end;position:relative}
  #ctrl .grps{position:absolute;left:calc(100% + 8px);bottom:0;width:min(340px,calc(100vw - 240px));max-height:calc(100dvh - 12px);z-index:6;background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow)}
  .dock-tabs button{min-height:40px;font-size:10px}
