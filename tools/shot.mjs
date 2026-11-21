@@ -6,7 +6,7 @@
 //   [hash]       optional URL hash, e.g. "mode=waves" -> opens .../#mode=waves
 //   --all        also shoot 1280x720, 360x740 and phone landscape 844x390
 //   --paused     after the wave has run, press Pause and shoot again as <name>-<viewport>-paused.png (annotations visible)
-//   --page=<p>   open a repo file instead of the app (e.g. --page=art/ear.svg) and shoot it alone at 900x700 on white
+//   --page=<p>   open a repo file instead of the app (e.g. --page=art/driver.svg) and shoot it alone at 900x700 on white
 //   --perf       no shots: 390x844 phone, CPU throttled x4, average fps over 5 s for each of the 4 modes (waves, sound, surface, em); exit 1 if any < 50
 // Requires the server: node tools/serve.mjs  (port 8765).
 // Exit code 1 on console errors / 4xx / page errors / a panel that needs scrolling / any page scrollbar (all viewports).

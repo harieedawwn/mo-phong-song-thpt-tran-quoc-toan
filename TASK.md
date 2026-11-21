@@ -15,13 +15,14 @@ SPEC §7. Files: `js/modes/sound.js` (grep `spk|speaker|talk|head|listener|colum
 - [x] Check `mode=sound` and `mode=sound&src=talker`, `--paused`: images sharp, no gaps between cone and air, ≥ 50 fps `--perf`.
 - Log: ảnh thật cho loa/người nói/đầu người nghe (raster.js, anchors), xoá 3 SVG; perf sound 57,6 fps.
 
-## Phase 2 – Tai thật trong kính lúp + âm thanh đi vào ống tai  `[ ]`  · Sonnet (High)
+## Phase 2 – Tai thật trong kính lúp + âm thanh đi vào ống tai  `[x]`  · Sonnet (High)
 SPEC §7, §3.2 (receiver). Files: ear parts of `js/modes/sound.js` (grep `ear|mag|zoom|drum|ossic|nerve`), `js/art/raster.js`, `img/anchors.json`.
-- [ ] Magnifier content = `ear-base.webp` clipped to the circle, plus `ear-drum.webp` at `drum.at` moved along `drum.normal` by the pressure at the drum (max 4 image px) and `ear-ossicles.webp` rotated about `ossicles.pivot` by drumShift / |tip − pivot| (radians). Same images in the "phóng to" view.
-- [ ] Canal air column: 3 rows of small spheres along the `canal` polyline (each point = x, y, half-height), displaced along the canal by the same u(x,t) continued from the listener's ear (magnified); compression reaches the drum exactly when it moves inward; spheres never enter the drum.
-- [ ] Nerve pulses: small golden dots running along `nerve` toward the brain, rate ∝ loudness; faint pulse ring on the `cochlea` when sound arrives.
-- [ ] Paused: labels from `ear.labels` (≤ 8) with leaders outside the circle in normal view, all in "phóng to"; "Sóng âm vào ống tai" on the canal; nén/giãn tint in the canal.
-- [ ] Delete `art/ear.svg` + old ear code. Check `--all --paused` sound mode; pause at max push: drum bulges in under a compression.
+- [x] Magnifier content = `ear-base.webp` clipped to the circle, plus `ear-drum.webp` at `drum.at` moved along `drum.normal` by the pressure at the drum (max 4 image px) and `ear-ossicles.webp` rotated about `ossicles.pivot` by drumShift / |tip − pivot| (radians). Same images in the "phóng to" view.
+- [x] Canal air column: 3 rows of small spheres along the `canal` polyline (each point = x, y, half-height), displaced along the canal by the same u(x,t) continued from the listener's ear (magnified); compression reaches the drum exactly when it moves inward; spheres never enter the drum.
+- [x] Nerve pulses: small golden dots running along `nerve` toward the brain, rate ∝ loudness; faint pulse ring on the `cochlea` when sound arrives.
+- [x] Paused: labels from `ear.labels` (≤ 8) with leaders outside the circle in normal view, all in "phóng to"; "Sóng âm vào ống tai" on the canal; nén/giãn tint in the canal.
+- [x] Delete `art/ear.svg` + old ear code. Check `--all --paused` sound mode; pause at max push: drum bulges in under a compression.
+- Log: tai thật trong kính lúp (ear-base/drum/ossicles), 36 cầu khí trong ống tai theo cùng u(x,t), màng nhĩ theo áp suất −∂u/∂x (≤ 4 px), xung thần kinh + vòng ốc tai, 8 nhãn, xoá ear.svg; perf sound 58,8 fps.
 
 ## Phase 3 – Vịt cao su + zoom bằng lăn chuột + màn đo nhỏ bên trái  `[ ]`  · Sonnet (Medium)
 SPEC §3.3 (duck), §4 (Left panel v4, Zoom v4). Files: `js/main.js`, `js/ui.js`, `css/style.css` (left column), `js/modes/surface.js` (grep `phao|buoy|float`), each mode's red-particle code (grep `track`).

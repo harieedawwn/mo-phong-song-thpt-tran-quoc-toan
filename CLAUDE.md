@@ -55,7 +55,7 @@ v3 rebuild = **finished (Phase 19)**; any new work = new phase in `TASK.md`. Was
 node tools/serve.mjs &                          # http://localhost:8765/mo-phong-song-thpt-tran-quoc-toan/
 node tools/shot.mjs <name> [hash] [--all] [--paused]   # shots/<name>-<vp>[-paused].png; exit 1 on errors / 404 / scrollbars / school name wrap
 node tools/shot.mjs p --perf                     # fps per mode on a throttled phone, exit 1 if < 50
-node tools/shot.mjs <name> --page=art/ear.svg   # one SVG (or any repo file) alone, 900×700
+node tools/shot.mjs <name> --page=art/driver.svg   # one SVG (or any repo file) alone, 900×700
 # first time: cd tools && npm i && npx playwright install chromium   (if the download fails, shot.mjs falls back to any installed Chromium; or CHROME=/path)
 find js -name '*.js' -exec node --check {} \;   # syntax check
 ```
