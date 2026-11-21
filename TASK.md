@@ -1,9 +1,6 @@
-# TASK – v4: ảnh minh hoạ thật (one phase per session; routine = CLAUDE.md "Session routine")
+# TASK – v5: sóng dừng, thanh chọn 2 cấp, phần tử to (one phase per session; routine = CLAUDE.md "Session routine")
 Status: `[ ]` todo · `[~]` in progress (resume) · `[x]` done · `[!]` blocked (note says why). Older phases: `docs/history.md` (do not read).
-Read only this header and YOUR phase section. Phase-local rule: touch only what the phase lists.
-**Art is already prepared** in `img/` (WebP with alpha, cut out, measured): do NOT open the PNG sources, do NOT re-cut images.
-All positions are in `img/anchors.json` (image pixels of each WebP). First thing in a phase that uses it: add a temporary debug
-draw of the anchors it needs (small red dots), take ONE screenshot, fix any anchor off by > 6 px directly in the JSON, remove the debug draw.
+Read only this header and YOUR phase section (phases 1–3 are v4, done – skip them). Phase-local rule: touch only what the phase lists.
 
 ## Phase 1 – Ảnh thật: loa, người nói, đầu người nghe  `[x]`  · Sonnet (Medium)
 SPEC §7. Files: `js/modes/sound.js` (grep `spk|speaker|talk|head|listener|column|airL`), `js/art/sprite.js` (API style only), `img/anchors.json`.
@@ -30,6 +27,24 @@ SPEC §3.3 (duck), §4 (Left panel v4, Zoom v4). Files: `js/main.js`, `js/ui.js`
 - [x] Zoom in `main.js` (wheel + pinch 1–4×, drag pan, double-click / "1:1" resets, mode switch resets); EM band tap and magnifier tap still hit correctly.
 - [x] Controls card shrinks to content; "Phần tử đỏ" mini-scope card below (`probe()` per mode, ring buffer, no per-frame allocation); hidden on phones.
 - [x] Check `--all --paused` 4 modes; ≥ 50 fps `--perf`. Then final light cleanup of dead code (grep only).
+
+## Phase 4 – Sóng dừng + phần tử to + "Chỉ phần tử"  `[ ]`  · Opus 5.5 (High)
+SPEC §2, §3.1 (v5 bullet), §3.5. Files: `js/modes/waves.js` (whole – template for the new mode), `js/main.js` (grep `MODES|ALIAS|src=talker|med=`), `js/state.js`, `js/ui.js` (grep `PATHS|chips|toggle|tgs`), `js/scope.js` (grep `lane`), `css/style.css` (grep `\.chips|\.g4|\.tgs`), `tools/shot.mjs` (grep `'waves', 'sound'`).
+- [ ] `js/modes/standing.js` exactly per SPEC §3.5 (same module shape as waves.js: layout/draw/annotate/controls/probe/metrics/readout, title 'Sóng dừng', short 'Dừng', icon 'standing' = new PATHS entry). Register in MODES after surface (keys 1–5); add `group` ('mech'|'em') to every mode export; parse `end=free` and `beads=1` from the hash like `src=talker`; add 'standing' to the shot.mjs perf list; one line in the CLAUDE.md code map.
+- [ ] waves.js: v5 bead sizing + spring-lane cap (SPEC §3.1 v5); rope tube width and coil amplitude scale with r.
+- [ ] `beadsOnly` toggle "Chỉ phần tử" in the Hiển thị group of waves and standing (VTCB ring layer as SPEC).
+- [ ] scope.js: `overlay` lane branch (both traces on one axis).
+- [ ] Verify: shots `after4 "mode=standing" --paused`, `after4e "mode=standing&end=free" --paused`, `after4w "mode=waves" --paused`, `after4b "mode=waves&beads=1"`. Open only: after4-desk-paused, after4-phone-paused, after4e-desk-paused, after4w-desk-paused, after4w-phone, after4b-desk. Check: nodes exactly on beads, λ/2 rulers node–node / antinode–antinode, red & orange beads in adjacent bó move opposite, spring beads never touch at A max, labels do not overlap. `node tools/shot.mjs p --perf` ≥ 50 fps for all 5 modes. Push; skip the deploy check (routine step 9) in this phase.
+- Log:
+
+## Phase 5 – Header không khung + thanh chọn 2 cấp + rà hạt + kiểm tra cuối  `[ ]`  · Sonnet 5.5 (Medium)
+SPEC §4 (Header v5, Mode nav v5). Files: `index.html`, `js/ui.js` (grep `mode tabs|tabBtns|setMode|HELP`), `css/style.css` (grep `#title|#school|#tabs|\.seg|@media`), `js/modes/surface.js` and `js/modes/sound.js` (grep `L.r =` only).
+- [ ] Header per SPEC §4 Header v5 (all breakpoints).
+- [ ] Two-level nav per SPEC §4 Mode nav v5, built in ui.js from `mode.group`; remember the last mech mode; aria: role=tablist on the group row and on the sub-tab row; keys 1–5 unchanged.
+- [ ] Help modal (≤ 5 bullets): keys 1–5, "Sóng cơ có 4 chế độ con", one short mention of Chỉ phần tử.
+- [ ] Particle size: surface `L.r` about +35 % if the top-row particles keep ≥ 3 px gap at max amplitude (else less); sound: raise the radius cap 4,4 → 5,2 only if the column shows no new merging (compare before/after desk shot), otherwise leave it.
+- [ ] Final check: `shot.mjs after5 --all --paused` and `shot.mjs after5s "mode=standing" --all` must exit 0 (no scrollbar, school name one line). Open after5-desk720, after5-phone360, after5-phoneLand, after5-desk-paused, after5s-phone. `--perf` ≥ 50 fps all modes. Full deploy check (5 retries) this phase.
+- Log:
 
 ## Log
 <!-- one line per session: date · phase · what · numbers checked · hash -->

@@ -47,14 +47,15 @@ phương dao động, phương truyền sóng, vùng nén, vùng giãn, đỉnh 
   | 6 | Sóng vô tuyến | 1 m – 100 km | 3·10³ – 3·10⁸ | Đài FM 100 MHz → 3 m (default band) |
 - Honesty: animations are slowed and amplitudes enlarged → said once, on the pause chip line 2. Readouts always show **real** values.
 
-## 3. Modes (4 tabs)
+## 3. Modes (5, two-level nav)
 | id (`#mode=`) | Tab (desktop / phone) | Old ids kept as aliases |
 |---|---|---|
 | `waves` (default) | Sóng ngang – Sóng dọc / Ngang – Dọc | `transverse` |
 | `sound` | Sóng âm / Sóng âm | `longitudinal` |
 | `surface` | Sóng mặt / Sóng mặt | – |
+| `standing` | Sóng dừng / Dừng | – |
 | `em` | Sóng điện từ / Điện từ | – |
-Keys 1–4 select tabs. `#mode=sound&src=talker` and `&med=water|steel` select source/medium (checker + teacher links).
+Keys 1–5 select modes (waves, sound, surface, standing, em). `#mode=standing&end=free` selects the free end; `&beads=1` turns on Chỉ phần tử (checker links). `#mode=sound&src=talker` and `&med=water|steel` select source/medium (checker + teacher links).
 
 ### 3.1 `waves` – Sóng ngang và sóng dọc song song
 Two lanes stacked, **same f, A, v, t and the same x scale**, so λ and the propagation are visibly identical and only the
@@ -72,6 +73,7 @@ direction of oscillation differs. Seg control "Cả hai | Sóng ngang | Sóng d�
   aligned (same length) with the real value; a thin vertical dashed guide through the two red beads; readout chip.
 - **No graphs** (the old u–x and u–t graphs are deleted).
 - Controls: f (0,2 – 5 Hz, log slider + chips 0,5/1/2/4), A, v (0,5 – 4 m/s), làm chậm, lane seg, toggle "Phần tử đỏ".
+- **v5 – bigger beads:** spacing target dxT = 28 px desk / 17 px phone (N = clamp(round(ropeW/dxT), 18, 40)), bead r = clamp(0,25·dx, 4,4, 8,5), red bead r + 2; rope tube width and coil zigzag amplitude scale with r. The rope keeps the slider amplitude; the spring lane may draw a smaller one: k·A_spring ≤ min(0,8; 1 − (2r+3)/dx) so neighbouring beads never touch (this replaces "same drawn amplitude in both lanes"). Toggle **Chỉ phần tử** (state `beadsOnly`, shared with `standing`): hides the rope tube and the coil springs; each bead gets a faint grey VTCB ring at its rest position (all rings pre-rendered once per layout into one offscreen canvas → one drawImage per frame). Driver unchanged.
 
 ### 3.2 `sound` – Sóng âm
 Layout left → right: source · medium · receiver. Medium seg **Không khí | Nước** (v4: Thép removed by the owner; physically honest scenes):
@@ -121,12 +123,26 @@ in shallow mode. Orbit outlines are **dashed** red lines (v4) and may stay while
   band's real λ range, f range and example.
 - Controls: làm chậm, toggles Điện trường E / Từ trường B / Mũi tên.
 
+### 3.5 `standing` – Sóng dừng trên dây (v5)
+Physics (KNTT, bài Sóng dừng). String length ℓ = 1,20 m (real), X = ℓ − x = distance from the reflecting (right) end, K = 2π/λ, λ = v/f.
+- Hai đầu cố định: ℓ = k·λ/2 (k = số bó = số bụng n); u = A·sin(KX)·cos(ωt); f_n = n·v/(2ℓ).
+- Một đầu tự do (right end = ring sliding on a smooth vertical rod): ℓ = (2k+1)·λ/4 with k = n − 1 (n = số bụng); u = A·cos(KX)·sin(ωt); f_n = (2n−1)·v/(4ℓ).
+- Only resonant states (n = 1…6) are offered → always a true steady standing wave; no fake build-up/transient.
+- Left end: the same máy rung as `waves`, upright; its shaft moves with tiny amplitude e = min(2 px, 0,05·A_px) and the string uses u + e·(X/ℓ)·(same time factor) → the driver end is ≈ a node.
+- Nodes every λ/2, antinodes halfway (node–antinode λ/4); amplitude at X = A·|sin KX| (fixed) or A·|cos KX| (free); all points of one bó (between two adjacent nodes) oscillate in phase, adjacent bó in antiphase.
+- Incident + reflected (toggle): fixed: u_t = (A/2)·sin(ωt + KX), u_r = −(A/2)·sin(ωt − KX); free: u_r = +(A/2)·sin(ωt − KX). Their sum must equal u exactly.
+Stage: one string, vertically centred, axes O, x, u like the rope lane. Beads: fixed → m = max(2, round(ℓpx/n/dxT)) per bó, N = n·m + 1; free → m = max(1, round(ℓpx/(2n−1)/dxT)) per quarter-λ, N = (2n−1)·m + 1 → every node falls exactly on a bead. dxT as §3.1 v5, r = clamp(0,27·dx, 4,4, 8,5). Arrays preallocated at max N (no per-frame allocation). Right end: fixed = steel clamp post (canvas, cached gradient); free = vertical rod + ring carrying the last bead.
+Running (no text): string tube + beads (or beads + VTCB rings when Chỉ phần tử), red bead at the first antinode from the left, orange bead at the next antinode (n ≥ 2; for fixed n = 1 only the red). Toggle on → thin dashed incident (orange) and reflected (blue) curves.
+Paused: dashed envelope ±A·|S(X)|; pills "Nút sóng"/"Nút" at nodes and "Bụng sóng"/"Bụng" at antinodes (tag() overlap rule of waves.js); λ/2 ruler between two adjacent nodes (below) and between two adjacent antinodes (above), real values ("λ/2 = 40,0 cm"); small arrows on beads whose envelope > 0,4·A showing their velocity direction (same in one bó, opposite in neighbours); one "Cùng pha" pill under one bó and one "Ngược pha" pill between the red and orange beads; "Đầu gắn cần rung ≈ nút"; free end: "Đầu tự do = bụng". Chip line 2 (readout()): "ℓ = 1,20 m = 3·λ/2 · hai đầu cố định" or "ℓ = 1,20 m = 5·λ/4 · một đầu tự do", plus the slow/amplitude note.
+Controls: group "Sóng dừng trên dây": seg Đầu dây (Hai đầu cố định | Một đầu tự do); chips "Số bụng sóng" 1–6 (label value shows f, e.g. "n = 3 · f = 7,5 Hz"); Biên độ bụng A (cm); Tốc độ truyền v (2–12 m/s, default 6); Làm chậm (mode default slow = 0,1). Group "Hiển thị": toggles Phần tử đỏ, Chỉ phần tử, Sóng tới – phản xạ (default off). State keys: stN 3, stEnd 'fixed', stA, stv 6, stInc false, beadsOnly false.
+Mini-scope: probe() returns lane 'overlay' → red bead (red) and orange bead (orange) on ONE axis, showing antiphase (scope.js gets an `overlay` branch).
+
 ## 4. Layout & UI
-- **Header (identity, unchanged look):** centre white pill with red uppercase **"THÍ NGHIỆM MÔ PHỎNG SÓNG"**; right **"TRƯỜNG THPT TRẦN
-  QUỐC TOẢN (ĐỒNG THÁP)"** red uppercase in a white card with a red left bar – **always one line** (`white-space:nowrap`, font size
-  `clamp()` by viewport; on phones it sits on its own line under the title); left: icon toolbar (help, mute, fullscreen if supported,
-  screenshot, restart).
-- **Mode tabs (v4):** centred on the page under the title pill (same centre x as the title), not centred over the stage.
+- **Header (v5):** no boxes – `#title` and `#school` have no background, border, red left bar, radius, shadow or box padding (desktop and phones; the phone red underline is removed too). Text stays red uppercase 800, title may grow 1–2 px; school name always one line (nowrap + clamp). Left: icon toolbar unchanged.
+- **Mode nav (v5, two levels):** level 1 = **SÓNG CƠ** | **SÓNG ĐIỆN TỪ**; when Sóng cơ is active its capsule expands in the same row to show 4 sub-tabs: Sóng ngang – Sóng dọc · Sóng âm · Sóng mặt · Sóng dừng. Clicking SÓNG CƠ while on EM returns to the last mech mode (default waves). Modes carry `group: 'mech' | 'em'`; the nav is built from that. The nav must never be taller than the v4 tab row:
+  - desktop: one row (34 px; 30 px when height ≤ 820), centred under the title. Active group = ink fill; its sub-tabs inside: active = white fill + ink text, others white 75 % text.
+  - phone portrait (< 1000 px): one row 44 px = [narrow group button "SÓNG / CƠ" (2 lines, 9–10 px, ~30 px wide) + 4 icon sub-tabs, short labels Ngang–Dọc / Âm / Mặt / Dừng] + [Điện từ]; with EM active: two equal buttons Sóng cơ | Điện từ.
+  - phone landscape (height ≤ 520): row 1 = group seg (28 px), row 2 = 4 icon sub-tabs (32 px, one-word labels) only while Sóng cơ is active.
 - **Desktop grid:** `top` row, then tabs, then `ctrl | stage`. Columns `var(--ctrl-w) minmax(0,1fr)` – the old `#info` column is
   removed and the stage takes all the width. Bottom-centre of the stage: restart icon button, big red **Phát / Tạm dừng** pill (the speed chip is deleted in v4; speed lives on the slider).
 - **Phones (< 1000 px or height ≤ 520 px):** title, school line, 4 icon tabs, stage, bottom dock (2 groups max: "Sóng", "Hiển thị").
