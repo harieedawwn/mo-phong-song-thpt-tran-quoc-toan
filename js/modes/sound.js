@@ -6,6 +6,7 @@ import {SPEED, MEDIUM, HEARING, clamp, describePitch, niceSlow, makeWave} from '
 import {C, font, pill, text, arrow, ruler, roundRect, textW} from '../draw/ink.js';
 import {ball, drawBall, BALL, ballDpr} from '../draw/ball.js';
 import {loadArt, layoutLabels, drawLabels} from '../art/sprite.js';
+import {loadImg, loadAnchors, baked} from '../art/raster.js';
 
 const F_MIN = 10, F_MAX = 40000;           // slider reaches a little outside 20 Hz–20 kHz to show hạ âm / siêu âm
 const DB_MIN = 40, DB_MAX = 100;
@@ -19,81 +20,67 @@ const niceF = f => f < 100 ? Math.round(f) : Number(f.toPrecision(f < 1000 ? 2 :
 const fPos = f => Math.round(1000 * Math.log(f / F_MIN) / Math.log(F_MAX / F_MIN));
 function setF(f) { set('f', f); set('slow', niceSlow(f)); }
 
-// Loudspeaker = art/speaker.svg (static cabinet / basket / magnet + moving layer "cone": cone, dust cap, voice coil).
-// Surround + spider are canvas curves from a static anchor to the moving rim / coil, so they stretch with u(0,t).
-const spkArt = loadArt('speaker');                                      // cut-away view only (v4)
-spkArt.ready.then(() => { labelKey = ''; bus.emit('change', {key: 'art'}); });
-const SPK_W = 156, SPK_H = 200;
-const spkPt = (id, fx, fy) => spkArt.pt(id) || {x: fx, y: fy};
+// Raster figures (v4, SPEC §7): speaker, talker and listener are WebP sprites; every number comes from img/anchors.json (image px).
+// The figure objects keep the old interface (x, y, s, w, h, px, place, drawDyn) so layout/labels code is shared: design units = image px here.
+const AN = loadAnchors();
+const iSpk = loadImg('img/speaker-base.webp'), iCone = loadImg('img/speaker-cone.webp'), iTk = loadImg('img/talker.webp'), iHead = loadImg('img/listener.webp');
+const DEF = {speaker: {size: [688, 662], cone: {at: [388.4, 117], size: [238, 430]}, rimTop: [625.5, 121], rimBot: [625.5, 542.2], labels: {}},
+  talker: {size: [747, 1054], folds: [411, 833.5], mouth: [671, 628.5], mouthH: 30, airPath: [], labels: {}}, listener: {size: [761, 770], earCanal: [380, 302.8]}};
+const an = k => (AN.data && AN.data[k]) || DEF[k];
+const labTab = (k, rows) => rows.map(([id, name, side, row]) => { const p = (an(k).labels || {})[name] || [0, 0]; return [id, name, p[0], p[1], side, row]; });
+Promise.all([AN.ready, iSpk.ready, iCone.ready, iTk.ready, iHead.ready]).then(() => { labelKey = ''; if (L.w) layout(L.w, L.h); bus.emit('change', {key: 'art'}); });
+const SPK_W = 688, SPK_H = 662;
 const spk = {
   w: SPK_W, h: SPK_H, x: 0, y: 0, s: 1,
   place(x, y, bw, bh, ax = 0.5, ay = 0.5) { const s = Math.min(bw / SPK_W, bh / SPK_H); this.s = s; this.x = x + (bw - SPK_W * s) * ax; this.y = y + (bh - SPK_H * s) * ay; },
   px(dx, dy) { return [this.x + dx * this.s, this.y + dy * this.s]; },
-  rimH() { return spkPt('a-rimbot', 146, 156).y - spkPt('a-rimtop', 146, 44).y; },
-  rimX() { return spkPt('a-rimtop', 146, 44).x; },
-  rimCy() { return (spkPt('a-rimbot', 146, 156).y + spkPt('a-rimtop', 146, 44).y) / 2; },
+  rimH() { const a = an('speaker'); return a.rimBot[1] - a.rimTop[1]; },
+  rimX() { return an('speaker').rimTop[0]; },
+  rimCy() { const a = an('speaker'); return (a.rimBot[1] + a.rimTop[1]) / 2; },
   drawStatic() {},
-  // dd = cone displacement in design units (+ toward the air) = u(0,t)/s, the same u as the first air layer
+  // dd = cone displacement in image px (+ toward the air) = u(0,t)/s, the same u as the first air layer
   drawDyn(ctx, dd) {
-    const s = this.s, dpr = ballDpr();
-    if (spkArt.scale !== s || spkArt.dpr !== dpr) spkArt.render(s, dpr);
-    spkArt.draw(ctx, this.x, this.y, {cone: {dx: dd}});
-    if (!spkArt.layers.length) return;
-    const X = (u) => this.x + u * s, Y = (v) => this.y + v * s;
-    const rt = spkPt('a-rimtop', 146, 44), rb = spkPt('a-rimbot', 146, 156), ft = spkPt('a-fl-top', 139, 40), fb = spkPt('a-fl-bot', 139, 160);
-    const st = spkPt('a-sp-top', 84, 76), sb = spkPt('a-sp-bot', 84, 124), cl = spkPt('a-coil', 84, 85);
-    ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-    // surround (gờ treo): rubber half-roll from the fixed basket flange to the moving cone rim
-    for (const [f, r, k] of [[ft, rt, -1], [fb, rb, 1]]) {
-      ctx.beginPath(); ctx.moveTo(X(f.x), Y(f.y)); ctx.quadraticCurveTo(X((f.x + r.x) / 2 + 2 + dd * 0.5), Y((f.y + r.y) / 2 + k * 8), X(r.x + dd), Y(r.y));
-      ctx.strokeStyle = '#16181b'; ctx.lineWidth = 2.8 * s; ctx.stroke();
-      ctx.strokeStyle = 'rgba(255,255,255,.28)'; ctx.lineWidth = 0.8 * s; ctx.stroke();
-    }
-    // spider: corrugated cloth from the fixed basket to the moving voice coil
-    for (const [a, k] of [[st, 1], [sb, -1]]) {
-      const cy = cl.y + (k > 0 ? 0 : 30), x1 = X(cl.x - 2 + dd);
-      ctx.beginPath(); ctx.moveTo(X(a.x), Y(a.y));
-      ctx.bezierCurveTo(X(a.x + 4 + dd * 0.3), Y(a.y + k * 3), X(a.x - 5 + dd * 0.6), Y(a.y + k * 5), x1, Y(cy));
-      ctx.strokeStyle = '#b9965f'; ctx.lineWidth = 1.8 * s; ctx.stroke();
-    }
+    const s = this.s, dpr = ballDpr(), cn = an('speaker').cone;
+    const b = baked(iSpk, SPK_W * s, SPK_H * s, dpr), c = baked(iCone, cn.size[0] * s, cn.size[1] * s, dpr);
+    if (!b) { ctx.fillStyle = 'rgba(0,0,0,.05)'; ctx.fillRect(this.x, this.y, SPK_W * s, SPK_H * s); return; }
+    ctx.drawImage(b, this.x, this.y, SPK_W * s, SPK_H * s);
+    if (c) ctx.drawImage(c, this.x + (cn.at[0] + dd) * s, this.y + cn.at[1] * s, cn.size[0] * s, cn.size[1] * s);
   }
 };
-const SPK_LAB_IN = [['cone', 'Màng loa', 'a-cone', 122, 65, 'top'], ['basket', 'Khung loa', 'a-basket', 108, 54, 'top', 1], ['coil', 'Cuộn dây', 'a-coil', 84, 85, 'bottom'], ['magnet', 'Nam châm', 'a-magnet', 42, 75, 'bottom']];
-const spkLabels = () => SPK_LAB_IN
-  .map(([id, t, a, fx, fy, side, row]) => { const p = spkPt(a, fx, fy); return [id, t, p.x, p.y, side, row]; });
-// Talker = art/talker.svg (head + sagittal cut of the vocal tract); moving layer "folds" (vocal folds) vibrates with u(0,t).
-// The air column starts at the lips (anchor a-mouth) and is a bit narrower than the loudspeaker's (TALK_COL design units).
-const tkArt = loadArt('talker');
-tkArt.ready.then(() => { labelKey = ''; bus.emit('change', {key: 'art'}); });
-const TALK_W = 232, TALK_H = 300, TALK_COL = 108;
-const tkPt = (id, fx, fy) => tkArt.pt(id) || {x: fx, y: fy};
+const SPK_LAB_IN = [['cone', 'Màng loa', 'top'], ['basket', 'Khung loa', 'top', 1], ['coil', 'Cuộn dây', 'bottom'], ['magnet', 'Nam châm', 'bottom']];
+const spkLabels = () => labTab('speaker', SPK_LAB_IN);
+// Talker = talker.webp (static) + two pale-pink vocal folds drawn over the larynx; they open / close with u(0,t) (≤ 6 image px).
+// The air column starts at the lips (mouth) and is mouthH·3 image px tall (never thinner than 40 px, so the spheres stay readable).
+const TALK_W = 747, TALK_H = 1054;
 const talk = {
   w: TALK_W, h: TALK_H, x: 0, y: 0, s: 1,
   place(x, y, bw, bh, ax = 0.5, ay = 0.5) { const s = Math.min(bw / TALK_W, bh / TALK_H); this.s = s; this.x = x + (bw - TALK_W * s) * ax; this.y = y + (bh - TALK_H * s) * ay; },
   px(dx, dy) { return [this.x + dx * this.s, this.y + dy * this.s]; },
-  mouth() { return tkPt('a-mouth', 211, 165.8); },
+  mouth() { const m = an('talker').mouth; return {x: m[0], y: m[1]}; },
   drawStatic() {},
-  // v = u(0,t) / A in −1…1: the folds move up/down and thicken/thin with the same oscillation that pushes the first air layer
+  // v = u(0,t) / A in −1…1
   drawDyn(ctx, v) {
-    const s = this.s, dpr = ballDpr();
-    if (tkArt.scale !== s || tkArt.dpr !== dpr) tkArt.render(s, dpr);
-    tkArt.draw(ctx, this.x, this.y, {folds: {dy: -1.3 * v, sy: 1 + 0.32 * v}});
+    const s = this.s, dpr = ballDpr(), b = baked(iTk, TALK_W * s, TALK_H * s, dpr);
+    if (!b) { ctx.fillStyle = 'rgba(0,0,0,.05)'; ctx.fillRect(this.x, this.y, TALK_W * s, TALK_H * s); return; }
+    ctx.drawImage(b, this.x, this.y, TALK_W * s, TALK_H * s);
+    const f = an('talker').folds, g = 10 + 6 * v, w = 30 * s, hgt = 15 * s, cx = this.x + f[0] * s, cy = this.y + f[1] * s;
+    ctx.fillStyle = '#f2a7b5'; ctx.strokeStyle = '#b4566a'; ctx.lineWidth = Math.max(0.8, 1.6 * s);
+    for (const k of [-1, 1]) { ctx.beginPath(); ctx.ellipse(cx + k * (g * s + w * 0.5), cy, w * 0.5, hgt * 0.5, 0, 0, 6.2832); ctx.fill(); ctx.stroke(); }
   }
 };
-const TALK_LAB = [['nasal', 'Khoang mũi', 'a-nasal', 170, 143, 'top'], ['mouth', 'Khoang miệng', 'a-oral', 180, 154, 'top', 1], ['tongue', 'Lưỡi', 'a-tongue', 170, 178, 'bottom'],
-  ['throat', 'Họng', 'a-throat', 127, 196, 'bottom'], ['cords', 'Dây thanh âm', 'a-cords', 139, 255, 'bottom']];
-const talkLabels = () => TALK_LAB.map(([id, t, a, fx, fy, side, row]) => { const p = tkPt(a, fx, fy); return [id, t, p.x, p.y, side, row]; });
-// Listener = art/head.svg mirrored (faces the source) + magnifier art/ear.svg (coronal cut: pinna, S-canal, eardrum, ossicles,
+const TALK_LAB = [['nasal', 'Khoang mũi', 'top'], ['mouth', 'Khoang miệng', 'top', 1], ['tongue', 'Lưỡi', 'bottom'], ['throat', 'Họng', 'bottom'], ['cords', 'Dây thanh âm', 'bottom']];
+const talkLabels = () => labTab('talker', TALK_LAB);
+// Listener = listener.webp (head facing left, toward the source) + magnifier art/ear.svg (coronal cut: pinna, S-canal, eardrum, ossicles,
 // cochlea, semicircular canals, nerve). Composite design box EAR_W × EAR_H; the canal axis (y = EAR_AX) is the air column's centre line.
-const headArt = loadArt('head'), earArt = loadArt('ear');
-for (const a of [headArt, earArt]) a.ready.then(() => { labelKey = ''; bus.emit('change', {key: 'art'}); });
+const earArt = loadArt('ear');
+earArt.ready.then(() => { labelKey = ''; bus.emit('change', {key: 'art'}); });
 // Composite (design units = px at s = 1): small listener head on the left, big magnifier disc (ear.svg scaled by ES) on the right.
 const ES = 2.05, RB = 113.2 * ES;                                       // ES = ear.svg → composite scale; RB = bezel outer radius
-const HD = {s: 0.38, x: 0, y: 0, w: 232, ex: 99.2, ey: 123.5};          // head.svg in the composite (mirrored); ex/ey = its ear (a-ear)
-const HX = (HD.w - HD.ex) * HD.s;                                        // head's ear x (mirrored)
+const HD = {s: 0.12, x: 0, y: 0, w: 761, h: 770, ex: 380, ey: 302.8};           // listener.webp in the composite; ex/ey = earCanal (image px)
+const HX = HD.ex * HD.s;                                                 // head's ear x
 const CX = HX + 8 + 113 * ES;                                           // disc centre x: its left edge sits just right of the head's ear
 const EAR_AX = RB + 4;                                                  // disc centre y = canal axis = centre line of the air column
-HD.y = EAR_AX - 188 * HD.s;                                             // the air column meets the face at nose / mouth level
+HD.y = EAR_AX - HD.ey * HD.s;                                           // ear canal on the column's centre line
 const EAR_W = CX + RB + 3, EAR_H = EAR_AX + 125 * ES + 6;
 const EX = CX - 148 * ES, EY = EAR_AX - 116 * ES;                       // ear.svg origin in the composite (disc centre 148,116)
 const earPt = (id, fx, fy) => { const p = earArt.pt(id) || {x: fx, y: fy}; return {x: EX + p.x * ES, y: EY + p.y * ES}; };
@@ -119,10 +106,10 @@ const ear = {
   // phase = nerve-pulse phase 0…1, −1 while the wave has not reached the ear
   draw(ctx, d, phase) {
     const s = this.s, dpr = ballDpr(), X = this.x, Y = this.y;
-    if (!zoom && (headArt.scale !== s * HD.s || headArt.dpr !== dpr)) headArt.render(s * HD.s, dpr);
     if (earArt.scale !== s * ES || earArt.dpr !== dpr) earArt.render(s * ES, dpr);
     if (!zoom) {
-      ctx.save(); ctx.translate(X + (HD.x + HD.w * HD.s) * s, Y + HD.y * s); ctx.scale(-1, 1); headArt.draw(ctx, 0, 0); ctx.restore();
+      const hb = baked(iHead, HD.w * HD.s * s, HD.h * HD.s * s, dpr);
+      if (hb) ctx.drawImage(hb, X + HD.x * s, Y + HD.y * s, HD.w * HD.s * s, HD.h * HD.s * s);
       ctx.strokeStyle = 'rgba(52,58,66,.5)'; ctx.lineWidth = 1; ctx.beginPath();
       ctx.arc(X + CALL.ex * s, Y + CALL.ey * s, CALL.r1 * s, 0, 6.2832);
       for (let i = 0; i < 2; i++) { const t = CALL.t[i]; ctx.moveTo(X + t[0] * s, Y + t[1] * s); ctx.lineTo(X + t[2] * s, Y + t[3] * s); }
@@ -235,8 +222,8 @@ function layout(w, hh) {
       // column in front of the lips: TALK_COL design units tall, centred on the mouth; rows re-fitted to it
       const m = talk.mouth();
       // the head is tall above the mouth: keep 2 label rows + the heading below the readout chip (≈ 70 px above the hair)
-      const s = Math.min(fitS((L.airL - 4) / (m.x + 2), m.y, TALK_H - m.y), L.compact ? 9 : (cy - 136) / m.y), colPx = TALK_COL * s;
-      L.rows = clamp(Math.round(colPx / Math.min(L.dy, L.dx * 1.35)), 5, 10); L.dy = colPx / L.rows;
+      const s = Math.min(fitS((L.airL - 4) / (m.x + 2), m.y, TALK_H - m.y), L.compact ? 9 : (cy - 136) / m.y), colPx = Math.max(an('talker').mouthH * 3 * s, 40);
+      L.rows = clamp(Math.round(colPx / Math.min(L.dy, L.dx * 1.35)), 4, 10); L.dy = colPx / L.rows;
       L.fieldTop = cy - colPx / 2; L.fieldBot = cy + colPx / 2;
       talk.s = s; talk.x = L.airL - (m.x + 2) * s; talk.y = cy - m.y * s;
     } else {
@@ -573,6 +560,13 @@ function annotate(ctx) {
     if (yn < L.h - 12) pill(ctx, 'Bể nước', airL + airW / 2, yn, {size: fs, weight: 800, fill: C.paper, stroke: null, color: C.ink2});
     return;
   }
+  // talker, paused: dashed air path from the lungs through the larynx and mouth to the lips (anchors airPath)
+  if (state.source === 'talker' && L.layout === 'side' && !L.compact && AN.data) {
+    const f = talk, P = AN.data.talker.airPath;
+    ctx.save(); ctx.setLineDash([6, 5]); ctx.strokeStyle = C.blue || '#1c7ed6'; ctx.lineWidth = 2; ctx.lineCap = 'round'; ctx.beginPath();
+    P.forEach((q, i) => { const [x, y] = f.px(q[0], q[1]); if (i) ctx.lineTo(x, y); else ctx.moveTo(x, y); });
+    ctx.stroke(); ctx.restore();
+  }
   // --- part labels + headings
   if (L.layout === 'bars' || L.compact) return;
   const lab = L.lab; if (!lab) return;
@@ -582,7 +576,7 @@ function annotate(ctx) {
   const hs = L.fs + 1;
   if (L.layout === 'side') {
     text(ctx, SRC[state.source].title, (sf.x + L.airL) / 2 + (state.source === 'talker' ? -20 : 0), Math.min(lab.tops.src, sf.y) - 14, {size: hs, weight: 800});
-    const hx = ear.x + HD.w * HD.s * 0.42 * ear.s, hy = ear.y + HD.y * ear.s - 8;      // two short lines above the head (clear of the disc and the air column)
+    const hx = ear.x + HD.w * HD.s * 0.2 * ear.s, hy = ear.y + HD.y * ear.s - 8;      // two short lines above the head (clear of the disc and the air column)
     text(ctx, 'Tai người', hx, hy - 16, {size: hs, weight: 800}); text(ctx, 'nghe', hx, hy, {size: hs, weight: 800});
   } else {
     text(ctx, SRC[state.source].title, sf.x + sf.w * sf.s + 10, sf.y + 8, {size: hs - 1, weight: 800, align: 'left'});

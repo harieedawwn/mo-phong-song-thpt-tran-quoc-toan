@@ -5,14 +5,15 @@ Read only this header and YOUR phase section. Phase-local rule: touch only what 
 All positions are in `img/anchors.json` (image pixels of each WebP). First thing in a phase that uses it: add a temporary debug
 draw of the anchors it needs (small red dots), take ONE screenshot, fix any anchor off by > 6 px directly in the JSON, remove the debug draw.
 
-## Phase 1 – Ảnh thật: loa, người nói, đầu người nghe  `[ ]`  · Sonnet (Medium)
+## Phase 1 – Ảnh thật: loa, người nói, đầu người nghe  `[x]`  · Sonnet (Medium)
 SPEC §7. Files: `js/modes/sound.js` (grep `spk|speaker|talk|head|listener|column|airL`), `js/art/sprite.js` (API style only), `img/anchors.json`.
-- [ ] `js/art/raster.js`: `loadImg(path)` (Image + decode, cached) and `loadAnchors()` (fetch `img/anchors.json` once); draw with `drawImage` at a scale chosen in `layout()`; placeholder until ready.
-- [ ] Loudspeaker = `speaker-base.webp` + `speaker-cone.webp` drawn at `cone.at` shifted by u(0,t) (max ±8 image px at A max). Air column starts at `coneFace`, rows only between `rimTop` and `rimBot` (inner 80 %), first layer locked to the cone face.
-- [ ] Talker = `talker.webp` (static) + small canvas overlay at `folds`: two pale-pink folds opening/closing with u(0,t) (≤ 6 px), column starts at `mouth` (height `mouthH`·2..3). Paused: dashed air path along `airPath` + labels from `labels`.
-- [ ] Listener head = `listener.webp`, facing left, air column ends at `earCanal`. Paused labels: speaker/talker names from `labels`.
-- [ ] Delete `art/speaker.svg`, `art/talker.svg`, `art/head.svg` and their code once unused (keep `sprite.js` for driver/transducer).
-- [ ] Check `mode=sound` and `mode=sound&src=talker`, `--paused`: images sharp, no gaps between cone and air, ≥ 50 fps `--perf`.
+- [x] `js/art/raster.js`: `loadImg(path)` (Image + decode, cached) and `loadAnchors()` (fetch `img/anchors.json` once); draw with `drawImage` at a scale chosen in `layout()`; placeholder until ready.
+- [x] Loudspeaker = `speaker-base.webp` + `speaker-cone.webp` drawn at `cone.at` shifted by u(0,t) (max ±8 image px at A max). Air column starts at `coneFace`, rows only between `rimTop` and `rimBot` (inner 80 %), first layer locked to the cone face.
+- [x] Talker = `talker.webp` (static) + small canvas overlay at `folds`: two pale-pink folds opening/closing with u(0,t) (≤ 6 px), column starts at `mouth` (height `mouthH`·2..3). Paused: dashed air path along `airPath` + labels from `labels`.
+- [x] Listener head = `listener.webp`, facing left, air column ends at `earCanal`. Paused labels: speaker/talker names from `labels`.
+- [x] Delete `art/speaker.svg`, `art/talker.svg`, `art/head.svg` and their code once unused (keep `sprite.js` for driver/transducer).
+- [x] Check `mode=sound` and `mode=sound&src=talker`, `--paused`: images sharp, no gaps between cone and air, ≥ 50 fps `--perf`.
+- Log: ảnh thật cho loa/người nói/đầu người nghe (raster.js, anchors), xoá 3 SVG; perf sound 57,6 fps.
 
 ## Phase 2 – Tai thật trong kính lúp + âm thanh đi vào ống tai  `[ ]`  · Sonnet (High)
 SPEC §7, §3.2 (receiver). Files: ear parts of `js/modes/sound.js` (grep `ear|mag|zoom|drum|ossic|nerve`), `js/art/raster.js`, `img/anchors.json`.
