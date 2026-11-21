@@ -32,6 +32,13 @@ export const state = {
   orbits: true,     // show orbit outlines of the tracked particles
   // sóng điện từ
   band: 6,          // index into the 7 bands of Bảng 11.1 (0 = gamma … 6 = vô tuyến, default)
-  emE: true, emB: true, emArrows: true
+  emE: true, emB: true, emArrows: true,
+  // sóng dừng
+  stN: 3,           // số bụng sóng (1–6)
+  stEnd: 'fixed',   // fixed (hai đầu cố định) | free (một đầu tự do)
+  stA: 4,           // cm, biên độ bụng
+  stv: 6,           // m/s
+  stInc: false,     // show incident + reflected waves
+  beadsOnly: false  // Chỉ phần tử (waves + standing)
 };
 export function set(key, value) { state[key] = value; bus.emit('change', {key, value}); }

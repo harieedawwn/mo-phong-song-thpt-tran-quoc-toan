@@ -247,7 +247,7 @@ function probe() {
 }
 
 export default {
-  probe, id: 'em', title: 'Sóng điện từ', short: 'Sóng điện từ', icon: 'em',
+  probe, id: 'em', group: 'em', title: 'Sóng điện từ', short: 'Sóng điện từ', icon: 'em',
   defaults: {slow: 1},
   metrics: () => ({f: BANDS[state.band].f, v: CC}),
   readout: () => { const b = BANDS[state.band]; return b.name + ' · λ ' + b.lam + ' · f ' + b.fr + ' · ' + b.ex; },

@@ -32,7 +32,7 @@ v3 rebuild = **finished (Phase 19)**; any new work = new phase in `TASK.md`. Was
 - `js/main.js` – loop, resize/DPR, mode routing (`#mode=` + aliases), calls `draw` every frame and `annotate` only when paused, `window.__app`.
 - `js/state.js` – store + bus. `js/ui.js` – DOM helpers, controls, tabs, toolbar, help, play button. `js/fmt.js` – Vietnamese numbers.
 - `js/physics.js` – `makeWave()`, speeds, pitch text. `js/audio.js` – WebAudio (muted by default).
-- `js/modes/` – `waves.js` (sóng ngang + sóng dọc), `sound.js` (sóng âm), `surface.js` (sóng mặt), `em.js` (sóng điện từ).
+- `js/modes/` – `waves.js` (sóng ngang + sóng dọc), `sound.js` (sóng âm), `surface.js` (sóng mặt), `standing.js` (sóng dừng, nút luôn trùng hạt), `em.js` (sóng điện từ).
 - `js/draw/` – `grid.js` (paper background), `ink.js` (pills, arrows, rulers, `fx.a`), `ball.js` (3D sphere sprites).
 - `js/art/sprite.js` – loads `art/*.svg`, splits `data-move` layers, rasterises once per resize and crops each layer to its painted box (per frame = small drawImage only). `art/` – driver, speaker, speaker-out, transducer, head, talker, ear SVGs.
 - `img/` – realistic WebP art + `anchors.json` (SPEC §7), loaded by `js/art/raster.js`.

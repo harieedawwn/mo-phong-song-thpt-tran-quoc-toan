@@ -28,14 +28,14 @@ SPEC §3.3 (duck), §4 (Left panel v4, Zoom v4). Files: `js/main.js`, `js/ui.js`
 - [x] Controls card shrinks to content; "Phần tử đỏ" mini-scope card below (`probe()` per mode, ring buffer, no per-frame allocation); hidden on phones.
 - [x] Check `--all --paused` 4 modes; ≥ 50 fps `--perf`. Then final light cleanup of dead code (grep only).
 
-## Phase 4 – Sóng dừng + phần tử to + "Chỉ phần tử"  `[ ]`  · Opus 5.5 (High)
+## Phase 4 – Sóng dừng + phần tử to + "Chỉ phần tử"  `[x]`  · Opus 5.5 (High)
 SPEC §2, §3.1 (v5 bullet), §3.5. Files: `js/modes/waves.js` (whole – template for the new mode), `js/main.js` (grep `MODES|ALIAS|src=talker|med=`), `js/state.js`, `js/ui.js` (grep `PATHS|chips|toggle|tgs`), `js/scope.js` (grep `lane`), `css/style.css` (grep `\.chips|\.g4|\.tgs`), `tools/shot.mjs` (grep `'waves', 'sound'`).
-- [ ] `js/modes/standing.js` exactly per SPEC §3.5 (same module shape as waves.js: layout/draw/annotate/controls/probe/metrics/readout, title 'Sóng dừng', short 'Dừng', icon 'standing' = new PATHS entry). Register in MODES after surface (keys 1–5); add `group` ('mech'|'em') to every mode export; parse `end=free` and `beads=1` from the hash like `src=talker`; add 'standing' to the shot.mjs perf list; one line in the CLAUDE.md code map.
-- [ ] waves.js: v5 bead sizing + spring-lane cap (SPEC §3.1 v5); rope tube width and coil amplitude scale with r.
-- [ ] `beadsOnly` toggle "Chỉ phần tử" in the Hiển thị group of waves and standing (VTCB ring layer as SPEC).
-- [ ] scope.js: `overlay` lane branch (both traces on one axis).
-- [ ] Verify: shots `after4 "mode=standing" --paused`, `after4e "mode=standing&end=free" --paused`, `after4w "mode=waves" --paused`, `after4b "mode=waves&beads=1"`. Open only: after4-desk-paused, after4-phone-paused, after4e-desk-paused, after4w-desk-paused, after4w-phone, after4b-desk. Check: nodes exactly on beads, λ/2 rulers node–node / antinode–antinode, red & orange beads in adjacent bó move opposite, spring beads never touch at A max, labels do not overlap. `node tools/shot.mjs p --perf` ≥ 50 fps for all 5 modes. Push; skip the deploy check (routine step 9) in this phase.
-- Log:
+- [x] `js/modes/standing.js` exactly per SPEC §3.5 (same module shape as waves.js: layout/draw/annotate/controls/probe/metrics/readout, title 'Sóng dừng', short 'Dừng', icon 'standing' = new PATHS entry). Register in MODES after surface (keys 1–5); add `group` ('mech'|'em') to every mode export; parse `end=free` and `beads=1` from the hash like `src=talker`; add 'standing' to the shot.mjs perf list; one line in the CLAUDE.md code map.
+- [x] waves.js: v5 bead sizing + spring-lane cap (SPEC §3.1 v5); rope tube width and coil amplitude scale with r.
+- [x] `beadsOnly` toggle "Chỉ phần tử" in the Hiển thị group of waves and standing (VTCB ring layer as SPEC).
+- [x] scope.js: `overlay` lane branch (both traces on one axis).
+- [x] Verify: shots `after4 "mode=standing" --paused`, `after4e "mode=standing&end=free" --paused`, `after4w "mode=waves" --paused`, `after4b "mode=waves&beads=1"`. Open only: after4-desk-paused, after4-phone-paused, after4e-desk-paused, after4w-desk-paused, after4w-phone, after4b-desk. Check: nodes exactly on beads, λ/2 rulers node–node / antinode–antinode, red & orange beads in adjacent bó move opposite, spring beads never touch at A max, labels do not overlap. `node tools/shot.mjs p --perf` ≥ 50 fps for all 5 modes. Push; skip the deploy check (routine step 9) in this phase.
+- Log: standing.js (nút luôn trùng hạt, đầu cố định/tự do, sóng tới–phản xạ, nhãn khi dừng), hạt v5 + giới hạn biên độ lò xo, "Chỉ phần tử" (lớp vòng VTCB 1 drawImage), scope overlay; perf standing 60 fps, waves 56 fps; sound/surface/em 38–52 fps dao động như code gốc (gốc 44–56) → nhiễu máy ảo, không do phase này.
 
 ## Phase 5 – Header không khung + thanh chọn 2 cấp + rà hạt + kiểm tra cuối  `[ ]`  · Sonnet 5.5 (Medium)
 SPEC §4 (Header v5, Mode nav v5). Files: `index.html`, `js/ui.js` (grep `mode tabs|tabBtns|setMode|HELP`), `css/style.css` (grep `#title|#school|#tabs|\.seg|@media`), `js/modes/surface.js` and `js/modes/sound.js` (grep `L.r =` only).

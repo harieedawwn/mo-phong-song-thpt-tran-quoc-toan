@@ -7,7 +7,7 @@
 //   --all        also shoot 1280x720, 360x740 and phone landscape 844x390
 //   --paused     after the wave has run, press Pause and shoot again as <name>-<viewport>-paused.png (annotations visible)
 //   --page=<p>   open a repo file instead of the app (e.g. --page=art/driver.svg) and shoot it alone at 900x700 on white
-//   --perf       no shots: 390x844 phone, CPU throttled x4, average fps over 5 s for each of the 4 modes (waves, sound, surface, em); exit 1 if any < 50
+//   --perf       no shots: 390x844 phone, CPU throttled x4, average fps over 5 s for each of the 5 modes (waves, sound, surface, standing, em); exit 1 if any < 50
 // Requires the server: node tools/serve.mjs  (port 8765).
 // Exit code 1 on console errors / 4xx / page errors / a panel that needs scrolling / any page scrollbar (all viewports).
 import {createRequire} from 'node:module';
@@ -50,7 +50,7 @@ catch (e) {
 
 if (args.includes('--perf')) {
   const bad = [];
-  for (const mode of ['waves', 'sound', 'surface', 'em']) {
+  for (const mode of ['waves', 'sound', 'surface', 'standing', 'em']) {
     const ctx = await browser.newContext({viewport: {width: 390, height: 844}, isMobile: true, hasTouch: true, deviceScaleFactor: 2});
     const page = await ctx.newPage();
     const cdp = await ctx.newCDPSession(page);

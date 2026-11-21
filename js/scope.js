@@ -23,18 +23,13 @@ export function scopePush(t, p) {
 }
 const idx = i => (head - cnt + i + N) % N;
 
-function lane(y0, y1, win, t1, col, buf, f) {
+// col2/buf2 (optional) = a second trace on the same axis (overlay: two particles, e.g. antiphase beads of a standing wave)
+function lane(y0, y1, win, t1, col, buf, f, col2, buf2) {
   const h = (y1 - y0) / 2, cy = (y0 + y1) / 2, x0 = 26, x1 = W - 8;
   g.strokeStyle = MUTED; g.lineWidth = 1; g.beginPath(); g.moveTo(x0, cy); g.lineTo(x1, cy); g.stroke();   // time axis
   g.beginPath(); g.moveTo(x0, y0 + 2); g.lineTo(x0, y1 - 2); g.stroke();
-  g.strokeStyle = col; g.lineWidth = 2; g.lineJoin = 'round'; g.beginPath();
-  let first = true;
-  for (let i = 0; i < cnt; i++) {
-    const k = idx(i), dt = t1 - T[k]; if (dt > win) continue;
-    const x = x1 - dt / win * (x1 - x0), y = cy - buf[k] * (h - 6);
-    first ? g.moveTo(x, y) : g.lineTo(x, y); first = false;
-  }
-  g.stroke();
+  trace(x0, x1, cy, h, win, t1, col, buf);
+  if (buf2) trace(x0, x1, cy, h, win, t1, col2, buf2);
   if (!state.playing) {                                             // value ticks only when paused
     g.fillStyle = INK; g.font = font(10.5, 700, true); g.textAlign = 'right'; g.textBaseline = 'middle';
     g.fillText('A', x0 - 4, cy - h + 6); g.fillText('−A', x0 - 4, cy + h - 6);
@@ -47,6 +42,17 @@ function lane(y0, y1, win, t1, col, buf, f) {
     }
   }
   g.fillStyle = INK; g.font = font(12, 700, true); g.textAlign = 'left'; g.textBaseline = 'middle'; g.fillText('u', x0 + 4, y0 + 6);
+}
+
+function trace(x0, x1, cy, h, win, t1, col, buf) {
+  g.strokeStyle = col; g.lineWidth = 2; g.lineJoin = 'round'; g.beginPath();
+  let first = true;
+  for (let i = 0; i < cnt; i++) {
+    const k = idx(i), dt = t1 - T[k]; if (dt > win) continue;
+    const x = x1 - dt / win * (x1 - x0), y = cy - buf[k] * (h - 6);
+    first ? g.moveTo(x, y) : g.lineTo(x, y); first = false;
+  }
+  g.stroke();
 }
 
 // p = mode.probe() result, f = real frequency of the mode (Hz), draws 3 periods of simulated time
@@ -70,6 +76,7 @@ export function scopeDraw(p, f) {
     return;
   }
   g.fillStyle = INK; g.font = font(12, 700, true); g.textAlign = 'right'; g.textBaseline = 'middle'; g.fillText('t', W - 4, H / 2 + 12);
-  if (p.lane === 'both' || p.lane === 'two') { lane(4, H / 2 - 2, win, t1, p.ca, A, f); lane(H / 2 + 2, H - 4, win, t1, p.cb, B, f); }
+  if (p.lane === 'overlay') lane(4, H - 4, win, t1, p.ca, A, f, p.cb, p.two ? B : null);
+  else if (p.lane === 'both' || p.lane === 'two') { lane(4, H / 2 - 2, win, t1, p.ca, A, f); lane(H / 2 + 2, H - 4, win, t1, p.cb, B, f); }
   else lane(4, H - 4, win, t1, p.lane === 'spring' ? p.cb : p.ca, A, f);
 }

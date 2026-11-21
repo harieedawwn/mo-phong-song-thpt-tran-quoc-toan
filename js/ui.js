@@ -24,6 +24,8 @@ export const PATHS = {
   tag: '<path d="M3 3h8l10 10-8 8L3 11z"/><circle cx="7.5" cy="7.5" r="1.5"/>',
   medium: '<path d="M3 8c3-2 6 2 9 0s6-2 9 0M3 16c3-2 6 2 9 0s6-2 9 0"/>',
   note: '<path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/>',
+  standing: '<path d="M2 12c3-6 7-6 10 0s7 6 10 0"/><path d="M2 12c3 6 7 6 10 0s7-6 10 0" stroke-dasharray="2 2.5"/>',
+  beads: '<circle cx="5" cy="12" r="2.5"/><circle cx="12" cy="12" r="2.5"/><circle cx="19" cy="12" r="2.5"/>',
   source: '<rect x="3" y="6" width="6" height="12" rx="1"/><path d="M9 9l6-5v16l-6-5"/>'
 };
 export function icon(name, size = 20, cls = '') {
@@ -101,7 +103,7 @@ export const group = (tab, title, ...nodes) => h('section', {class: 'grp', 'data
 
 const HELP = [
   'Nhấn Phát / Tạm dừng (phím cách): khi sóng chạy chỉ thấy các vật và hạt; khi tạm dừng sẽ hiện nhãn, thước λ và số liệu thật.',
-  'Chọn loại sóng ở thanh phía trên (hoặc nhấn phím 1–4). Nút ↻ cho sóng xuất phát lại từ nguồn.',
+  'Chọn loại sóng ở thanh phía trên (hoặc nhấn phím 1–5). Nút ↻ cho sóng xuất phát lại từ nguồn.',
   'Kéo thanh Làm chậm để quan sát rõ dao động của từng phần tử; hình đã làm chậm và phóng đại biên độ.',
   'Chấm đỏ là một phần tử được theo dõi: nó chỉ dao động quanh vị trí cân bằng, sóng không mang nó đi.',
   'Trong nước, nguồn là đầu phát âm dưới nước áp sát môi trường (loa trong không khí không đẩy âm vào nước tốt); cùng tần số, bước sóng trong nước dài gấp 4,32 lần.'

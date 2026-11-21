@@ -16,7 +16,21 @@ const wave = makeWave();
 const driver = loadArt('driver');
 driver.ready.then(() => bus.emit('change', {key: 'art'}));
 const L = {};
-let xs = new Float32Array(0), ys = new Float32Array(0), spr = null;
+let xs = new Float32Array(0), ys = new Float32Array(0), spr = null, rings = null;
+const DRV = {shaft: {dy: 0, clipY: 94}};
+
+// "Chỉ phần tử": faint grey VTCB rings at the rest positions p = [x0, y0, x1, y1, …], drawn once into one offscreen canvas
+// (per frame = one drawImage). Shared with standing.js.
+export function ringLayer(w, hh, r, p) {
+  const d = ballDpr(), c = document.createElement('canvas');
+  c.width = Math.ceil(w * d); c.height = Math.ceil(hh * d);
+  const g = c.getContext('2d'); g.scale(d, d);
+  g.beginPath();
+  for (let i = 0; i < p.length; i += 2) { g.moveTo(p[i] + r, p[i + 1]); g.arc(p[i], p[i + 1], r, 0, 6.2832); }
+  g.fillStyle = 'rgba(73,80,87,.07)'; g.fill();
+  g.strokeStyle = 'rgba(73,80,87,.45)'; g.lineWidth = 1.1; g.setLineDash([2.5, 2]); g.stroke();
+  return c;
+}
 const occ = [];                         // label rectangles already placed (annotate only)
 
 const fPos = f => Math.round(1000 * Math.log(f / F_MIN) / Math.log(F_MAX / F_MIN));
@@ -35,9 +49,9 @@ function layout(w, hh) {
   const s = clamp(Math.min((lh - topRow) / 178, 0.2 * w / 132), 0.25, both ? 1.0 : 1.15);
   L.s = s; L.amax = 46 * s;
   L.xc = Math.round(132 * s + 8); L.ropeR = w - 26; L.ropeW = L.ropeR - L.xc;
-  L.N = clamp(Math.round(L.ropeW / (phone ? 10 : 20)), 24, 44);
+  L.N = clamp(Math.round(L.ropeW / (phone ? 17 : 28)), 18, 40);     // v5: bigger beads
   L.dx = L.ropeW / (L.N - 1);
-  L.r = phone ? 3.6 : 4.8;
+  L.r = clamp(0.25 * L.dx, 4.4, 8.5);
   L.tI = Math.round(L.N * 0.3); L.xt = L.xc + L.tI * L.dx;
   L.lh = lh; L.topRow = topRow;
   const showR = state.lane !== 'spring', showS = state.lane !== 'rope';
@@ -46,14 +60,16 @@ function layout(w, hh) {
   L.cyS = showS ? L.topS + topRow + 20 + Math.max(0, lh - topRow - 60 * s - 60) / 2 : null;
   L.topR = topR;
   if (xs.length !== L.N) { xs = new Float32Array(L.N); ys = new Float32Array(L.N); }
-  spr = null;
+  spr = null; rings = null;
   driver.render(s, ballDpr());
 }
 
 function syncWave() {
   wave.set(state.tf, state.tv, L.ropeW / SHOW_M, 6 * L.dx, L.ropeW * 0.7, 0);
-  // same drawn amplitude in both lanes; k·A ≤ 0,8 so the spring beads never cross each other or the driver
+  // rope = slider amplitude (k·A ≤ 0,8); spring lane may be drawn smaller: k·A_s ≤ min(0,8; 1 − (2r+3)/dx) → neighbouring beads never touch
   L.apx = Math.min(state.tA / A_MAX * L.amax, 0.8 / wave.k);
+  L.aspr = Math.min(L.apx, Math.max(0, Math.min(0.8, 1 - (2 * L.r + 3) / L.dx)) / wave.k);
+  L.ks = L.apx > 0 ? L.aspr / L.apx : 0;
   wave.A = L.apx; wave.at(state.t);
 }
 
@@ -79,14 +95,18 @@ function drawRope(ctx) {
   ctx.beginPath(); ctx.moveTo(xs[0], ys[0]);
   for (let i = 1; i < N - 1; i++) ctx.quadraticCurveTo(xs[i], ys[i], (xs[i] + xs[i + 1]) / 2, (ys[i] + ys[i + 1]) / 2);
   ctx.lineTo(xs[N - 1], ys[N - 1]);
-  ctx.strokeStyle = '#2b2f36'; ctx.lineWidth = 5.4; ctx.stroke();
-  ctx.strokeStyle = '#7a828c'; ctx.lineWidth = 3.4; ctx.stroke();
-  ctx.save(); ctx.translate(0, -1); ctx.strokeStyle = 'rgba(255,255,255,.6)'; ctx.lineWidth = 1; ctx.stroke(); ctx.restore();
-  if (!spr) spr = {bead: ball(BALL.bead, r), red: ball(BALL.red, r + 1.6)};
+  if (!state.beadsOnly) {
+    const k = r / 4.8;                                 // tube width scales with the bead size
+    ctx.strokeStyle = '#2b2f36'; ctx.lineWidth = 5.4 * k; ctx.stroke();
+    ctx.strokeStyle = '#7a828c'; ctx.lineWidth = 3.4 * k; ctx.stroke();
+    ctx.save(); ctx.translate(0, -k); ctx.strokeStyle = 'rgba(255,255,255,.6)'; ctx.lineWidth = k; ctx.stroke(); ctx.restore();
+  }
+  if (!spr) spr = {bead: ball(BALL.bead, r), red: ball(BALL.red, r + 2)};
   for (let i = 0; i < N; i++) { if (state.track && i === L.tI) continue; drawBall(ctx, spr.bead, xs[i], ys[i]); }
   if (state.track) drawBall(ctx, spr.red, xs[L.tI], ys[L.tI]);
   // driver upright: body fixed, shaft slides by u(0,t) and carries the rope end
-  driver.draw(ctx, xc - a.x * s, cy - a.y * s, {shaft: {dy: -wave.u(0) / s, clipY: topY()}});
+  DRV.shaft.dy = -wave.u(0) / s; DRV.shaft.clipY = topY();
+  driver.draw(ctx, xc - a.x * s, cy - a.y * s, DRV);
 }
 
 function drawSpring(ctx) {
@@ -97,24 +117,28 @@ function drawSpring(ctx) {
   arrow(ctx, xc - L.amax - 12, ay, xc + L.amax + 12, ay, {color: AX, width: 1.2, size: 6, both: true});
   text(ctx, 'u', xc + L.amax + 22, ay, {size: 12.5, weight: 700, color: C.ink});
   text(ctx, 'O', xc, cy + 32, {size: 12.5, weight: 700, color: C.ink});
-  for (let i = 0; i < N; i++) xs[i] = xc + i * dx + wave.u(i * dx);   // longitudinal: each bead at rest x + u
-  // coil springs (zigzag): light under-stroke + graphite line
-  const amp = L.phone ? 3.4 : 4.8, TEETH = 5;
-  ctx.beginPath();
-  for (let i = 0; i < N - 1; i++) {
-    const x0 = xs[i], d = xs[i + 1] - x0, e = d * 0.14;
-    ctx.moveTo(x0, cy); ctx.lineTo(x0 + e, cy);
-    for (let k = 1; k < 2 * TEETH; k++) ctx.lineTo(x0 + e + (d - 2 * e) * k / (2 * TEETH), cy + (k & 1 ? -amp : amp));
-    ctx.lineTo(x0 + d - e, cy); ctx.lineTo(x0 + d, cy);
+  const ks = L.ks;
+  for (let i = 0; i < N; i++) xs[i] = xc + i * dx + ks * wave.u(i * dx);   // longitudinal: each bead at rest x + u (spring amplitude)
+  // coil springs (zigzag): light under-stroke + graphite line; zigzag amplitude scales with the bead size
+  const amp = 0.8 * r, TEETH = 5;
+  if (!state.beadsOnly) {
+    ctx.beginPath();
+    for (let i = 0; i < N - 1; i++) {
+      const x0 = xs[i], d = xs[i + 1] - x0, e = d * 0.14;
+      ctx.moveTo(x0, cy); ctx.lineTo(x0 + e, cy);
+      for (let k = 1; k < 2 * TEETH; k++) ctx.lineTo(x0 + e + (d - 2 * e) * k / (2 * TEETH), cy + (k & 1 ? -amp : amp));
+      ctx.lineTo(x0 + d - e, cy); ctx.lineTo(x0 + d, cy);
+    }
+    ctx.strokeStyle = '#ced4da'; ctx.lineWidth = 3.2; ctx.stroke();
+    ctx.strokeStyle = '#495057'; ctx.lineWidth = 1.3; ctx.stroke();
   }
-  ctx.strokeStyle = '#ced4da'; ctx.lineWidth = 3.2; ctx.stroke();
-  ctx.strokeStyle = '#495057'; ctx.lineWidth = 1.3; ctx.stroke();
-  if (!spr) spr = {bead: ball(BALL.bead, r), red: ball(BALL.red, r + 1.6)};
+  if (!spr) spr = {bead: ball(BALL.bead, r), red: ball(BALL.red, r + 2)};
   for (let i = 0; i < N; i++) { if (state.track && i === L.tI) continue; drawBall(ctx, spr.bead, xs[i], cy); }
   if (state.track) drawBall(ctx, spr.red, xs[L.tI], cy);
   // same driver lying on its side: shaft slides along x by u(0,t) and pushes the first bead
   ctx.save(); ctx.translate(xc, cy); ctx.rotate(Math.PI / 2);
-  driver.draw(ctx, -a.x * s, -a.y * s, {shaft: {dy: -wave.u(0) / s, clipY: topY()}});
+  DRV.shaft.dy = -ks * wave.u(0) / s; DRV.shaft.clipY = topY();
+  driver.draw(ctx, -a.x * s, -a.y * s, DRV);
   ctx.restore();
 }
 
@@ -122,6 +146,14 @@ function draw(ctx) {
   if (!L.w) return;
   if (L.lane !== state.lane) layout(L.w, L.h);
   syncWave();
+  if (state.beadsOnly) {
+    if (!rings) {
+      const p = [];
+      for (const cy of [L.cyR, L.cyS]) if (cy != null) for (let i = 0; i < L.N; i++) p.push(L.xc + i * L.dx, cy);
+      rings = ringLayer(L.w, L.h, L.r + 0.6, p);
+    }
+    ctx.drawImage(rings, 0, 0, L.w, L.h);
+  }
   if (L.cyR != null) drawRope(ctx);
   if (L.cyS != null) drawSpring(ctx);
 }
@@ -206,7 +238,7 @@ function annotate(ctx) {
       if (xg >= 14 && xg <= ropeW - 14) tag(ctx, tG, xc + xg, py, o(C.rare));
     }
     if (state.track) {
-      arrow(ctx, xt - A - 10, cy + 17, xt + A + 10, cy + 17, {color: C.track, width: 1.6, size: 6, both: true});
+      arrow(ctx, xt - L.aspr - 10, cy + 17, xt + L.aspr + 10, cy + 17, {color: C.track, width: 1.6, size: 6, both: true});
       tag(ctx, 'Phương dao động', xt, cy + 38, {size: fs - 1, fill: '#fff', stroke: C.track, color: C.track});
     }
   }
@@ -243,7 +275,8 @@ function controls() {
     group('show', 'Hiển thị',
       seg([['both', 'Cả hai'], ['rope', 'Sóng ngang'], ['spring', 'Sóng dọc']], () => state.lane, v => set('lane', v), 'Loại sóng hiển thị'),
       h('div', {class: 'tgs'},
-        toggle('target', 'Phần tử đỏ', () => state.track, v => set('track', v), 'Theo dõi một phần tử (màu đỏ)')))
+        toggle('target', 'Phần tử đỏ', () => state.track, v => set('track', v), 'Theo dõi một phần tử (màu đỏ)'),
+        toggle('beads', 'Chỉ phần tử', () => state.beadsOnly, v => set('beadsOnly', v), 'Chỉ vẽ các phần tử và vị trí cân bằng')))
   ];
 }
 
@@ -255,7 +288,7 @@ function probe() {
 }
 
 export default {
-  probe, id: 'waves', title: 'Sóng ngang – Sóng dọc', short: 'Ngang – Dọc', icon: 'transverse',
+  probe, id: 'waves', group: 'mech', title: 'Sóng ngang – Sóng dọc', short: 'Ngang – Dọc', icon: 'transverse',
   defaults: {slow: 1},
   metrics: () => ({f: state.tf, v: state.tv}),
   readout, controls, layout, draw, annotate, update() {}, reset() {}

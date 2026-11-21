@@ -8,11 +8,12 @@ import {freqParts, timeParts, lenParts, speedParts} from './fmt.js';
 import waves from './modes/waves.js';
 import sound from './modes/sound.js';
 import surface from './modes/surface.js';
+import standing from './modes/standing.js';
 import em from './modes/em.js';
 import {scopeInit, scopeClear, scopeSize, scopePush, scopeDraw} from './scope.js';
 import './audio.js';
 
-const MODES = [waves, sound, surface, em];
+const MODES = [waves, sound, surface, standing, em];
 const ALIAS = {transverse: 'waves', longitudinal: 'sound'};   // old #mode= links keep working
 const byId = id => MODES.find(m => m.id === (ALIAS[id] || id));
 const canvas = document.getElementById('cv'), stage = document.getElementById('stage');
@@ -191,6 +192,8 @@ fx.a = state.playing ? 0 : 1;
 window.__app = {zoom: (z, x, y) => zoomTo(z, x, y), play, pause, restart, setMode, get mode() { return mode.id; }, state};
 if (/src=talker/.test(location.hash)) state.source = 'talker';   // checker / teacher link: #mode=sound&src=talker
 { const mm = /med=(air|water)/.exec(location.hash); if (mm) state.medium = mm[1]; }   // checker / teacher link: #mode=sound&med=water
+if (/end=free/.test(location.hash)) state.stEnd = 'free';          // #mode=standing&end=free
+if (/beads=1/.test(location.hash)) state.beadsOnly = true;         // &beads=1 → Chỉ phần tử
 setMode(modeFromHash() || 'waves');
 resize();
 startLoop();

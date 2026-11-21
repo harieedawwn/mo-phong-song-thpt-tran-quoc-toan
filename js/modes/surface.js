@@ -253,7 +253,7 @@ function controls() {
 }
 
 export default {
-  id: 'surface', title: 'Sóng mặt', short: 'Sóng mặt', icon: 'surface',
+  id: 'surface', group: 'mech', title: 'Sóng mặt', short: 'Sóng mặt', icon: 'surface',
   defaults: {slow: 1},
   metrics: () => ({f: state.sf, v: state.sv}),
   readout, controls, layout, draw, annotate, probe, update() {}, reset() {}
