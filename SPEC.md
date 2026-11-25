@@ -201,9 +201,8 @@ Mini-scope: probe() returns lane 'overlay' → red bead (red) and orange bead (o
 
 ## 7. Raster art (v4 – replaces the SVG talker/head/ear/speaker)
 Realistic illustrations (Gemini-generated, checked for anatomy) live in `img/` as WebP with alpha, already cut out:
-`speaker-base` + `speaker-cone` (moving cone/dust cap/voice coil), `talker` (sagittal head, facing right), `listener` (head facing left),
-`ear-base` + `ear-drum` + `ear-ossicles` (coronal ear, opening on the left). `img/anchors.json` gives every anchor in image pixels
-(cone position/face/rim, talker folds/mouth/air path, listener ear canal, ear canal polyline, drum normal, ossicle pivot/tip, oval window,
+`speaker-base` + `speaker-cone` (moving cone/dust cap/voice coil), `talker` (sagittal head, facing right), `ear-base` + `ear-drum` + `ear-ossicles` (coronal ear, opening on the left). `img/anchors.json` gives every anchor in image pixels
+(cone position/face/rim, talker folds/mouth/air path, ear canal polyline, drum normal, ossicle pivot/tip, oval window,
 cochlea, nerve path, Vietnamese label points). Moving parts are separate sprites over an inpainted base, so translating/rotating them
 a few pixels never shows a ghost. Rules: draw with `drawImage` only (no per-frame filters), scale fixed per layout, keep every motion
 small (cone ≤ 8, drum ≤ 4 image px), physics drives all motion (u(0,t) at the source, pressure −∂u/∂x at the drum). No text is baked into images;

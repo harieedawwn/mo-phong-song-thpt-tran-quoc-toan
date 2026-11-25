@@ -20,15 +20,15 @@ const niceF = f => f < 100 ? Math.round(f) : Number(f.toPrecision(f < 1000 ? 2 :
 const fPos = f => Math.round(1000 * Math.log(f / F_MIN) / Math.log(F_MAX / F_MIN));
 function setF(f) { set('f', f); set('slow', niceSlow(f)); }
 
-// Raster figures (v4, SPEC §7): speaker, talker and listener are WebP sprites; every number comes from img/anchors.json (image px).
+// Raster figures (v4, SPEC §7): speaker and talker are WebP sprites; every number comes from img/anchors.json (image px).
 // The figure objects keep the old interface (x, y, s, w, h, px, place, drawDyn) so layout/labels code is shared: design units = image px here.
 const AN = loadAnchors();
-const iSpk = loadImg('img/speaker-base.webp'), iCone = loadImg('img/speaker-cone.webp'), iTk = loadImg('img/talker.webp'), iHead = loadImg('img/listener.webp');
+const iSpk = loadImg('img/speaker-base.webp'), iCone = loadImg('img/speaker-cone.webp'), iTk = loadImg('img/talker.webp');
 const DEF = {speaker: {size: [688, 662], cone: {at: [388.4, 117], size: [238, 430]}, rimTop: [625.5, 121], rimBot: [625.5, 542.2], labels: {}},
-  talker: {size: [747, 1054], folds: [411, 833.5], mouth: [671, 628.5], mouthH: 30, airPath: [], labels: {}}, listener: {size: [761, 770], earCanal: [380, 302.8]}};
+  talker: {size: [747, 1054], folds: [411, 833.5], mouth: [671, 628.5], mouthH: 30, airPath: [], labels: {}}};
 const an = k => (AN.data && AN.data[k]) || DEF[k];
 const labTab = (k, rows) => rows.map(([id, name, side, row]) => { const p = (an(k).labels || {})[name] || [0, 0]; return [id, name, p[0], p[1], side, row]; });
-Promise.all([AN.ready, iSpk.ready, iCone.ready, iTk.ready, iHead.ready]).then(() => { labelKey = ''; if (L.w) layout(L.w, L.h); bus.emit('change', {key: 'art'}); });
+Promise.all([AN.ready, iSpk.ready, iCone.ready, iTk.ready]).then(() => { labelKey = ''; if (L.w) layout(L.w, L.h); bus.emit('change', {key: 'art'}); });
 const SPK_W = 688, SPK_H = 662;
 const spk = {
   w: SPK_W, h: SPK_H, x: 0, y: 0, s: 1,
@@ -52,7 +52,7 @@ const spkLabels = () => labTab('speaker', SPK_LAB_IN);
 // Talker = talker.webp; the glottis region of the image itself is stretched open / closed with u(0,t).
 // The air column starts at the lips (mouth) and is mouthH·3 image px tall (never thinner than 40 px, so the spheres stay readable).
 const TALK_W = 747, TALK_H = 1054;
-const FW_RX = 34, FW_RY = 18, FW_NX = 8, FW_NY = 12;   // vocal-fold warp patch (talker.webp px, half sizes) and grid
+const FW_RX = 18, FW_RY = 34, FW_NX = 12, FW_NY = 8;   // vocal-fold warp patch (talker.webp px, half sizes) and grid: a vertical slit
 const talk = {
   w: TALK_W, h: TALK_H, x: 0, y: 0, s: 1,
   place(x, y, bw, bh, ax = 0.5, ay = 0.5) { const s = Math.min(bw / TALK_W, bh / TALK_H); this.s = s; this.x = x + (bw - TALK_W * s) * ax; this.y = y + (bh - TALK_H * s) * ay; },
@@ -65,48 +65,41 @@ const talk = {
     if (!b) { ctx.fillStyle = 'rgba(0,0,0,.05)'; ctx.fillRect(this.x, this.y, TALK_W * s, TALK_H * s); return; }
     ctx.drawImage(b, this.x, this.y, TALK_W * s, TALK_H * s);
     // Vocal folds: the real image is stretched in place (mesh warp of a small patch around the glottis), no overlay.
-    // Rows are moved by m(t) = t + c·sin(πt) (t = −1…1 across the patch): the slit opens, the patch edges stay fixed.
+    // The glottis is a vertical slit: COLUMNS are moved in x by m(t) = t + c·sin(πt) (t = −1…1 across the patch width), so the slit opens
+    // left–right while the patch edges stay fixed; c tapers with cos² along y.
     const f = an('talker').folds, c0 = 0.3 * (0.5 + 0.5 * v), k = b.width / TALK_W;
-    for (let i = 0; i < FW_NX; i++) {
-      const u0 = -1 + 2 * i / FW_NX, uc = u0 + 1 / FW_NX, wx = Math.cos(uc * 1.5708) ** 2, c = c0 * wx;   // taper to 0 at the sides
-      const ix = f[0] + u0 * FW_RX, iw = 2 * FW_RX / FW_NX;
-      for (let j = 0; j < FW_NY; j++) {
-        const t0 = -1 + 2 * j / FW_NY, t1 = t0 + 2 / FW_NY;
+    for (let j = 0; j < FW_NY; j++) {
+      const v0 = -1 + 2 * j / FW_NY, vc = v0 + 1 / FW_NY, wy = Math.cos(vc * 1.5708) ** 2, c = c0 * wy;   // taper to 0 at top / bottom
+      const iy = f[1] + v0 * FW_RY, ih = 2 * FW_RY / FW_NY;
+      for (let i = 0; i < FW_NX; i++) {
+        const t0 = -1 + 2 * i / FW_NX, t1 = t0 + 2 / FW_NX;
         const d0 = t0 + c * Math.sin(Math.PI * t0), d1 = t1 + c * Math.sin(Math.PI * t1);
-        const iy = f[1] + t0 * FW_RY, ih = 2 * FW_RY / FW_NY;
+        const ix = f[0] + t0 * FW_RX, iw = 2 * FW_RX / FW_NX;
         ctx.drawImage(b, ix * k, iy * k, iw * k, ih * k,
-          this.x + ix * s, this.y + (f[1] + d0 * FW_RY) * s, iw * s + 0.6, (d1 - d0) * FW_RY * s + 0.6);
+          this.x + (f[0] + d0 * FW_RX) * s, this.y + iy * s, (d1 - d0) * FW_RX * s + 0.6, ih * s + 0.6);
       }
     }
   }
 };
 const TALK_LAB = [['nasal', 'Khoang mũi', 'top'], ['mouth', 'Khoang miệng', 'top', 1], ['tongue', 'Lưỡi', 'bottom'], ['throat', 'Họng', 'bottom'], ['cords', 'Dây thanh âm', 'bottom']];
 const talkLabels = () => labTab('talker', TALK_LAB);
-// Listener = listener.webp (head facing left, toward the source) + a magnifier lens showing the real ear section (ear-base.webp, SPEC §7).
-// Composite design box EAR_W × EAR_H (design units = px at s = 1); the canal axis (y = EAR_AX) is the outside air column's centre line.
+// Listener = only a magnifier disc showing the real ear section (ear-base.webp, SPEC §7); no head / person in front of it.
+// Composite box EAR_W × EAR_H (design units = px at s = 1); the canal axis (y = EAR_AX) is the outside air column's centre line.
 const iEar = loadImg('img/ear-base.webp'), iDrum = loadImg('img/ear-drum.webp'), iOss = loadImg('img/ear-ossicles.webp');
 Promise.all([AN.ready, iEar.ready, iDrum.ready, iOss.ready]).then(() => { labelKey = ''; bus.emit('change', {key: 'art'}); });
 const LCX = 835, LCY = 715, LR = 830;                                    // lens circle in ear-base image px (canal entrance sits on the axis)
 const RB = 232, RI = 224, ES = RI / LR;                                  // RB = bezel outer radius, RI = lens radius, ES = image px → composite
-const HD = {s: 0.12, x: 0, y: 0, w: 761, h: 770, ex: 380, ey: 302.8};           // listener.webp in the composite; ex/ey = earCanal (image px)
-const HX = HD.ex * HD.s;                                                 // head's ear x
-const CX = HX + 8 + RI;                                                  // disc centre x: its left edge sits just right of the head's ear
+const CX = RB;                                                           // disc centre x: the disc's left edge is the box's left edge
 const EAR_AX = RB + 4;                                                   // disc centre y = canal axis = centre line of the air column
-HD.y = EAR_AX - HD.ey * HD.s;                                            // ear canal on the column's centre line
 const EAR_W = CX + RB + 3, EAR_H = EAR_AX + RB + 6;
+const GAP = 10;                                                          // screen px between the end of the air column and the disc's left edge
 const ip = (x, y) => [CX + (x - LCX) * ES, EAR_AX + (y - LCY) * ES];     // ear-base image px → composite units
-// lens callout: small ring round the head's ear + the two outer tangents to the bezel (composite units, computed once)
-const CALL = (() => {
-  const ex = HX, ey = HD.y + HD.ey * HD.s, cx = CX, cy = EAR_AX, r1 = 5, r2 = RI;
-  const phi = Math.atan2(cy - ey, cx - ex), be = Math.acos((r1 - r2) / Math.hypot(cx - ex, cy - ey));
-  return {ex, ey, r1, t: [phi + be, phi - be].map(a => [ex + r1 * Math.cos(a), ey + r1 * Math.sin(a), cx + r2 * Math.cos(a), cy + r2 * Math.sin(a)])};
-})();
 // "phóng to": the disc alone fills the stage (air column + source hidden; the wave keeps driving the eardrum)
 let zoom = false;
 try { zoom = /zoom=1/.test(location.hash); } catch (e) { /* in-app browsers may refuse */ }   // #zoom=1 opens the big view (checker)
 
 // Canal air column: 3 rows × CN layers of small spheres between the canal entrance and the eardrum face, rest positions in image px.
-// They are moved by the SAME u(x,t) as the outside column, continued from the head's ear (sample x = ear0 + distance from the entrance),
+// They are moved by the SAME u(x,t) as the outside column, continued from the column end (sample x = ear0 + distance from the entrance),
 // and coloured by the same −∂u/∂x. Each row stops one displacement + one radius short of the (tilted) drum face, so nothing enters it.
 const CN = 12, CROW = [-0.6, 0, 0.6], CQ = 0.42;
 const CXR = new Float32Array(CN * 3), CYR = new Float32Array(CN * 3), CDX = new Float32Array(CN * 3);
@@ -133,7 +126,10 @@ function buildCanal() {
 }
 AN.ready.then(buildCanal);
 let sprC = null, sprCr = 0;
-const earBase = () => L.airR - L.airL + 6;                                // wave x of the head's ear (canal entrance)
+const earBase = () => {                                                   // wave x of the canal entrance in the disc = column end + gap + distance to the entrance
+  const a = AN.data && AN.data.ear, ex = a && a.canal ? a.canal[0][0] : 329;
+  return L.airR - L.airL + GAP + ip(ex, 0)[0] * ear.nrm.s;
+};
 const EAR_DRV = {phase: -1};                                              // reused every frame
 const ear = {
   w: EAR_W, h: EAR_H, x: 0, y: 0, s: 1, nrm: {x: 0, y: 0, s: 1}, zm: {x: 0, y: 0, s: 1, side: true},
@@ -144,14 +140,6 @@ const ear = {
   // drv.phase = nerve-pulse phase 0…1, −1 while the wave has not reached the ear
   draw(ctx, drv) {
     const s = this.s, dpr = ballDpr(), X = this.x, Y = this.y, k = ES * s, g = this.disc(), ri = RI * s, a = AN.data && AN.data.ear;
-    if (!zoom) {
-      const hb = baked(iHead, HD.w * HD.s * s, HD.h * HD.s * s, dpr);
-      if (hb) ctx.drawImage(hb, X + HD.x * s, Y + HD.y * s, HD.w * HD.s * s, HD.h * HD.s * s);
-      ctx.strokeStyle = 'rgba(52,58,66,.5)'; ctx.lineWidth = 1; ctx.beginPath();
-      ctx.arc(X + CALL.ex * s, Y + CALL.ey * s, CALL.r1 * s, 0, 6.2832);
-      for (let i = 0; i < 2; i++) { const t = CALL.t[i]; ctx.moveTo(X + t[0] * s, Y + t[1] * s); ctx.lineTo(X + t[2] * s, Y + t[3] * s); }
-      ctx.stroke();
-    }
     // lens content, clipped to the circle
     ctx.save(); ctx.beginPath(); ctx.arc(g.x, g.y, ri, 0, 6.2832); ctx.clip();
     ctx.fillStyle = '#f8f4ec'; ctx.fillRect(g.x - ri, g.y - ri, ri * 2, ri * 2);
@@ -282,7 +270,7 @@ function layout(w, hh) {
     const eTop = L.compact ? 8 : 60, eBot = L.compact ? 70 : 100;                        // room above / below the disc for the label rows and the play button
     const se = Math.max(0.3, Math.min(w * (L.compact ? 0.5 : 0.38) / EAR_W, (hh - eTop - eBot) / (2 * RB) * (L.compact ? 1 : 0.72)));
     const earW = EAR_W * se, earCy = (eTop + hh - eBot) / 2;
-    L.airL = srcW + 12; L.airR = w - earW - 8; L.airW = L.airR - L.airL;
+    L.airL = srcW + 12; L.airR = w - earW - GAP - 2; L.airW = L.airR - L.airL;
     L.cols = clamp(Math.round(L.airW / 9), 24, 40); L.rows = 12; L.dx = L.airW / (L.cols + 1);
     L.above = L.tiny ? 16 : L.compact ? 62 : 88; L.below = L.compact ? 6 : 112;
     const avail = hh - top - bottom - L.above - L.below;
@@ -306,7 +294,7 @@ function layout(w, hh) {
       L.fieldTop = cy - rimPx / 2; L.fieldBot = cy + rimPx / 2;
       spk.s = s; spk.x = L.airL - spk.rimX() * s; spk.y = cy - rimC * s;
     }
-    ear.nrm = {x: L.airR + 4, y: cy - EAR_AX * se, s: se};
+    ear.nrm = {x: L.airR + GAP, y: cy - EAR_AX * se, s: se};
   }
   zoomPlace(w, hh);
   L.r = clamp(Math.min(L.dx, L.dy) * 0.3, 3, 4.4);
@@ -657,14 +645,15 @@ function annotate(ctx) {
   const hs = L.fs + 1;
   if (L.layout === 'side') {
     text(ctx, SRC[state.source].title, (sf.x + L.airL) / 2 + (state.source === 'talker' ? -20 : 0), Math.min(lab.tops.src, sf.y) - 14, {size: hs, weight: 800});
-    const hx = ear.x + HD.w * HD.s * 0.2 * ear.s, hy = ear.y + HD.y * ear.s - 8;      // two short lines above the head (clear of the disc and the air column)
-    text(ctx, 'Tai người', hx, hy - 16, {size: hs, weight: 800}); text(ctx, 'nghe', hx, hy, {size: hs, weight: 800});
+    text(ctx, 'Tai người nghe (lát cắt)', g.x, Math.min(lab.tops.ear, g.y - g.r) - 18, {size: hs, weight: 800});
   } else {
     text(ctx, SRC[state.source].title, sf.x + sf.w * sf.s + 10, sf.y + 8, {size: hs - 1, weight: 800, align: 'left'});
-    // phone: the names live in "phóng to" – one hint beside the head
-    const hx = 8, hy = ear.y + HD.y * ear.s - 22;
-    text(ctx, 'Chạm kính lúp', hx, hy - 14, {size: 11.5, weight: 700, align: 'left', color: C.ink2});
-    text(ctx, 'để xem tên', hx, hy, {size: 11.5, weight: 700, align: 'left', color: C.ink2});
+    // phone: the names live in "phóng to" – two short lines in the free corner left of the disc's top (clear of the ruler above)
+    const hy = g.y - g.r + 26;
+    text(ctx, 'Tai người nghe', 10, hy, {size: 12, weight: 800, align: 'left'});
+    text(ctx, '(lát cắt)', 10, hy + 15, {size: 12, weight: 800, align: 'left'});
+    text(ctx, 'Chạm kính lúp', 10, hy + 36, {size: 11.5, weight: 700, align: 'left', color: C.ink2});
+    text(ctx, 'để xem tên', 10, hy + 51, {size: 11.5, weight: 700, align: 'left', color: C.ink2});
   }
 }
 
