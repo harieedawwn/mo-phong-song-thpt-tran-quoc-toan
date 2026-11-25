@@ -1,52 +1,35 @@
-# TASK – v5: sóng dừng, thanh chọn 2 cấp, phần tử to (one phase per session; routine = CLAUDE.md "Session routine")
+# TASK – v6: góp ý của thầy (one phase per session; routine = CLAUDE.md "Session routine")
 Status: `[ ]` todo · `[~]` in progress (resume) · `[x]` done · `[!]` blocked (note says why). Older phases: `docs/history.md` (do not read).
-Read only this header and YOUR phase section (phases 1–3 are v4, done – skip them). Phase-local rule: touch only what the phase lists.
+Read only this header and YOUR phase section. Phase-local rule: touch only what the phase lists.
+Lesson from v5: after any CSS change, also open a desk shot of the left panel of 2 modes (shared classes like `.seg`, `.tg`, `.chip` must still look right).
 
-## Phase 1 – Ảnh thật: loa, người nói, đầu người nghe  `[x]`  · Sonnet (Medium)
-SPEC §7. Files: `js/modes/sound.js` (grep `spk|speaker|talk|head|listener|column|airL`), `js/art/sprite.js` (API style only), `img/anchors.json`.
-- [x] `js/art/raster.js`: `loadImg(path)` (Image + decode, cached) and `loadAnchors()` (fetch `img/anchors.json` once); draw with `drawImage` at a scale chosen in `layout()`; placeholder until ready.
-- [x] Loudspeaker = `speaker-base.webp` + `speaker-cone.webp` drawn at `cone.at` shifted by u(0,t) (max ±8 image px at A max). Air column starts at `coneFace`, rows only between `rimTop` and `rimBot` (inner 80 %), first layer locked to the cone face.
-- [x] Talker = `talker.webp` (static) + small canvas overlay at `folds`: two pale-pink folds opening/closing with u(0,t) (≤ 6 px), column starts at `mouth` (height `mouthH`·2..3). Paused: dashed air path along `airPath` + labels from `labels`.
-- [x] Listener head = `listener.webp`, facing left, air column ends at `earCanal`. Paused labels: speaker/talker names from `labels`.
-- [x] Delete `art/speaker.svg`, `art/talker.svg`, `art/head.svg` and their code once unused (keep `sprite.js` for driver/transducer).
-- [x] Check `mode=sound` and `mode=sound&src=talker`, `--paused`: images sharp, no gaps between cone and air, ≥ 50 fps `--perf`.
-- Log: ảnh thật cho loa/người nói/đầu người nghe (raster.js, anchors), xoá 3 SVG; perf sound 57,6 fps.
+## Phase 1 – Thanh chọn chế độ: 2 nút chính, mục con chỉ hiện khi chọn Sóng cơ  `[ ]`  · Sonnet 5.5 (Medium)
+SPEC §4 "Mode nav (v6)". Files: `js/ui.js` (grep `mode tabs|gMech|gEm|sub|setMode`), `css/style.css` (grep `#tabs` – every rule incl. the 3 media blocks), `index.html` only if needed.
+- [ ] Markup in ui.js: `#tabs` = column; `.main` row (role=tablist, aria-label "Nhóm sóng") with `#gb-mech` (icon transverse + "Sóng cơ") and `#gb-em` (icon em + "Sóng điện từ"); `.sub` row (role=tablist, aria-label "Các loại sóng cơ") with the 4 mech sub-tabs as a separate row UNDER the main row (not inside a capsule). `tabs.dataset.g` = active group; `.sub` gets `hidden`/display:none when the group is em. Keep lastMech, keys 1–5, `m.short` labels on phones.
+- [ ] Style: main buttons uppercase 800, equal width (desktop min-width 190 px), active = red fill `var(--red)` + white text, inactive = card background + red text + 1 px `var(--line)` border, radius 10 px. Sub row = the normal `.seg` look (#ebe7dd track, active ink fill, white text), centred, 6 px below. Sizes per SPEC §4 (desktop / ≤ 820 h / phone portrait / phone landscape). Delete the v5 capsule rules (`#tabs .sub` inside the ink capsule, `#gb-mech` 32 px trick, `.g-s` 2-line label) – no dead CSS.
+- [ ] Verify: `shot.mjs after1 "mode=waves" --all`, `shot.mjs after1e "mode=em"`, `shot.mjs after1s "mode=sound"` must exit 0. Open: after1-desk, after1-desk720, after1-phone360, after1-phoneLand, after1e-desk (no sub row, stage taller), after1s-desk (left panel `.seg`/chips intact).
+- Log:
 
-## Phase 2 – Tai thật trong kính lúp + âm thanh đi vào ống tai  `[x]`  · Sonnet (High)
-SPEC §7, §3.2 (receiver). Files: ear parts of `js/modes/sound.js` (grep `ear|mag|zoom|drum|ossic|nerve`), `js/art/raster.js`, `img/anchors.json`.
-- [x] Magnifier content = `ear-base.webp` clipped to the circle, plus `ear-drum.webp` at `drum.at` moved along `drum.normal` by the pressure at the drum (max 4 image px) and `ear-ossicles.webp` rotated about `ossicles.pivot` by drumShift / |tip − pivot| (radians). Same images in the "phóng to" view.
-- [x] Canal air column: 3 rows of small spheres along the `canal` polyline (each point = x, y, half-height), displaced along the canal by the same u(x,t) continued from the listener's ear (magnified); compression reaches the drum exactly when it moves inward; spheres never enter the drum.
-- [x] Nerve pulses: small golden dots running along `nerve` toward the brain, rate ∝ loudness; faint pulse ring on the `cochlea` when sound arrives.
-- [x] Paused: labels from `ear.labels` (≤ 8) with leaders outside the circle in normal view, all in "phóng to"; "Sóng âm vào ống tai" on the canal; nén/giãn tint in the canal.
-- [x] Delete `art/ear.svg` + old ear code. Check `--all --paused` sound mode; pause at max push: drum bulges in under a compression.
-- Log: tai thật trong kính lúp (ear-base/drum/ossicles), 36 cầu khí trong ống tai theo cùng u(x,t), màng nhĩ theo áp suất −∂u/∂x (≤ 4 px), xung thần kinh + vòng ốc tai, 8 nhãn, xoá ear.svg; perf sound 58,8 fps.
+## Phase 2 – Sóng âm: bỏ hình người nghe, thanh môn dựng đứng  `[ ]`  · Sonnet 5.5 (High)
+SPEC §3.2, §7. Files: `js/modes/sound.js` (grep `iHead|HD\.|HX|CX|callout|tang|earBase|head|FW_|folds|drawDyn`), `img/anchors.json` (listener entry), `img/listener.webp`.
+- [ ] Remove the listener head everywhere: `iHead` load + draw, the callout ring + two tangent lines, head-based labels/hints ("two short lines above the head", phone hint beside the head), `HD`/`HX` constants. Delete `img/listener.webp` and its anchors entry once unused. Keep the ear-section disc exactly as now (bezel, ear-base, drum, ossicles, canal spheres, nerve pulses, "phóng to").
+- [ ] Re-place the disc: its left edge sits ~10 px right of the end of the outside air column, the column is vertically centred on the canal axis (EAR_AX) so the air visibly flows straight into the canal of the section. `earBase()` = wave x of the canal entrance in the disc (column end + the screen distance to the entrance), so the canal spheres continue the SAME u(x,t) without a jump. Paused: one pill "Tai người nghe (lát cắt)" above the disc (no overlap with the readout chip).
+- [ ] Glottis vertical: the warp patch is currently a horizontal slit (rows moved in y). Swap axes: FW_RX = 18, FW_RY = 34 (half sizes), grid FW_NX = 12 columns × FW_NY = 8 rows; COLUMNS are moved in x by m(t) = t + c·sin(πt) (t = −1…1 across the patch width) and c tapers with cos² along y → a vertical slit that opens left–right, edges fixed, same c0 = 0,3·(0,5 + 0,5·v). If `folds` is off-centre on the visible fold pair, fix it in anchors.json (one debug-dot shot, see old v4 rule).
+- [ ] Verify: `shot.mjs after2 "mode=sound" --paused`, `shot.mjs after2t "mode=sound&src=talker" --paused`, `shot.mjs after2z "mode=sound&zoom=1"`. Open after2-desk, after2-desk-paused, after2-phone, after2z-desk; for the glottis crop after2t-desk-paused around the folds anchor with PIL (×3) – slit must be vertical. `--perf` sound ≥ 50 fps.
+- Log:
 
-## Phase 3 – Vịt cao su + zoom bằng lăn chuột + màn đo nhỏ bên trái  `[x]`  · Sonnet (Medium)
-SPEC §3.3 (duck), §4 (Left panel v4, Zoom v4). Files: `js/main.js`, `js/ui.js`, `css/style.css` (left column), `js/modes/surface.js` (grep `phao|buoy|float`), each mode's red-particle code (grep `track`).
-- [x] `art/duck.svg` (small cute yellow rubber duck, shaded, orange beak) replaces the phao: follows the top particle's orbit, tilts with the slope.
-- [x] Zoom in `main.js` (wheel + pinch 1–4×, drag pan, double-click / "1:1" resets, mode switch resets); EM band tap and magnifier tap still hit correctly.
-- [x] Controls card shrinks to content; "Phần tử đỏ" mini-scope card below (`probe()` per mode, ring buffer, no per-frame allocation); hidden on phones.
-- [x] Check `--all --paused` 4 modes; ≥ 50 fps `--perf`. Then final light cleanup of dead code (grep only).
-
-## Phase 4 – Sóng dừng + phần tử to + "Chỉ phần tử"  `[x]`  · Opus 5.5 (High)
-SPEC §2, §3.1 (v5 bullet), §3.5. Files: `js/modes/waves.js` (whole – template for the new mode), `js/main.js` (grep `MODES|ALIAS|src=talker|med=`), `js/state.js`, `js/ui.js` (grep `PATHS|chips|toggle|tgs`), `js/scope.js` (grep `lane`), `css/style.css` (grep `\.chips|\.g4|\.tgs`), `tools/shot.mjs` (grep `'waves', 'sound'`).
-- [x] `js/modes/standing.js` exactly per SPEC §3.5 (same module shape as waves.js: layout/draw/annotate/controls/probe/metrics/readout, title 'Sóng dừng', short 'Dừng', icon 'standing' = new PATHS entry). Register in MODES after surface (keys 1–5); add `group` ('mech'|'em') to every mode export; parse `end=free` and `beads=1` from the hash like `src=talker`; add 'standing' to the shot.mjs perf list; one line in the CLAUDE.md code map.
-- [x] waves.js: v5 bead sizing + spring-lane cap (SPEC §3.1 v5); rope tube width and coil amplitude scale with r.
-- [x] `beadsOnly` toggle "Chỉ phần tử" in the Hiển thị group of waves and standing (VTCB ring layer as SPEC).
-- [x] scope.js: `overlay` lane branch (both traces on one axis).
-- [x] Verify: shots `after4 "mode=standing" --paused`, `after4e "mode=standing&end=free" --paused`, `after4w "mode=waves" --paused`, `after4b "mode=waves&beads=1"`. Open only: after4-desk-paused, after4-phone-paused, after4e-desk-paused, after4w-desk-paused, after4w-phone, after4b-desk. Check: nodes exactly on beads, λ/2 rulers node–node / antinode–antinode, red & orange beads in adjacent bó move opposite, spring beads never touch at A max, labels do not overlap. `node tools/shot.mjs p --perf` ≥ 50 fps for all 5 modes. Push; skip the deploy check (routine step 9) in this phase.
-- Log: standing.js (nút luôn trùng hạt, đầu cố định/tự do, sóng tới–phản xạ, nhãn khi dừng), hạt v5 + giới hạn biên độ lò xo, "Chỉ phần tử" (lớp vòng VTCB 1 drawImage), scope overlay; perf standing 60 fps, waves 56 fps; sound/surface/em 38–52 fps dao động như code gốc (gốc 44–56) → nhiễu máy ảo, không do phase này.
-
-## Phase 5 – Header không khung + thanh chọn 2 cấp + rà hạt + kiểm tra cuối  `[x]`  · Sonnet 5.5 (Medium)
-SPEC §4 (Header v5, Mode nav v5). Files: `index.html`, `js/ui.js` (grep `mode tabs|tabBtns|setMode|HELP`), `css/style.css` (grep `#title|#school|#tabs|\.seg|@media`), `js/modes/surface.js` and `js/modes/sound.js` (grep `L.r =` only).
-- [x] Header per SPEC §4 Header v5 (all breakpoints).
-- [x] Two-level nav per SPEC §4 Mode nav v5, built in ui.js from `mode.group`; remember the last mech mode; aria: role=tablist on the group row and on the sub-tab row; keys 1–5 unchanged.
-- [x] Help modal (≤ 5 bullets): keys 1–5, "Sóng cơ có 4 chế độ con", one short mention of Chỉ phần tử.
-- [x] Particle size: surface `L.r` about +35 % if the top-row particles keep ≥ 3 px gap at max amplitude (else less); sound: raise the radius cap 4,4 → 5,2 only if the column shows no new merging (compare before/after desk shot), otherwise leave it.
-- [x] Final check: `shot.mjs after5 --all --paused` and `shot.mjs after5s "mode=standing" --all` must exit 0 (no scrollbar, school name one line). Open after5-desk720, after5-phone360, after5-phoneLand, after5-desk-paused, after5s-phone. `--perf` ≥ 50 fps all modes. Full deploy check (5 retries) this phase.
-- Log: xong; perf nhiễu (sound 40–47, em 49–52 cả khi chưa sửa), surface phone giữ 3,5 vì +35 % làm tụt fps.
+## Phase 3 – Sóng dừng: thể hiện phản xạ (quá trình hình thành) + làm chậm hợp lí + kiểm tra cuối  `[ ]`  · Opus 5.5 (Medium)
+SPEC §3.5. Files: `js/modes/standing.js` (whole), `js/physics.js` (grep `niceSlow`), `js/main.js` (grep `restart|scopeClear|defaults`), `js/state.js` (stInc).
+Physics (x = distance from the driver end in px, ℓ = lpx, K = 2π/λpx, ω = 2πf, c = λpx·f = wave speed in px per simulated s, t = state.t since restart; σ = −1 fixed end, +1 free end):
+  u_t(x,t) = (A/2)·sin(ωt − Kx)            if x ≤ c·t, else 0          (incident, →)
+  u_r(x,t) = σ·(A/2)·sin(ωt − K(2ℓ − x))   if 2ℓ − x ≤ c·t, else 0     (reflected at x = ℓ, ←)
+  u = u_t + u_r (+ the existing tiny driver term e). For resonant ℓ (fixed ℓ = nλ/2, free ℓ = (2n−1)λ/4) this equals −A·cos(ωt)·sin(Kx) once t ≥ 2ℓ/c → nodes/antinodes exactly as now (|sin Kx| = |S|). Use u everywhere (draw, probe, arrows, annotate). The driver shaft follows u(0,t) + e term.
+- [ ] Formation: restart (↻, mode enter, change of n / end / v / A) → t = 0 and scopeClear; the wave visibly travels right, reflects (fixed end: flips sign = ngược pha; free end: ring moves with it = cùng pha) and the standing pattern appears when the reflected front reaches the driver. No allocation per frame (preallocated arrays).
+- [ ] Toggle "Sóng tới – phản xạ" (default ON, state stInc true): two thin lanes ABOVE the string, same x scale: lane 1 = u_t (orange #e8590c line 2 px + small orange beads every 2nd bead x), lane 2 = u_r (blue #1c7ed6). Each lane: own dashed rest line, centred at cy − amax − gap − …, lane half-height = A/2 drawn; a small arrowhead at each lane's current front (→ / ←) while the front is inside the string. Layout reserves the room (amax recomputed) when stInc is on; if the stage is too short (h < 380), fall back to thin dashed curves over the string. Off → current single-string view.
+- [ ] Paused annotations: lane pills "Sóng tới →" / "Sóng phản xạ ←"; at the right end "Phản xạ ở đầu cố định: ngược pha" or "Phản xạ ở đầu tự do: cùng pha"; next to the string "Sóng dừng = sóng tới + sóng phản xạ". Before steady (t < 2ℓ/c): only "Đang hình thành sóng dừng" + the lane pills (no nút/bụng/λ/2). Steady: everything of v5 as now.
+- [ ] Slow: replace `defaults: {slow: 0.1}` by a getter `niceSlow(fN(), 1.5)` (capped at 1) and re-apply it whenever stN, stEnd or stv change (target ≈ 1,5 Hz on screen; at defaults f = 7,5 Hz → ×5). Readout line 2 unchanged otherwise.
+- [ ] Verify: `shot.mjs after3 "mode=standing" --all --paused`, `shot.mjs after3e "mode=standing&end=free" --paused` exit 0. Open after3-desk, after3-desk-paused, after3-phone-paused, after3-phoneLand, after3e-desk-paused. `node tools/shot.mjs p --perf` ≥ 50 fps all 5 modes. Final: also `shot.mjs final --all` (waves) exit 0. Full deploy check (5 retries).
+- Log:
 
 ## Log
 <!-- one line per session: date · phase · what · numbers checked · hash -->
-2026-11-21 · Phase 3 · vịt SVG thay phao, zoom 1–4× (lăn/pinch/kéo/dblclick/1:1), màn đo "Phần tử đỏ" · 4 mode OK, perf 57–59 fps · 
-2026-11-21 · Phase 5 · header không khung, nav 2 cấp (Sóng cơ/Điện từ), help, hạt to hơn (surface desk, sound) · checker OK, perf waves 58/standing 60/surface 53 · 
