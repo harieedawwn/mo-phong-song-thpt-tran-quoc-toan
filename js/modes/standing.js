@@ -1,12 +1,15 @@
 // Sóng dừng trên dây (KNTT, bài Sóng dừng) – SPEC §3.5. Real string ℓ = 1,20 m, X = ℓ − x (distance from the reflecting end), K = 2π/λ.
 //   hai đầu cố định: ℓ = n·λ/2, u = A·sin(KX)·cos(ωt), f_n = n·v/(2ℓ)
 //   một đầu tự do:   ℓ = (2n−1)·λ/4, u = A·cos(KX)·sin(ωt), f_n = (2n−1)·v/(4ℓ)
-// Only resonant states → always the steady standing wave (no fake build-up). Bead count is chosen so every node sits on a bead.
-// Running: string + beads + axis letters only. Paused: annotate() adds envelope, nút/bụng pills, λ/2 rulers, phase pills.
+// v6 formation by reflection (x = distance from the driver, c = λ·f, σ = −1 fixed / +1 free, t since restart):
+//   u = (A/2)·sin(ωt − Kx)·[x ≤ ct] + σ·(A/2)·sin(ωt − K(2ℓ − x))·[2ℓ − x ≤ ct]  →  = −A·cos(ωt)·sin(Kx) once ct ≥ 2ℓ.
+// Only resonant states. Bead count is chosen so every node sits on a bead.
+// Running: string + beads + incident/reflected lanes + axis letters only. Paused: annotate() adds pills, envelope, rulers.
 import {state, set, bus} from '../state.js';
 import {h, chip, toggle, slider, seg, group, lab, slowControl, bind} from '../ui.js';
 import {num, slowText} from '../fmt.js';
-import {clamp, TAU} from '../physics.js';
+import {clamp, TAU, niceSlow} from '../physics.js';
+import {scopeClear} from '../scope.js';
 import {C, font, pill, text, arrow, ruler, textW} from '../draw/ink.js';
 import {ball, drawBall, BALL, ballDpr} from '../draw/ball.js';
 import {loadArt} from '../art/sprite.js';
@@ -26,23 +29,40 @@ let spr = null, rings = null, postG = null, rodG = null;
 const free = () => state.stEnd === 'free';
 const fN = () => free() ? (2 * state.stN - 1) * state.stv / (4 * ELL) : state.stN * state.stv / (2 * ELL);
 const dec = (x, d = 3) => String(+x.toPrecision(d)).replace('.', ',');
+const ORG = '#e8590c', BLU = '#1c7ed6';
+const autoSlow = () => Math.min(1, niceSlow(fN(), 1.5));
+// any change of n / end / v / A restarts the formation; n / end / v also re-apply the auto slow-motion
+bus.on('change', e => {
+  if (!e || state.mode !== 'standing') return;
+  const k = e.key;
+  if (k === 'stN' || k === 'stEnd' || k === 'stv') set('slow', autoSlow());
+  if (k === 'stN' || k === 'stEnd' || k === 'stv' || k === 'stA') { state.t = 0; scopeClear(); }
+});
 
 function layout(w, hh) {
   const phone = w < 600, tiny = hh < 300, short = hh < 420, n = state.stN, fr = free();
-  L.w = w; L.h = hh; L.phone = phone; L.fs = phone ? 11 : 12.5; L.n = n; L.end = state.stEnd;
+  L.w = w; L.h = hh; L.phone = phone; L.fs = phone ? 11 : 12.5; L.n = n; L.end = state.stEnd; L.inc = state.stInc;
   const topR = tiny ? 34 : short ? 42 : phone ? 56 : 62, botR = tiny ? 46 : short ? 50 : phone ? 56 : 64;
   const avail = hh - topR - botR;
   const s = clamp(Math.min((avail / 2 + botR - 20) / 165, 0.2 * w / 132), 0.25, 1.0);
   L.s = s; L.xc = Math.round(132 * s + 8); L.xR = w - 40; L.lpx = L.xR - L.xc;
-  L.cy = Math.round(topR + avail / 2 - 16);
-  L.amax = clamp(avail / 2 - 104, 16, 90);
+  // incident / reflected lanes above the string (each band = amax + 14, curve half-height A/2 ≤ amax/2); too short → curves over the string
+  L.lanes = state.stInc && hh >= 380 && (avail - 236) / 4 >= 20;
+  if (L.lanes) {
+    L.amax = clamp((avail - 236) / 4, 20, 70); L.lb = L.amax + 14;
+    L.ly1 = Math.round(topR + L.lb / 2); L.ly2 = Math.round(L.ly1 + L.lb);
+    L.cy = Math.round(topR + 2 * L.lb + L.amax + 88);
+  } else {
+    L.cy = Math.round(topR + avail / 2 - 16);
+    L.amax = clamp(avail / 2 - 104, 16, 90);
+  }
   // beads: fixed → m per bó (λ/2), free → m per λ/4; N − 1 segments → nodes land exactly on beads
   const dxT = phone ? 17 : 28, q = fr ? 2 * n - 1 : n;
   const m = fr ? Math.max(1, Math.round(L.lpx / q / dxT)) : Math.max(2, Math.round(L.lpx / q / dxT));
   L.m = m; L.N = Math.min(NMAX, q * m + 1); L.dx = L.lpx / (L.N - 1);
   L.r = clamp(0.27 * L.dx, 4.4, 8.5);
   L.lam = fr ? 4 * L.lpx / q : 2 * L.lpx / n; L.K = TAU / L.lam;
-  for (let i = 0; i < L.N; i++) { const X = L.lpx - i * L.dx; S[i] = fr ? Math.cos(L.K * X) : Math.sin(L.K * X); }
+  for (let i = 0; i < L.N; i++) S[i] = Math.sin(L.K * i * L.dx);     // steady u = A·S·T, T = −cos ωt (both end types)
   // antinodes from the left (x px from the driver end): fixed x = λ/4 + jλ/2, free x = λ/4 + jλ/2 as well (X = ℓ − x)
   L.anti = []; L.nodes = [];
   for (let j = 0; j <= 2 * n; j++) { const x = L.lam / 4 + j * L.lam / 2; if (x <= L.lpx + 0.5) L.anti.push(x); }
@@ -58,10 +78,52 @@ const topY = () => (driver.pt('a-top') || {y: 94}).y;
 function sync() {
   L.apx = state.stA / A_MAX * L.amax;
   L.e = Math.min(2, 0.05 * L.apx);                 // driver shaft amplitude → the driver end is ≈ a node
-  const wt = TAU * fN() * state.t;
-  L.T = free() ? Math.sin(wt) : Math.cos(wt);       // time factor of u
-  L.Td = free() ? Math.cos(wt) : -Math.sin(wt);     // its derivative / ω (velocity sign)
-  L.wt = wt;
+  const f = fN(), wt = TAU * f * state.t;
+  L.T = -Math.cos(wt);                              // steady time factor of u
+  L.Td = Math.sin(wt);                              // its derivative / ω (velocity sign)
+  L.wt = wt; L.sg = free() ? 1 : -1;
+  L.ct = L.lam * f * state.t;                       // distance travelled by the incident front (px)
+  L.steady = L.ct >= 2 * L.lpx - 0.01;
+}
+// u_t + u_r at x px from the driver (no driver term)
+function uAt(x) {
+  const {K, wt, ct, lpx} = L, half = L.apx / 2;
+  return (x <= ct ? half * Math.sin(wt - K * x) : 0) + (2 * lpx - x <= ct ? L.sg * half * Math.sin(wt - K * (2 * lpx - x)) : 0);
+}
+function tri(ctx, x, y, dir, color) {               // small arrowhead at a wave front
+  ctx.fillStyle = color; ctx.beginPath(); ctx.moveTo(x + dir * 8, y); ctx.lineTo(x, y - 4.5); ctx.lineTo(x, y + 4.5); ctx.closePath(); ctx.fill();
+}
+// incident (→, orange) and reflected (←, blue), drawn only where each wave has already arrived
+function drawInc(ctx) {
+  const {xc, lpx, K, wt, ct, sg, apx, N, dx} = L, half = apx / 2, lanes = L.lanes;
+  const yT = lanes ? L.ly1 : L.cy, yR = lanes ? L.ly2 : L.cy;
+  const xi1 = Math.min(ct, lpx), xr0 = Math.max(0, 2 * lpx - ct);
+  if (lanes) {
+    ctx.strokeStyle = C.muted; ctx.lineWidth = 1; ctx.setLineDash(DASH); ctx.beginPath();
+    ctx.moveTo(xc, yT); ctx.lineTo(xc + lpx, yT); ctx.moveTo(xc, yR); ctx.lineTo(xc + lpx, yR); ctx.stroke();
+    ctx.setLineDash(NONE); ctx.lineWidth = 2;
+  } else { ctx.setLineDash(DASH); ctx.lineWidth = 1.6; }
+  if (xi1 > 0) {
+    ctx.strokeStyle = ORG; ctx.beginPath();
+    for (let x = 0; ; x += 4) { if (x > xi1) x = xi1; const y = yT - half * Math.sin(wt - K * x); x ? ctx.lineTo(xc + x, y) : ctx.moveTo(xc, y); if (x >= xi1) break; }
+    ctx.stroke();
+  }
+  if (xr0 < lpx) {
+    ctx.strokeStyle = BLU; ctx.beginPath();
+    for (let x = xr0; ; x += 4) { if (x > lpx) x = lpx; const y = yR - sg * half * Math.sin(wt - K * (2 * lpx - x)); x === xr0 ? ctx.moveTo(xc + x, y) : ctx.lineTo(xc + x, y); if (x >= lpx) break; }
+    ctx.stroke();
+  }
+  ctx.setLineDash(NONE);
+  if (lanes) {   // small beads every 2nd bead x
+    ctx.fillStyle = ORG; ctx.beginPath();
+    for (let i = 0; i < N; i += 2) { const x = i * dx; if (x > xi1) break; const y = yT - half * Math.sin(wt - K * x); ctx.moveTo(xc + x + 2.8, y); ctx.arc(xc + x, y, 2.8, 0, TAU); }
+    ctx.fill();
+    ctx.fillStyle = BLU; ctx.beginPath();
+    for (let i = 0; i < N; i += 2) { const x = i * dx; if (x < xr0) continue; const y = yR - sg * half * Math.sin(wt - K * (2 * lpx - x)); ctx.moveTo(xc + x + 2.8, y); ctx.arc(xc + x, y, 2.8, 0, TAU); }
+    ctx.fill();
+  }
+  if (ct < lpx) tri(ctx, xc + ct, yT, 1, ORG);
+  else if (ct < 2 * lpx) tri(ctx, xc + 2 * lpx - ct, yR, -1, BLU);
 }
 
 function drawEnd(ctx) {
@@ -83,7 +145,7 @@ function drawEnd(ctx) {
 
 function draw(ctx) {
   if (!L.w) return;
-  if (L.n !== state.stN || L.end !== state.stEnd) layout(L.w, L.h);
+  if (L.n !== state.stN || L.end !== state.stEnd || L.inc !== state.stInc) layout(L.w, L.h);
   sync();
   const {xc, dx, N, r, cy, s, amax, apx: A, e, T, lpx} = L, a = anchor();
   ctx.lineJoin = 'round'; ctx.lineCap = 'round';
@@ -95,7 +157,7 @@ function draw(ctx) {
   text(ctx, 'u', xu - 9, cy - amax - 10, {size: 12.5, weight: 700, color: C.ink});
   text(ctx, 'O', xu - 9, cy + 11, {size: 12.5, weight: 700, color: C.ink});
   drawEnd(ctx);
-  for (let i = 0; i < N; i++) { const X = lpx - i * dx; xs[i] = xc + i * dx; ys[i] = cy - (A * S[i] + e * X / lpx) * T; }
+  for (let i = 0; i < N; i++) { const x = i * dx; xs[i] = xc + x; ys[i] = cy - uAt(x) - e * (lpx - x) / lpx * T; }
   if (state.beadsOnly) {
     if (!rings) { const p = []; for (let i = 0; i < N; i++) p.push(xc + i * dx, cy); rings = ringLayer(L.w, L.h, r + 0.6, p); }
     ctx.drawImage(rings, 0, 0, L.w, L.h);
@@ -108,17 +170,7 @@ function draw(ctx) {
     ctx.strokeStyle = '#7a828c'; ctx.lineWidth = 3.4 * k; ctx.stroke();
     ctx.save(); ctx.translate(0, -k); ctx.strokeStyle = 'rgba(255,255,255,.6)'; ctx.lineWidth = k; ctx.stroke(); ctx.restore();
   }
-  if (state.stInc) {
-    // incident (→, orange) and reflected (←, blue): u_t = (A/2)·sin(ωt + KX), u_r = ∓(A/2)·sin(ωt − KX); their sum is u
-    const K = L.K, wt = L.wt, sg = free() ? 1 : -1, half = A / 2, step = 4;
-    ctx.lineWidth = 1.6; ctx.setLineDash(DASH);
-    ctx.strokeStyle = 'rgba(232,89,12,.85)'; ctx.beginPath();
-    for (let x = 0; x <= lpx + 0.1; x += step) { const y = cy - half * Math.sin(wt + K * (lpx - x)); x ? ctx.lineTo(xc + x, y) : ctx.moveTo(xc + x, y); }
-    ctx.stroke();
-    ctx.strokeStyle = 'rgba(28,126,214,.85)'; ctx.beginPath();
-    for (let x = 0; x <= lpx + 0.1; x += step) { const y = cy - sg * half * Math.sin(wt - K * (lpx - x)); x ? ctx.lineTo(xc + x, y) : ctx.moveTo(xc + x, y); }
-    ctx.stroke(); ctx.setLineDash(NONE);
-  }
+  if (state.stInc) drawInc(ctx);
   if (!spr) spr = {bead: ball(BALL.bead, r), red: ball(BALL.red, r + 2), org: ball(BALL.orange, r + 2)};
   const tr = state.track, iR = L.iR, iO = L.iO;
   for (let i = 0; i < N; i++) { if (tr && (i === iR || i === iO)) continue; drawBall(ctx, spr.bead, xs[i], ys[i]); }
@@ -126,7 +178,7 @@ function draw(ctx) {
     ctx.strokeStyle = '#495057'; ctx.lineWidth = 2; ctx.beginPath(); ctx.ellipse(L.xR, ys[N - 1], 6, 2.6, 0, 0, TAU); ctx.stroke();
   }
   if (tr) { drawBall(ctx, spr.red, xs[iR], ys[iR]); if (iO >= 0) drawBall(ctx, spr.org, xs[iO], ys[iO]); }
-  DRV.shaft.dy = e * T / s; DRV.shaft.clipY = topY();
+  DRV.shaft.dy = -(uAt(0) + e * T) / s; DRV.shaft.clipY = topY();
   driver.draw(ctx, xc - a.x * s, cy - a.y * s, DRV);
 }
 
@@ -159,6 +211,23 @@ function annotate(ctx) {
   occ.push([xc - 66 * s, cy + 8, xc + 66 * s, cy + 168 * s]);
   // VTCB + dashed envelope ±A·|S(X)|
   ctx.strokeStyle = C.muted; ctx.lineWidth = 1; ctx.setLineDash(DASH); ctx.beginPath(); ctx.moveTo(xc, cy); ctx.lineTo(xR, cy); ctx.stroke();
+  ctx.setLineDash(NONE);
+  // lane pills: left of the lane (beside the driver top) if there is room, else inside the lane at its left end
+  const inc = state.stInc, lanes = inc && L.lanes;
+  if (inc) {
+    const lp = (t, y, c) => {
+      ctx.font = font(fs - 1, 700);
+      const w = textW(ctx, t) + 14, o = oP('#fff', c);
+      o.stroke = c;
+      if (!(xc - 6 - w >= 4 && tag(ctx, t, xc - 6 - w / 2, y, o))) tag(ctx, t, xc + w / 2 + 4, y, o);
+    };
+    if (lanes) { lp('Sóng tới →', L.ly1, ORG); lp('Sóng phản xạ ←', L.ly2, BLU); occ.push([xc, L.ly1 - L.lb / 2, xR, L.ly2 + L.lb / 2 - 4]); }
+    else { lp('Sóng tới →', cy - A - r - 84, ORG); lp('Sóng phản xạ ←', cy - A - r - 110, BLU); }
+  }
+  if (!L.steady) {   // still forming: no nút / bụng / λ/2 yet
+    tag(ctx, 'Đang hình thành sóng dừng', xc + lpx / 2, cy + A + r + 28, {size: fs, fill: '#fff', stroke: C.ink2, color: C.ink});
+    return;
+  }
   ctx.strokeStyle = 'rgba(21,24,29,.5)'; ctx.lineWidth = 1.2; ctx.setLineDash(DASH2);
   for (const sg of [-1, 1]) {
     ctx.beginPath();
@@ -214,6 +283,18 @@ function annotate(ctx) {
     const x = xs[i], y = ys[i] + dir * (r + 2);
     arrow(ctx, x, y, x, y + dir * al, {color: i === L.iR || i === L.iO ? C.track : C.ink2, width: 1.5, size: 5});
   }
+  if (!inc) return;
+  // reflection phase at the right end (between the lanes and the string, else high above it), and the superposition note
+  const right = (t, ys, o) => {
+    ctx.font = font(o.size, 700);
+    const x = Math.min(xR, L.w - 6 - (textW(ctx, t) + 14) / 2);
+    for (const y of ys) if (tag(ctx, t, x, y, o)) return true;
+    return false;
+  };
+  const yE = lanes ? [L.ly2 + L.lb / 2 + 8, yRa - 26, L.ly1 + L.lb / 2] : [yRa - 26, yRa - 52];
+  const oE = {size: fs - 1, fill: '#fff', stroke: BLU, color: BLU};
+  if (!right(fr ? 'Phản xạ ở đầu tự do: cùng pha' : 'Phản xạ ở đầu cố định: ngược pha', yE, oE)) right(fr ? 'Đầu tự do: cùng pha' : 'Đầu cố định: ngược pha', yE, oE);
+  right('Sóng dừng = sóng tới + sóng phản xạ', [yC, yC + 26], {size: fs - 1, fill: '#fff', stroke: C.ink2, color: C.ink});
 }
 
 function controls() {
@@ -244,14 +325,14 @@ function controls() {
 const PR = {xy: false, a: 0, b: 0, ca: '#d7191f', cb: '#e8590c', lane: 'overlay', two: true};
 function probe() {
   sync();
-  const t = L.T, sR = S[L.iR] || 0;
-  PR.a = sR * t; PR.two = L.iO >= 0; PR.b = PR.two ? S[L.iO] * t : 0;
+  const k = 1 / (L.apx || 1);
+  PR.a = uAt(L.iR * L.dx) * k; PR.two = L.iO >= 0; PR.b = PR.two ? uAt(L.iO * L.dx) * k : 0;
   return PR;
 }
 
 export default {
   probe, id: 'standing', group: 'mech', title: 'Sóng dừng', short: 'Dừng', icon: 'standing',
-  defaults: {slow: 0.1},
+  defaults: {get slow() { return autoSlow(); }},
   metrics: () => ({f: fN(), v: state.stv}),
   readout, controls, layout, draw, annotate, update() {}, reset() {}
 };

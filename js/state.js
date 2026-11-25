@@ -38,7 +38,7 @@ export const state = {
   stEnd: 'fixed',   // fixed (hai đầu cố định) | free (một đầu tự do)
   stA: 4,           // cm, biên độ bụng
   stv: 6,           // m/s
-  stInc: false,     // show incident + reflected waves
+  stInc: true,      // show incident + reflected waves (v6 default on)
   beadsOnly: false  // Chỉ phần tử (waves + standing)
 };
 export function set(key, value) { state[key] = value; bus.emit('change', {key, value}); }
