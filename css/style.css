@@ -65,17 +65,16 @@ button{-webkit-tap-highlight-color:transparent}
 #school{justify-self:end;max-width:none;white-space:nowrap;padding:0;background:none;border:0;border-radius:0;box-shadow:none;font:800 clamp(10px,1.02vw,13.5px)/1.3 var(--font);color:var(--red);text-transform:uppercase;letter-spacing:.02em}
 
 /* ===== Thanh chọn chế độ ===== */
-#tabs{grid-area:tabs;justify-self:center;align-self:start;max-width:100%;display:flex;gap:3px;padding:3px;background:#ebe7dd;border:1px solid var(--line);border-radius:12px}
-#tabs button{min-height:34px;border:0;border-radius:9px;background:transparent;cursor:pointer;font-weight:700;font-size:13px;color:var(--muted);display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:0 12px;white-space:nowrap}
-#tabs button:hover{color:var(--ink)}
-#tabs>button[aria-selected=true]{background:var(--ink);color:#fff;text-transform:uppercase;letter-spacing:.02em;font-size:12px}
-#tabs .sub{display:none;gap:2px;padding:0 2px 0 0;margin-left:-3px;background:var(--ink);border-radius:0 9px 9px 0;align-items:center}
-#tabs[data-g=mech] .sub{display:flex}
-#tabs[data-g=mech] #gb-mech{border-radius:9px 0 0 9px}
-#tabs .sub button{color:rgba(255,255,255,.75);min-height:30px;margin:2px 0;padding:0 11px}
-#tabs .sub button:hover{color:#fff}
-#tabs .sub button[aria-selected=true]{background:#fff;color:var(--ink)}
-#tabs .t-s,#tabs .g-s{display:none}
+#tabs{grid-area:tabs;justify-self:center;align-self:start;max-width:100%;display:flex;flex-direction:column;align-items:center;gap:6px}
+#tabs .main{display:flex;gap:6px}
+#tabs .main button{min-width:190px;min-height:34px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--red);font-weight:800;font-size:13px;text-transform:uppercase;letter-spacing:.02em;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:0 14px;white-space:nowrap}
+#tabs .main button[aria-selected=true]{background:var(--red);border-color:var(--red);color:#fff}
+#tabs .sub{display:flex;gap:3px;padding:3px;max-width:100%;background:#ebe7dd;border:1px solid var(--line);border-radius:12px}
+#tabs .sub[hidden]{display:none}
+#tabs .sub button{min-height:30px;border:0;border-radius:9px;background:transparent;cursor:pointer;font-weight:700;font-size:13px;color:var(--muted);display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:0 12px;white-space:nowrap}
+#tabs .sub button:hover{color:var(--ink)}
+#tabs .sub button[aria-selected=true]{background:var(--ink);color:#fff}
+#tabs .t-s{display:none}
 /* segmented controls inside the panels (restored: Phase 5 dropped these generic rules) */
 .seg{display:flex;padding:3px;gap:3px;background:#ebe7dd;border:1px solid var(--line);border-radius:12px}
 .seg>button{flex:1;min-height:34px;border:0;border-radius:9px;background:transparent;cursor:pointer;font-weight:600;font-size:13px;color:var(--muted);display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:0 12px;white-space:nowrap}
@@ -158,7 +157,7 @@ button{-webkit-tap-highlight-color:transparent}
  :root{--pad:8px}
  #app{gap:6px 12px}
  #title{padding:2px 0}#title h1{font-size:21px}
- #tabs button{min-height:30px}#tabs .sub button{min-height:26px}
+ #tabs .main button{min-height:30px}#tabs .sub button{min-height:28px}
  .grp{padding:7px 11px;gap:5px}
  .chip{min-height:30px}.seg>button{min-height:30px}.tg{min-height:36px;font-size:10px}
  #btn-play{min-height:44px}
@@ -166,7 +165,7 @@ button{-webkit-tap-highlight-color:transparent}
 @media (min-width:1000px) and (max-width:1180px){
  :root{--ctrl-w:270px}
  #title h1{font-size:18px}
- #tabs button{padding:0 9px;font-size:12px}
+ #tabs .main button{min-width:160px}#tabs .sub button{padding:0 9px;font-size:12px}
  #btn-mute .mlab{display:none}
 }
 
@@ -187,19 +186,11 @@ button{-webkit-tap-highlight-color:transparent}
  #tools .tbtn.desk{display:none}
  #btn-mute .mlab{display:none}
  #btn-mute{padding:0;width:36px}
- #tabs{justify-self:stretch;width:100%;gap:2px}
- #tabs button{flex-direction:column;gap:2px;min-height:44px;padding:3px 2px;font-size:11px;white-space:normal;line-height:1.1;text-transform:none}
- #tabs .t-l,#tabs .g-l{display:none}#tabs .t-s,#tabs .g-s{display:inline;text-align:center}
- #tabs .sub{flex:1;min-width:0;margin-left:0;padding:0 2px 0 0;gap:1px}
- #tabs .sub button{flex:1;min-width:0;min-height:40px;margin:2px 0;padding:2px 1px;font-size:10.5px}
- #tabs>button#gb-mech{flex:1;border-radius:9px}
- #tabs[data-g=mech]>button#gb-mech{flex:0 0 32px;padding:0;font-size:9px;line-height:1.05;font-weight:800;text-transform:uppercase;border-radius:9px 0 0 9px}
- #tabs[data-g=mech]>button#gb-em{flex:0 0 58px;padding:0 2px}
- #tabs[data-g=em]>button{flex:1}
- #tabs[data-g=em]>button .g-s{display:none}#tabs[data-g=em]>button .g-l{display:inline}
- #tabs[data-g=em]>button#gb-em{text-transform:uppercase}
- #ctrl{background:var(--card);border-radius:12px}
- #ctrl .grps{flex:none;max-height:38vh;overflow:auto;border-bottom:1px solid var(--line)}
+ #tabs{justify-self:stretch;width:100%;gap:5px;align-items:stretch}
+ #tabs .main{gap:5px}#tabs .main button{flex:1;min-width:0;min-height:36px;font-size:12px;padding:0 6px}
+ #tabs .sub{gap:2px;padding:2px}
+ #tabs .sub button{flex:1;min-width:0;flex-direction:column;gap:2px;min-height:42px;padding:2px 1px;font-size:10.5px;white-space:normal;line-height:1.1;font-weight:600}
+ #tabs .t-l{display:none}#tabs .t-s{display:inline;text-align:center}
  #ctrl[data-tab=none] .grps{display:none}
  #ctrl .grp{display:none;padding:9px 12px 8px}
  #ctrl[data-tab=wave] .grp[data-grp=wave],#ctrl[data-tab=show] .grp[data-grp=show]{display:flex}
@@ -220,15 +211,11 @@ button{-webkit-tap-highlight-color:transparent}
  #title{padding:0;white-space:normal}#title h1{font-size:11.5px;line-height:1.2}
  #school{justify-self:stretch;text-align:center;font-size:7.4px;padding:2px 2px;line-height:1.25;letter-spacing:0}
  #tools .tbtn{width:34px;height:34px}
- #tabs{display:grid;grid-template-columns:1fr 1fr;gap:2px}
- #tabs>button,#tabs[data-g=mech]>button#gb-mech,#tabs[data-g=mech]>button#gb-em{flex:none;min-height:28px;flex-direction:row;gap:4px;font-size:10.5px;padding:2px 3px;border-radius:9px}
- #tabs .g-l,#tabs[data-g=em]>button .g-l{display:inline}#tabs .g-s,#tabs[data-g=em]>button .g-s{display:none}
- #tabs .sub{grid-column:1/-1;grid-row:2;margin:0;padding:0;background:#ebe7dd;border-radius:0;gap:2px}
- #tabs .sub button{flex-direction:row;min-height:32px;margin:0;gap:4px;font-size:9px;color:var(--muted);background:transparent}
- #tabs .sub button[aria-selected=true]{background:var(--ink);color:#fff}
- #tabs .t-l{display:none}#tabs .t-s{display:inline}
- #tabs .sub button svg{display:none}#tabs .sub button:first-child{flex:1.35}#tabs .sub button{white-space:nowrap;padding:2px 1px}
- #tabs .sub{gap:3px}#tabs .sub button{background:#f7f4ed;border-radius:7px}
+ #tabs{gap:4px}
+ #tabs .main button{min-height:28px;font-size:10.5px;gap:4px;padding:2px 3px}#tabs .main button svg{display:none}
+ #tabs .sub{gap:2px;padding:2px}
+ #tabs .sub button{flex-direction:row;min-height:32px;gap:4px;font-size:9px;padding:2px 1px}#tabs .sub button svg{display:none}
+ #tabs .sub button:first-child{flex:1.35}
  #ctrl{align-self:end;position:relative}
  #ctrl .grps{position:absolute;left:calc(100% + 8px);bottom:0;width:min(340px,calc(100vw - 240px));max-height:calc(100dvh - 12px);z-index:6;background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow)}
  .dock-tabs button{min-height:40px;font-size:10px}

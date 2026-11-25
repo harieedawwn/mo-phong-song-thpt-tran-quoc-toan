@@ -152,12 +152,13 @@ export function mountShell({modes, onMode, onRestart, onToggle, onShot}) {
   const byId = id => tabBtns.find(b => b.dataset.id === id);
   let lastMech = (mech[0] || {}).id;
   const gMech = h('button', {type: 'button', role: 'tab', id: 'gb-mech', 'data-g': 'mech', 'aria-selected': 'false', onclick: () => onMode(lastMech)},
-    h('span', {class: 'g-l', text: 'Sóng cơ'}), h('span', {class: 'g-s'}, 'Sóng', h('br'), 'cơ'));
+    icon(mech[0].icon, 18), h('span', {text: 'Sóng cơ'}));
   const gEm = h('button', {type: 'button', role: 'tab', id: 'gb-em', 'data-g': 'em', 'aria-selected': 'false', onclick: () => onMode(emM[0].id)},
-    h('span', {class: 'g-l', text: 'Sóng điện từ'}), h('span', {class: 'g-s', text: 'Điện từ'}));
-  const sub = h('div', {class: 'sub', role: 'tablist', 'aria-label': 'Loại sóng cơ'}, ...tabBtns.filter(b => mech.some(m => m.id === b.dataset.id)));
-  tabs.setAttribute('aria-owns', 'gb-mech gb-em');
-  tabs.append(gMech, sub, gEm);
+    icon(emM[0].icon, 18), h('span', {text: 'Sóng điện từ'}));
+  const main = h('div', {class: 'main', role: 'tablist', 'aria-label': 'Nhóm sóng'}, gMech, gEm);
+  const sub = h('div', {class: 'sub', role: 'tablist', 'aria-label': 'Các loại sóng cơ'}, ...tabBtns.filter(b => mech.some(m => m.id === b.dataset.id)));
+  tabs.removeAttribute('role'); tabs.removeAttribute('aria-label');
+  tabs.append(main, sub);
 
   // controls + phone bottom-sheet tabs + phone bottom-sheet tabs
   const ctrl = $('ctrl'), grps = $('grps'), dock = $('dock');
@@ -195,6 +196,7 @@ export function mountShell({modes, onMode, onRestart, onToggle, onShot}) {
       for (const b of tabBtns) b.setAttribute('aria-selected', String(b.dataset.id === m.id));
       if (m.group === 'mech') lastMech = m.id;
       tabs.dataset.g = m.group;
+      sub.hidden = m.group !== 'mech';
       gMech.setAttribute('aria-selected', String(m.group === 'mech'));
       gEm.setAttribute('aria-selected', String(m.group === 'em'));
       buildControls(m);
