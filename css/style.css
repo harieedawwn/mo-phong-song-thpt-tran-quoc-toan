@@ -36,7 +36,7 @@ button{-webkit-tap-highlight-color:transparent}
  padding-left:max(calc(var(--pad) + 8px),env(safe-area-inset-left));padding-right:max(calc(var(--pad) + 8px),env(safe-area-inset-right));
  grid-template-columns:var(--ctrl-w) minmax(0,1fr);
  grid-template-rows:auto auto auto minmax(0,1fr);
- grid-template-areas:"top top" "tabs tabs" "ctrl stage" "scope stage"}
+ grid-template-areas:"top top" "tabs tabs" "ctrl stage" "ctrl stage"}
 #top{grid-area:top;display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:12px;align-items:center}
 
 /* panel có góc khung (giống ảnh mẫu của trường) */
@@ -83,8 +83,6 @@ button{-webkit-tap-highlight-color:transparent}
 
 /* ===== Bảng điều khiển trái ===== */
 #ctrl{grid-area:ctrl;display:flex;flex-direction:column;min-height:0;position:relative;align-self:start}
-#scope{grid-area:scope;display:flex;flex-direction:column;gap:6px;min-height:0;padding:10px 12px 12px;background:var(--card)}
-#scv{flex:1;min-height:0;width:100%;display:block;border-radius:8px;background:#fbfaf6}
 #btn-zoom{position:absolute;top:10px;right:10px;z-index:3;min-height:30px;padding:0 12px;border:1.5px solid var(--ink);border-radius:15px;background:#fff;font:800 12.5px var(--font);cursor:pointer}
 #btn-zoom[hidden]{display:none}
 .dock-tabs{display:none}
@@ -172,7 +170,6 @@ button{-webkit-tap-highlight-color:transparent}
 /* ===== Điện thoại / máy tính bảng dọc: bố cục gọn ===== */
 @media (max-width:999px),(max-height:520px){
  :root{--pad:6px}
- #scope{display:none}
  #app{gap:6px;padding:6px 8px calc(6px + env(safe-area-inset-bottom));
   grid-template-columns:minmax(0,1fr);grid-template-rows:auto auto minmax(0,1fr) auto;
   grid-template-areas:"top" "tabs" "stage" "ctrl"}

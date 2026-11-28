@@ -271,7 +271,7 @@ function controls() {
       h('div', {class: 'chips g4'}, ...[0.5, 1, 2, 4].map(f => chip(dec(f), () => state.tf === f, () => set('tf', f), 'sm'))),
       lab('transverse', 'Biên độ A', aVal), aS,
       lab('medium', 'Tốc độ truyền v', vVal), vS,
-      ...slowControl()),
+      ...slowControl(50)),
     group('show', 'Hiển thị',
       seg([['both', 'Cả hai'], ['rope', 'Sóng ngang'], ['spring', 'Sóng dọc']], () => state.lane, v => set('lane', v), 'Loại sóng hiển thị'),
       h('div', {class: 'tgs'},

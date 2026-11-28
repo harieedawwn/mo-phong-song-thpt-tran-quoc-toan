@@ -9,7 +9,6 @@ import {state, set, bus} from '../state.js';
 import {h, chip, toggle, slider, seg, group, lab, slowControl, bind} from '../ui.js';
 import {num, slowText} from '../fmt.js';
 import {clamp, TAU, niceSlow} from '../physics.js';
-import {scopeClear} from '../scope.js';
 import {C, font, pill, text, arrow, ruler, textW} from '../draw/ink.js';
 import {ball, drawBall, BALL, ballDpr} from '../draw/ball.js';
 import {loadArt} from '../art/sprite.js';
@@ -36,7 +35,7 @@ bus.on('change', e => {
   if (!e || state.mode !== 'standing') return;
   const k = e.key;
   if (k === 'stN' || k === 'stEnd' || k === 'stv') set('slow', autoSlow());
-  if (k === 'stN' || k === 'stEnd' || k === 'stv' || k === 'stA') { state.t = 0; scopeClear(); }
+  if (k === 'stN' || k === 'stEnd' || k === 'stv' || k === 'stA') { state.t = 0; }
 });
 
 function layout(w, hh) {
@@ -312,7 +311,7 @@ function controls() {
       lab('freq', 'Số bụng sóng', nVal), nChips,
       lab('transverse', 'Biên độ bụng A', aVal), aS,
       lab('medium', 'Tốc độ truyền v', vVal), vS,
-      ...slowControl()),
+      ...slowControl(20)),
     group('show', 'Hiển thị',
       h('div', {class: 'tgs'},
         toggle('target', 'Phần tử đỏ', () => state.track, v => set('track', v), 'Theo dõi hai phần tử ở hai bụng kề nhau'),

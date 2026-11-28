@@ -10,7 +10,6 @@ import sound from './modes/sound.js';
 import surface from './modes/surface.js';
 import standing from './modes/standing.js';
 import em from './modes/em.js';
-import {scopeInit, scopeClear, scopeSize, scopePush, scopeDraw} from './scope.js';
 import './audio.js';
 
 const MODES = [waves, sound, surface, standing, em];
@@ -19,8 +18,7 @@ const byId = id => MODES.find(m => m.id === (ALIAS[id] || id));
 const canvas = document.getElementById('cv'), stage = document.getElementById('stage');
 const ctx = canvas.getContext('2d');
 let zs = 1, zx = 0, zy = 0;       // stage zoom (1–4×) and pan, CSS px
-const zbtn = document.getElementById('btn-zoom'), scv = document.getElementById('scv');
-if (scv) scopeInit(scv);
+const zbtn = document.getElementById('btn-zoom');
 let mode = MODES[0], W = 0, H = 0, grid = null, dirty = true, raf = 0, last = 0, fadeT0 = 0;
 const FADE = 250, calm = !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
 // annotations (annotate()) exist only while paused: fade in over 0,25 s after Pause, vanish at once on Play
@@ -29,7 +27,7 @@ function startFade() { if (calm) fx.a = 1; else { fx.a = 0; fadeT0 = performance
 function play() { set('playing', true); }
 function pause() { set('playing', false); }
 function toggle() { state.playing ? pause() : play(); }
-function restart() { state.t = 0; scopeClear(); if (mode.reset) mode.reset(); dirty = true; }
+function restart() { state.t = 0; if (mode.reset) mode.reset(); dirty = true; }
 function modeFromHash() { const m = /mode=([a-z]+)/.exec(location.hash); return m && byId(m[1]) ? byId(m[1]).id : null; }
 
 const ui = mountShell({
@@ -47,7 +45,7 @@ const ui = mountShell({
 function setMode(id) {
   const m = byId(id) || MODES[0];
   if (mode && mode !== m && mode.leave) mode.leave();
-  mode = m; state.t = 0; scopeClear(); zoomTo(1, 0, 0); if (m.reset) m.reset();
+  mode = m; state.t = 0; zoomTo(1, 0, 0); if (m.reset) m.reset();
   set('mode', m.id);
   set('slow', m.defaults.slow);
   m.layout(W, H);
@@ -65,7 +63,7 @@ function resize() {
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   setBallDpr(dpr);
   grid = makeGrid(W, H, dpr);
-  mode.layout(W, H); scopeSize();
+  mode.layout(W, H);
   zoomTo(zs, zx, zy);
   bus.emit('change', {key: 'layout'});
   dirty = true;
@@ -106,20 +104,12 @@ function draw(annotate) {
   }
 }
 
-// mini-scope: one sample per running frame (mode.probe() returns a reused object), redrawn while running or when something changed
-function sample(push = true) {
-  if (!scv || !mode.probe || !scv.offsetWidth) return;
-  const p = mode.probe();
-  if (push) scopePush(state.t, p);
-  scopeDraw(p, mode.metrics().f);
-}
-
 function frame(ts) {
   raf = requestAnimationFrame(frame);
   const dt = Math.min(0.05, (ts - last) / 1000); last = ts;
   if (!state.playing && fx.a < 1) { const e = Math.min(1, Math.max(0, (performance.now() - fadeT0) / FADE)); fx.a = e * (2 - e); dirty = true; }
-  if (state.playing) { const sdt = dt * state.slow; state.t += sdt; mode.update(sdt); draw(false); dirty = false; sample(); }
-  else if (dirty) { draw(true); dirty = false; sample(false); }
+  if (state.playing) { const sdt = dt * state.slow; state.t += sdt; mode.update(sdt); draw(false); dirty = false; }
+  else if (dirty) { draw(true); dirty = false; }
 }
 function startLoop() { cancelAnimationFrame(raf); last = performance.now(); raf = requestAnimationFrame(frame); }
 

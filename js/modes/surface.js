@@ -244,7 +244,7 @@ function controls() {
       h('div', {class: 'chips g4'}, ...[0.5, 1, 1.5, 2].map(f => chip(dec(f), () => state.sf === f, () => set('sf', f), 'sm'))),
       lab('transverse', 'Biên độ A', aVal), aS,
       lab('medium', 'Tốc độ truyền v', vVal), vS,
-      ...slowControl()),
+      ...slowControl(20)),
     group('show', 'Hiển thị',
       h('div', {class: 'tgs'},
         toggle('target', 'Phần tử đỏ', () => state.track, v => set('track', v), 'Theo dõi các phần tử màu đỏ'),

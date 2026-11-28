@@ -83,10 +83,10 @@ export function slider({min, max, step = 1, label, pos, apply, sync}) {
   bind(() => { if (document.activeElement !== i) { const p = String(pos()); if (i.value !== p) { i.value = p; paint(); } } if (sync) sync(); });
   return wrap;
 }
-// Log slider for the slow-motion factor (×1 … ×100 000) snapped to 1-2-5 steps.
-export function slowControl() {
+// Log slider for the slow-motion factor (×1 … ×maxN, default ×100 000) snapped to 1-2-5 steps.
+export function slowControl(maxN = 1e5) {
   const val = h('span', {class: 'val'});
-  const LO = 1e-5, SPAN = 5;  // decades
+  const LO = 1 / maxN, SPAN = Math.log10(maxN);  // decades
   const s = slider({min: 0, max: 1000, label: 'Làm chậm',
     pos: () => Math.round(1000 * (Math.log10(Math.min(1, Math.max(LO, state.slow))) - Math.log10(LO)) / SPAN),
     apply: p => {
